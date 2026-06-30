@@ -1,0 +1,46 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "name": "neutral-business",
+  "canvas": { "w": 13.333, "h": 7.5, "margin": 0.7 },
+  "font": { "family": "Meiryo" },
+  "colors": {
+    "bg": "FFFFFF",
+    "ink": "1B2735",
+    "muted": "566373",
+    "faint": "8A98A6",
+    "surface": "F3F5F7",
+    "surfaceAccent": "E9F3F3",
+    "line": "DCE2E8",
+    "dark": "1E2A3A",
+    "darkAlt": "26384C",
+    "onDark": "FFFFFF",
+    "onDarkMuted": "AAB8C7",
+    "accent": "0E7C86",
+    "accentDeep": "0A5E66",
+    "accentSoft": "5FA8AE",
+    "onAccentMuted": "EAF7F7"
+  },
+  "sizes": {
+    "cover": 40,
+    "coverSub": 17,
+    "title": 28,
+    "kicker": 12.5,
+    "message": 32,
+    "stat": 62,
+    "head": 18,
+    "body": 15,
+    "small": 13,
+    "cap": 11,
+    "num": 17,
+    "compareLabel": 22,
+    "takeawayHead": 19,
+    "offerHead": 21,
+    "footer": 12.5,
+    "sectionTitle": 36,
+    "sectionIndex": 150,
+    "statCard": 40
+  },
+  "brand": {
+    "footerLabel": ""
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pptx-creation/schemas/theme.schema.json",
+  "title": "PPTX deck theme",
+  "description": "Brand-level visual identity (colors, fonts, sizes, canvas). Per-project repos own a theme.json that conforms to this schema. The plugin ships exactly one neutral default. A theme carries ONLY look-and-feel — never chapter structure, slide order, or wording.",
+  "type": "object",
+  "required": ["name", "canvas", "font", "colors", "sizes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string", "description": "Optional free-text note (ignored by the engine)." },
+    "name": {
+      "type": "string",
+      "description": "Human-readable theme id, e.g. 'neutral-business' or 'acme-corp'."
+    },
+    "canvas": {
+      "type": "object",
+      "description": "Slide geometry in inches. 13.333x7.5 = 16:9 widescreen.",
+      "required": ["w", "h", "margin"],
+      "additionalProperties": false,
+      "properties": {
+        "w": { "type": "number", "exclusiveMinimum": 0, "description": "Slide width (inches)." },
+        "h": { "type": "number", "exclusiveMinimum": 0, "description": "Slide height (inches)." },
+        "margin": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Outer safe-area margin (inches). House bar: 0.3 or 0.5+; neutral default 0.7."
+        }
+      }
+    },
+    "font": {
+      "type": "object",
+      "description": "Typeface tokens. One family is managed as a single token (house rule). Default Meiryo; Yu Gothic / Noto Sans JP also valid for Japanese.",
+      "required": ["family"],
+      "additionalProperties": false,
+      "properties": {
+        "family": { "type": "string", "minLength": 1 }
+      }
+    },
+    "colors": {
+      "type": "object",
+      "description": "Palette. All values are 6-digit hex WITHOUT a leading '#'. House rule: one dominant color (60-70%) + one restrained accent.",
+      "required": [
+        "bg", "ink", "muted", "faint", "surface", "surfaceAccent", "line",
+        "dark", "darkAlt", "onDark", "onDarkMuted",
+        "accent", "accentDeep", "accentSoft", "onAccentMuted"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(bg|ink|muted|faint|surface|surfaceAccent|line|dark|darkAlt|onDark|onDarkMuted|accent|accentDeep|accentSoft|onAccentMuted)$": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{6}$",
+          "description": "6-digit hex, no '#'."
+        }
+      },
+      "properties": {
+        "bg": { "description": "Light slide background (body slides)." },
+        "ink": { "description": "Primary text on light." },
+        "muted": { "description": "Secondary text on light." },
+        "faint": { "description": "Captions / footer on light." },
+        "surface": { "description": "Neutral card tint." },
+        "surfaceAccent": { "description": "Accent-tinted card (emphasis)." },
+        "line": { "description": "Hairline / divider." },
+        "dark": { "description": "Dark slide background (cover, CTA — sandwich)." },
+        "darkAlt": { "description": "Depth motif shape on dark (oval, not a stripe)." },
+        "onDark": { "description": "Primary text on dark." },
+        "onDarkMuted": { "description": "Secondary text on dark." },
+        "accent": { "description": "Single sharp accent." },
+        "accentDeep": { "description": "Darker accent for text on accent-tinted surfaces." },
+        "accentSoft": { "description": "Softer accent (e.g. kicker on dark)." },
+        "onAccentMuted": { "description": "Muted text on a solid accent fill." }
+      }
+    },
+    "sizes": {
+      "type": "object",
+      "description": "Type scale in points. Builders reference these tokens; they never hardcode point sizes.",
+      "required": [
+        "cover", "coverSub", "title", "kicker", "message", "stat",
+        "head", "body", "small", "cap", "num", "compareLabel", "takeawayHead", "offerHead", "footer"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(cover|coverSub|title|kicker|message|stat|head|body|small|cap|num|compareLabel|takeawayHead|offerHead|footer|sectionTitle|sectionIndex|statCard)$": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "properties": {
+        "cover": { "description": "Cover title." },
+        "coverSub": { "description": "Cover subtitle." },
+        "title": { "description": "Body / section title." },
+        "kicker": { "description": "Kicker eyebrow label." },
+        "message": { "description": "Centered single-message statement; also CTA title." },
+        "stat": { "description": "Big stat number." },
+        "head": { "description": "Item / row heading." },
+        "body": { "description": "Body copy." },
+        "small": { "description": "Small text / sub-copy." },
+        "cap": { "description": "Footer / caption." },
+        "num": { "description": "Digit inside a number circle." },
+        "compareLabel": { "description": "Comparison column label." },
+        "takeawayHead": { "description": "Chart takeaway heading." },
+        "offerHead": { "description": "CTA offer heading." },
+        "footer": { "description": "Cover footer / CTA contact line." },
+        "sectionTitle": { "description": "Optional. Section-divider title (pattern 'section'). Engine falls back to 36 if absent." },
+        "sectionIndex": { "description": "Optional. Section-divider watermark index number (pattern 'section'). Engine falls back to 150 if absent." },
+        "statCard": { "description": "Optional. Big value in a KPI card (pattern 'stat-grid'). Engine falls back to 40 if absent." }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "description": "Optional brand chrome. The plugin's neutral default ships these empty so no brand identity is stored in the plugin (per-project repos fill them).",
+      "additionalProperties": false,
+      "properties": {
+        "footerLabel": {
+          "type": "string",
+          "description": "Text shown at bottom-left of body slides (usually the org name). A deck plan's meta.footerLabel overrides this."
+        }
+      }
+    }
+  }
+}

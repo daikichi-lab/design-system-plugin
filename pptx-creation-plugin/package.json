@@ -1,0 +1,22 @@
+{
+  "name": "pptx-creation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Engine + recipes for generating high-quality PPTX decks from a deck plan + project theme.",
+  "bin": {
+    "pptx-generate": "bin/generate.js"
+  },
+  "scripts": {
+    "generate": "node bin/generate.js",
+    "qa": "bash bin/qa.sh",
+    "validate": "node bin/validate.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "^3.12.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  }
+}

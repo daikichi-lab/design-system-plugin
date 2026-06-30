@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "daikichi-plugins",
+  "owner": {
+    "name": "Shiojiri Fuga"
+  },
+  "version": "1.0.0",
+  "description": "Shiojiri Fuga's Claude Code plugins.",
+  "plugins": [
+    {
+      "name": "pptx-creation",
+      "source": "./pptx-creation-plugin",
+      "description": "Plan, compose, generate, and review high-quality PowerPoint decks. Strategy, slide-pattern recipes, theme schema, and review live in the plugin; per-project content and themes live in each project repo."
+    }
+  ]
+}

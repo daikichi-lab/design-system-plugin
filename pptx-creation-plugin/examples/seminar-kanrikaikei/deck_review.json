@@ -1,0 +1,47 @@
+{
+  "deck": "examples/seminar-kanrikaikei/out/deck.pptx",
+  "totalScore": 94,
+  "band": "external",
+  "dimensions": {
+    "messageLogic": {
+      "score": 23, "max": 25,
+      "notes": "Titles are conclusions/questions, not labels (s2 「決算書が出てから動くのでは、半年遅い。」, s5 「月次で見ると、打ち手が早くなる」, s6 ask). Clean problem→insight→evidence→action arc (goal → 3 lenses → contrast → chart proof → single CTA). 1 slide/1 message throughout."
+    },
+    "visualIntegrity": {
+      "score": 25, "max": 25,
+      "notes": "Visual QA ran on all 6 slides: no overflow, no overlap, uniform 0.7\" margins, strong contrast, aligned number-circle rows and cards. Zero AI-tells — no vertical bands, banners, or title underlines."
+    },
+    "designFidelity": {
+      "score": 19, "max": 20,
+      "notes": "One dominant neutral + single teal accent; sandwich (dark cover/CTA, light body); fully tokenized type and colour; consistent off-canvas oval motif on both dark slides. -1: motif appears only on the dark bookends (acceptable, but body could echo it lightly)."
+    },
+    "informationDesign": {
+      "score": 18, "max": 20,
+      "notes": "Every slide carries a visual element (oval, big stat, number circles, tinted compare cards, native column chart, accent offer panel). Chart is native/editable with data labels; 6 bars read cleanly. -2: chart unit lives in the series name rather than a labelled axis."
+    },
+    "contentIntegrity": {
+      "score": 9, "max": 10,
+      "notes": "Estimates are honestly flagged (約60%…（イメージ）); CTA states 「無理な勧誘はいたしません」. Numbers are illustrative and not presented as audited fact. -1: the 60% figure has no cited basis (fine for a seminar hook, would need a source for an external data claim)."
+    }
+  },
+  "visualQa": {
+    "ran": true,
+    "slides": [
+      { "slide": 1, "issues": [] },
+      { "slide": 2, "issues": [] },
+      { "slide": 3, "issues": [] },
+      { "slide": 4, "issues": [] },
+      { "slide": 5, "issues": [] },
+      { "slide": 6, "issues": [] }
+    ]
+  },
+  "findings": [
+    {
+      "dimension": "informationDesign",
+      "slide": 5,
+      "issue": "Chart unit (万円) is carried in the series name, not as an axis/value label.",
+      "fix": "Optional: keep the value axis hidden but add a small '（万円）' caption near the chart top-left, or append the unit to the takeaway."
+    }
+  ],
+  "verdict": "Ship — cleared for external delivery (94/100). This is the reference pass-line deck: clean visual integrity, honest content, conclusion-titles, native chart. The single minor improvement (explicit chart unit) is optional and does not block delivery."
+}

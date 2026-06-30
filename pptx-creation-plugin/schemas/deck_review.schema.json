@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pptx-creation/schemas/deck_review.schema.json",
+  "title": "Deck review",
+  "description": "Output of the deck-review skill: a scored, evidence-backed assessment of a generated deck against references/principles/house-quality-bar.md. The visual QA result (per-slide image inspection) MUST feed the visualIntegrity dimension.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["deck", "totalScore", "band", "dimensions", "visualQa", "verdict"],
+  "properties": {
+    "deck": {
+      "type": "string",
+      "description": "Path or name of the reviewed .pptx."
+    },
+    "totalScore": {
+      "type": "integer", "minimum": 0, "maximum": 100,
+      "description": "Sum of the five dimension scores."
+    },
+    "band": {
+      "type": "string",
+      "enum": ["reject", "internal", "external"],
+      "description": "reject = <80 (return with fixes); internal = 80-89; external = >=90 (cleared for external delivery). Any unresolved visualQa break forces 'reject'."
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["messageLogic", "visualIntegrity", "designFidelity", "informationDesign", "contentIntegrity"],
+      "properties": {
+        "messageLogic":      { "$ref": "#/definitions/scored", "description": "/25 — 1 slide/1 message, conclusion-titles, narrative frame, clear goal-action." },
+        "visualIntegrity":   { "$ref": "#/definitions/scored", "description": "/25 — no overflow/overlap, uniform margins, alignment, contrast, no AI-tells. Driven by visualQa." },
+        "designFidelity":    { "$ref": "#/definitions/scored", "description": "/20 — one dominant + one accent, sandwich, tokenized type/color, consistent motif, theme match." },
+        "informationDesign": { "$ref": "#/definitions/scored", "description": "/20 — every slide has a visual, native charts, right chart choice + labels, right density." },
+        "contentIntegrity":  { "$ref": "#/definitions/scored", "description": "/10 — honest claims, assumptions/definitions present, no unsupported assertions, tone fit." }
+      }
+    },
+    "visualQa": {
+      "type": "object",
+      "description": "Result of the mandatory render-and-look QA loop.",
+      "additionalProperties": false,
+      "required": ["ran", "slides"],
+      "properties": {
+        "ran": { "type": "boolean", "description": "Were per-slide images actually rendered and inspected?" },
+        "slides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["slide", "issues"],
+            "properties": {
+              "slide": { "type": "integer", "minimum": 1 },
+              "issues": {
+                "type": "array",
+                "description": "Empty array = clean slide.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["type", "detail", "severity"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["overflow", "overlap", "margin", "contrast", "alignment", "ai-tell", "placeholder", "chart", "other"]
+                    },
+                    "detail": { "type": "string" },
+                    "severity": { "type": "string", "enum": ["blocker", "major", "minor"] },
+                    "resolved": { "type": "boolean", "default": false }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "description": "Prioritized, concrete improvements (most impactful first).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dimension", "issue", "fix"],
+        "properties": {
+          "dimension": { "type": "string", "enum": ["messageLogic", "visualIntegrity", "designFidelity", "informationDesign", "contentIntegrity"] },
+          "slide": { "type": "integer", "minimum": 1 },
+          "issue": { "type": "string" },
+          "fix": { "type": "string", "description": "Specific, actionable change (e.g. 'split slide 5 into two', not 'improve clarity')." }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "description": "One-paragraph summary: ship / fix-then-ship / reject, and why."
+    }
+  },
+  "definitions": {
+    "scored": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "max", "notes"],
+      "properties": {
+        "score": { "type": "integer", "minimum": 0 },
+        "max":   { "type": "integer", "minimum": 0 },
+        "notes": { "type": "string", "description": "Evidence for the score (cite slide numbers)." }
+      }
+    }
+  }
+}

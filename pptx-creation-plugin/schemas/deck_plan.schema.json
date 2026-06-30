@@ -1,0 +1,232 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pptx-creation/schemas/deck_plan.schema.json",
+  "title": "Deck plan",
+  "description": "The engine's input: an ordered list of slides, each naming a pattern from references/patterns/catalog.md plus that pattern's content slots. deck-strategy produces this; bin/generate.js consumes it. Accepts either a bare slides array or an object with deck-level meta.",
+  "oneOf": [
+    { "$ref": "#/definitions/slideArray" },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slides"],
+      "properties": {
+        "meta": { "$ref": "#/definitions/meta" },
+        "slides": { "$ref": "#/definitions/slideArray" }
+      }
+    }
+  ],
+  "definitions": {
+    "meta": {
+      "type": "object",
+      "description": "Deck-level metadata and chrome.",
+      "additionalProperties": false,
+      "properties": {
+        "title":  { "type": "string", "description": "PPTX title metadata." },
+        "author": { "type": "string", "description": "PPTX author metadata." },
+        "footerLabel": {
+          "type": "string",
+          "description": "Bottom-left brand label on body slides. Overrides theme.brand.footerLabel. Empty string = no label."
+        },
+        "showPageNumbers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the page number at bottom-right of body slides."
+        }
+      }
+    },
+    "slideArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/slide" }
+    },
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pattern", "content"],
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Pattern id. Must exist in the engine registry.",
+          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta"]
+        },
+        "content": {
+          "type": "object",
+          "description": "Pattern-specific slots (see catalog.md). All patterns accept an optional 'notes' (speaker notes). Validated per-pattern below.",
+          "properties": {
+            "notes": { "type": "string" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "pattern": { "const": "cover" } } },
+          "then": { "properties": { "content": {
+            "required": ["titleLines"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "titleLines": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 2 },
+              "subtitle": { "type": "string" },
+              "footer": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "message" } } },
+          "then": { "properties": { "content": {
+            "required": ["messageLines"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "messageLines": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 2 },
+              "statBig": { "type": "string" },
+              "statCaption": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "two-column" } } },
+          "then": { "properties": { "content": {
+            "required": ["title", "items"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "lead": { "type": "string" },
+              "items": {
+                "type": "array", "minItems": 1, "maxItems": 4,
+                "items": {
+                  "type": "object",
+                  "required": ["n", "head", "body"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "n": { "type": ["integer", "string"] },
+                    "head": { "type": "string" },
+                    "body": { "type": "string" }
+                  }
+                }
+              },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "comparison" } } },
+          "then": { "properties": { "content": {
+            "required": ["title", "left", "right"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "left": { "$ref": "#/definitions/comparisonColumn" },
+              "right": { "$ref": "#/definitions/comparisonColumn" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "chart" } } },
+          "then": { "properties": { "content": {
+            "required": ["title", "series", "takeawayHead", "takeaway"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "series": {
+                "type": "object",
+                "required": ["name", "labels", "values"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": { "type": "string" },
+                  "labels": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+                  "values": { "type": "array", "items": { "type": "number" }, "minItems": 2 }
+                }
+              },
+              "takeawayHead": { "type": "string" },
+              "takeaway": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "stat-grid" } } },
+          "then": { "properties": { "content": {
+            "required": ["title", "stats"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "stats": {
+                "type": "array", "minItems": 2, "maxItems": 4,
+                "items": {
+                  "type": "object",
+                  "required": ["value", "label"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "value": { "type": ["string", "number"] },
+                    "label": { "type": "string" },
+                    "sub": { "type": "string" }
+                  }
+                }
+              },
+              "emphasizeIndex": { "type": "integer", "minimum": 0 },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "table" } } },
+          "then": { "properties": { "content": {
+            "required": ["title", "columns", "rows"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "columns": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 6 },
+              "rows": {
+                "type": "array", "minItems": 1,
+                "items": { "type": "array", "items": { "type": ["string", "number"] } }
+              },
+              "colAlign": { "type": "array", "items": { "type": "string", "enum": ["left", "right", "center"] } },
+              "colW": { "type": "array", "items": { "type": "number" } },
+              "note": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "section" } } },
+          "then": { "properties": { "content": {
+            "required": ["title"],
+            "properties": {
+              "index": { "type": ["string", "number"] },
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "subtitle": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "cta" } } },
+          "then": { "properties": { "content": {
+            "required": ["titleLines", "offerHead", "offerBody"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "titleLines": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 2 },
+              "offerHead": { "type": "string" },
+              "offerBody": { "type": "string" },
+              "contact": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        }
+      ]
+    },
+    "comparisonColumn": {
+      "type": "object",
+      "required": ["label", "role", "points"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "role": { "type": "string" },
+        "points": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 }
+      }
+    }
+  }
+}

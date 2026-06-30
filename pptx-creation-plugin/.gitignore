@@ -1,0 +1,12 @@
+# dependencies
+node_modules/
+
+# QA render artifacts (regenerate with bin/qa.sh) — keep the .pptx, drop the renders
+**/qa/
+*.pdf
+**/slide-*.jpg
+**/slide-*.jpeg
+**/slide-*.png
+
+# OS / editor noise
+.DS_Store

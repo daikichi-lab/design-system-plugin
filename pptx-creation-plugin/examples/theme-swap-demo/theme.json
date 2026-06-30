@@ -1,0 +1,47 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "name": "warm-corporate",
+  "$comment": "Example PROJECT theme (navy + amber). Demonstrates that the SAME deck plan + patterns render under a different brand. Not a plugin-shipped theme — the plugin ships only themes/_default-neutral.",
+  "canvas": { "w": 13.333, "h": 7.5, "margin": 0.7 },
+  "font": { "family": "Meiryo" },
+  "colors": {
+    "bg": "FFFFFF",
+    "ink": "1C2433",
+    "muted": "5A6577",
+    "faint": "95A0AE",
+    "surface": "F4F6F8",
+    "surfaceAccent": "FBEEE2",
+    "line": "DCE2E8",
+    "dark": "16233A",
+    "darkAlt": "22304A",
+    "onDark": "FFFFFF",
+    "onDarkMuted": "A9B4C2",
+    "accent": "B45309",
+    "accentDeep": "7C2D12",
+    "accentSoft": "D98E4F",
+    "onAccentMuted": "FCEBD9"
+  },
+  "sizes": {
+    "cover": 40,
+    "coverSub": 17,
+    "title": 28,
+    "kicker": 12.5,
+    "message": 32,
+    "stat": 62,
+    "head": 18,
+    "body": 15,
+    "small": 13,
+    "cap": 11,
+    "num": 17,
+    "compareLabel": 22,
+    "takeawayHead": 19,
+    "offerHead": 21,
+    "footer": 12.5,
+    "sectionTitle": 36,
+    "sectionIndex": 150,
+    "statCard": 40
+  },
+  "brand": {
+    "footerLabel": "ACME Corp."
+  }
+}

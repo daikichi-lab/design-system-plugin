@@ -1,0 +1,15 @@
+# ============================================================
+#  Placeholder — NO Python engine is used yet.
+#
+#  The active, verified engine is pptxgenjs (Node): bin/generate.js.
+#  Per the build plan, we deliberately ship ONE engine first and prove it
+#  never breaks across decks before adding a second track.
+#
+#  A python-pptx track would only be added if/when numeric-heavy decks truly
+#  need it. Until then these stay commented out so `pip install -r` is a no-op
+#  in spirit (nothing required).
+# ============================================================
+
+# python-pptx>=0.6.23   # future numeric/python-pptx engine track
+# Pillow>=10.0.0        # optional: logo colour extraction for theme-init
+                        # (sharp in Node works too — no Python dependency required)

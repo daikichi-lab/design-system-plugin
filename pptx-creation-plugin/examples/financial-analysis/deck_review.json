@@ -1,0 +1,53 @@
+{
+  "deck": "examples/financial-analysis/out/deck.pptx",
+  "totalScore": 95,
+  "band": "external",
+  "dimensions": {
+    "messageLogic": {
+      "score": 23, "max": 25,
+      "notes": "Conclusion-titles throughout (s2 増収増益・下期は原価対応が論点, s6 利益の源泉は産業機械, s5 直近2四半期で増収が加速, s9 利益を守る3つの打ち手). Clean review arc: summary → ハイライト章 → KPI/trend/segment evidence → 論点 → 打ち手章 → 意思決定。1 slide/1 message holds."
+    },
+    "visualIntegrity": {
+      "score": 25, "max": 25,
+      "notes": "Visual QA ran on all 10 slides after the chart-precision fix: no overflow/overlap, uniform 0.7\" margins, aligned KPI cards and table, strong contrast (white-on-teal table header and CTA panel). No AI-tells — section dividers use a faint watermark number, not a stripe; the table uses functional hairlines only."
+    },
+    "designFidelity": {
+      "score": 19, "max": 20,
+      "notes": "One dominant neutral + single teal accent; sandwich plus two dark `section` dividers; fully tokenized; consistent motif (off-canvas oval on cover/cta, watermark index on sections). -1: the emphasized stat-grid card (営業利益率) reads only subtly different from its neighbours."
+    },
+    "informationDesign": {
+      "score": 19, "max": 20,
+      "notes": "Every slide carries a visual: KPI grid, native column chart (labels now match the decimals — 21.8/22.6/23.1/25.1), native editable segment table with a units/assumptions note, comparison cards. Right density throughout. -1: the table 合計 row is not visually distinguished from the data rows."
+    },
+    "contentIntegrity": {
+      "score": 9, "max": 10,
+      "notes": "Strong for a financial deck: figures are labelled 速報・社内管理ベース; the table note states 単位（百万円）, セグメント間配賦後, and the rounding caveat; growth rates carry the prior-period basis; the chart 前年同四半期比 is flagged as 速報. -1: numbers are illustrative sample values (acceptable for an example deck; a real deck would cite the source system)."
+    }
+  },
+  "visualQa": {
+    "ran": true,
+    "slides": [
+      { "slide": 1, "issues": [] },
+      { "slide": 2, "issues": [] },
+      { "slide": 3, "issues": [] },
+      { "slide": 4, "issues": [] },
+      { "slide": 5, "issues": [
+        { "type": "chart", "detail": "First render rounded decimal values with #,##0 so 21.8 and 23.1 both read as 22/23 — two different-height bars shared a label. Engine now auto-keeps one decimal for non-integer data.", "severity": "major", "resolved": true }
+      ] },
+      { "slide": 6, "issues": [] },
+      { "slide": 7, "issues": [] },
+      { "slide": 8, "issues": [] },
+      { "slide": 9, "issues": [] },
+      { "slide": 10, "issues": [] }
+    ]
+  },
+  "findings": [
+    {
+      "dimension": "informationDesign",
+      "slide": 6,
+      "issue": "The 合計 row in the segment table is not visually distinguished from data rows.",
+      "fix": "Optional: bold the 合計 row or give it a faint surfaceAccent fill (a future `table` option) so the total reads as a summary line."
+    }
+  ],
+  "verdict": "Ship — cleared for external/board delivery (95/100). The QA loop caught one real data-integrity break (decimal chart labels) which was fixed at the engine level; re-render is clean across all 10 slides. Honest financial framing (units, basis, estimates labelled) meets house bar §4. The single remaining item (emphasize the total row) is optional polish."
+}
