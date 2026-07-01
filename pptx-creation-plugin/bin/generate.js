@@ -97,6 +97,26 @@ function loadTheme(themePath) {
 /* fresh shadow object each call (pptxgenjs mutates option objects) */
 const cardShadow = (T) => ({ type: "outer", color: T.c.ink, blur: 11, offset: 4, angle: 90, opacity: 0.11 });
 
+/* Optional decoration layer the deck_plan can place on ANY slide (not just the
+ * cover): a code-drawn SVG/PNG motif (`bgMotif`) and/or a faint ground pattern
+ * (`bgPattern`), supplied per project like the cover `bg` (M-7 code-drawn, M-8
+ * figure-only — text/numbers/charts stay native). Drawn BEHIND all content; the
+ * recipe MUST keep ink out of the text/chart zones, and image-lint's scrim check
+ * (per-pattern textRegions) enforces legibility. Both default empty => the slide
+ * is byte-for-byte identical to before (no-regression). */
+function bgLayer(s, T, d) {
+  if (!d) return;
+  if (d.bgPattern) s.addImage({ path: d.bgPattern, x: 0, y: 0, w: T.W, h: T.H });
+  if (d.bgMotif) s.addImage({ path: d.bgMotif, x: 0, y: 0, w: T.W, h: T.H });
+}
+
+/* Optional supporting ICON (transparent PNG, code-drawn SVG rasterized 2x) — a
+ * bystander beside a stat/number, never a decoration of the number itself (M-8).
+ * Placed in a fixed box the caller passes; empty => nothing drawn. */
+function iconSlot(s, icon, x, y, wh) {
+  if (icon) s.addImage({ path: icon, x, y, w: wh, h: wh });
+}
+
 /* A prose field may be a plain string (pptx auto-wraps it) OR an array of
  * pre-computed lines (baked kinsoku/balance breaks from bin/layout-html/bake.js).
  * richText turns either into what pptxgenjs addText wants — baked lines get
@@ -179,6 +199,7 @@ function slideCover(pres, d, T) {
 function slideMessage(pres, d, T, ctx) {
   const s = pres.addSlide();
   s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
   kicker(s, T, d.kicker, T.m);
   // centered single statement (display leading, tight tracking)
   const msg = d.messageLines.map((t, i, a) => ({ text: t, options: { breakLine: i < a.length - 1 } }));
@@ -198,6 +219,7 @@ function slideMessage(pres, d, T, ctx) {
 function slideTwoColumn(pres, d, T, ctx) {
   const s = pres.addSlide();
   s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
   kicker(s, T, d.kicker, T.m);
   title(s, T, d.title, 1.15, { w: 7.0 });
   // left: lead paragraph (body face, airy leading)
@@ -222,6 +244,7 @@ function slideTwoColumn(pres, d, T, ctx) {
 function slideComparison(pres, d, T, ctx) {
   const s = pres.addSlide();
   s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
   kicker(s, T, d.kicker, T.m);
   title(s, T, d.title, 1.15);
   const top = 2.5, h = 3.95, gap = 0.5;
@@ -251,6 +274,7 @@ function slideComparison(pres, d, T, ctx) {
 function slideChart(pres, d, T, ctx) {
   const s = pres.addSlide();
   s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
   kicker(s, T, d.kicker, T.m);
   title(s, T, d.title, 1.15, { w: 8.5 });
   // Data-label precision must not misrepresent the values: if any value has a
@@ -289,6 +313,7 @@ function slideChart(pres, d, T, ctx) {
 function slideCTA(pres, d, T) {
   const s = pres.addSlide();
   s.background = { color: T.c.dark };
+  bgLayer(s, T, d);
   s.addShape("ellipse", { x: -2.6, y: -2.6, w: 6.4, h: 6.4,
     fill: { color: T.c.darkAlt }, line: { type: "none" } });
   kicker(s, T, d.kicker, 1.5, { onDark: true });
@@ -310,6 +335,7 @@ function slideCTA(pres, d, T) {
 function slideSection(pres, d, T) {
   const s = pres.addSlide();
   s.background = { color: T.c.dark };
+  bgLayer(s, T, d);
   // motif: large faint index number as a watermark (depth via a soft shape, not a stripe)
   if (d.index != null) s.addText(String(d.index), { x: 8.4, y: 1.2, w: T.W - T.m - 8.4, h: 5.1, margin: 0,
     fontFace: T.font.heading, fontSize: T.s.sectionIndex || 150, bold: true, color: T.c.darkAlt, align: "right", valign: "middle" });
@@ -324,6 +350,7 @@ function slideSection(pres, d, T) {
 function slideStatGrid(pres, d, T, ctx) {
   const s = pres.addSlide();
   s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
   kicker(s, T, d.kicker, T.m);
   title(s, T, d.title, 1.15);
   const stats = d.stats || [];
@@ -336,6 +363,9 @@ function slideStatGrid(pres, d, T, ctx) {
     const emph = d.emphasizeIndex === i;
     card(s, T, x, top, w, h, { fill: emph ? T.c.surfaceA : T.c.surface });
     const pad = 0.4;
+    // supporting icon (optional) — top-right corner, ABOVE the value band (value
+    // glyphs start ~top+0.8) so a wide value like 40.7% is never crowded
+    iconSlot(s, st.icon, x + w - pad - 0.5, top + 0.2, 0.5);
     s.addText(String(st.value), { x: x + pad, y: top + 0.5, w: w - 2 * pad, h: 1.2, margin: 0,
       fontFace: T.font.heading, fontSize: T.s.statCard || 40, bold: true, color: emph ? T.c.accentDp : T.c.accent,
       align: "left", valign: "middle" });
@@ -352,6 +382,7 @@ function slideStatGrid(pres, d, T, ctx) {
 function slideTable(pres, d, T, ctx) {
   const s = pres.addSlide();
   s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
   kicker(s, T, d.kicker, T.m);
   title(s, T, d.title, 1.15);
 

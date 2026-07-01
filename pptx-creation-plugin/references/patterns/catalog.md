@@ -42,6 +42,26 @@ Schema: `schemas/deck_plan.schema.json`.
 pattern (`cta`); keep the body light. Don't put two dark slides adjacent in
 the body.
 
+**Optional decoration slots (all patterns; empty by default = no change).** Any
+slide may carry a code-drawn SVG/PNG (M-7 all code-drawn, M-8 figure-only —
+text/numbers/charts stay native), supplied per project like the cover `bg`
+(paths in the deck plan point at the project's `assets/`; the plugin holds only
+the slot). The engine draws them behind the content:
+
+- `bg` — full-bleed opaque background (cover's hero atmosphere). image-lint
+  checks WCAG **scrim contrast** under the text.
+- `bgMotif` / `bgPattern` — a decoration motif / faint ground on **any** pattern
+  (section, CTA, data pages, not just the cover). Keep the ink in corners/bands;
+  image-lint's **motif-intrude** check fails a motif that covers a text zone.
+- `stats[].icon` (stat-grid) and `items[].icon` (two-column) — a supporting icon
+  (transparent PNG) beside the number, a bystander that never decorates it.
+  image-lint's **icon-set** check fails icons that don't share one optical size
+  and stroke weight.
+
+A slide with none of these renders byte-for-byte as before (verified: empty-slot
+example slide XML is identical). Legibility is the priority — a motif never earns
+its place by crowding the words.
+
 ---
 
 ## Pattern: `cover`

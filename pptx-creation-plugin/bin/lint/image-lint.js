@@ -10,6 +10,10 @@
  *    (3) aspect         — image aspect ~= placement aspect (no stretch)
  *    (4) scrim edge     — the scrim must feather, not hard-step, at the text edge
  *    (5) weight         — per-image + whole-deck embedded image size caps
+ *    (6) motif intrude  — a decoration motif (bgMotif/bgPattern) must stay OUT of
+ *                         the text zone (corners/bands only), not crowd the words
+ *    (7) icon set       — icons meant to look uniform (same slide) must share an
+ *                         optical size and a stroke weight (ink-coverage spread)
  *
  *  Needs playwright-core (reused Chromium) for pixel sampling; parses PNG/JPEG
  *  headers itself for dimensions. Exit 1 on any ERROR (a CI gate). M-7/M-8 hold:
@@ -28,6 +32,21 @@ const PX_PER_IN = 96;
 // thresholds
 const WEIGHT_ERR = 800 * 1024, WEIGHT_WARN = 400 * 1024, DECK_ERR = 6 * 1024 * 1024;
 const CONTRAST_ERR = 3.0, CONTRAST_WARN = 4.5;
+// decoration motif must stay OUT of the text zone (fraction of the text region its
+// opaque ink may cover before it hurts legibility)
+const INTRUDE_ERR = 0.18, INTRUDE_WARN = 0.08;
+// icon-set consistency: icons meant to look uniform (same slide) must share an
+// optical size and a stroke weight. ICON_MIN_PX = 0.55in placement @2x, 75% floor.
+const ICON_MIN_PX = 105 * 0.75, ICON_DIM_RATIO = 1.3, ICON_INK_SPREAD = 0.14;
+
+// The icons on one slide that form a visual SET (should match each other).
+function slideIcons(slide) {
+  const c = slide.content || {};
+  const out = [];
+  if (slide.pattern === "stat-grid") (c.stats || []).forEach((st, i) => { if (st && st.icon) out.push({ path: st.icon, where: `stats[${i}]` }); });
+  if (slide.pattern === "two-column") (c.items || []).forEach((it, i) => { if (it && it.icon) out.push({ path: it.icon, where: `items[${i}]` }); });
+  return out;
+}
 
 /* ---- image dimensions from the file header (no full decode) ---- */
 function imageDims(buf) {
@@ -75,8 +94,8 @@ async function sampleRegion(buf, fmt, region) {
       const d = ctx.getImageData(rx, ry, rw, rh).data;
       const lin = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
       const L = (i) => 0.2126 * lin(d[i] / 255) + 0.7152 * lin(d[i + 1] / 255) + 0.0722 * lin(d[i + 2] / 255);
-      let maxL = 0, sum = 0, n = 0;
-      for (let i = 0; i < d.length; i += 4) { const l = L(i); maxL = Math.max(maxL, l); sum += l; n++; }
+      let maxL = 0, sum = 0, n = 0, opaque = 0;
+      for (let i = 0; i < d.length; i += 4) { const l = L(i); maxL = Math.max(maxL, l); sum += l; n++; if (d[i + 3] > 127) opaque++; }
       // horizontal luminance profile (column means) for the edge-softness check
       const cols = 24, prof = [];
       for (let c = 0; c < cols; c++) {
@@ -84,7 +103,7 @@ async function sampleRegion(buf, fmt, region) {
         for (let x = x0; x < x1; x++) for (let y = 0; y < rh; y++) { const i = (y * rw + x) * 4; s += L(i); m++; }
         prof.push(m ? s / m : 0);
       }
-      return { maxL, avgL: sum / n, prof };
+      return { maxL, avgL: sum / n, inkCov: n ? opaque / n : 0, prof };
     }, { src: dataUrl, region });
   } finally { await page.close(); }
 }
@@ -125,33 +144,61 @@ async function lintPlan(planPath, themePath) {
   const W = (slide, check, msg) => findings.push({ level: "WARN", slide, check, msg });
 
   for (let i = 0; i < slides.length; i++) {
-    const bg = slides[i].content && slides[i].content.bg;
-    if (!bg) continue;
-    images++;
-    const p = path.isAbsolute(bg) ? bg : path.join(dir, bg);
-    if (!fs.existsSync(p)) { E(i + 1, "MISSING", `bg image not found: ${bg}`); continue; }
-    const buf = fs.readFileSync(p);
-    deckBytes += buf.length;
-    // (5) weight
-    if (buf.length > WEIGHT_ERR) E(i + 1, "WEIGHT", `bg ${(buf.length / 1024 | 0)}KB > ${WEIGHT_ERR / 1024}KB (use JPEG / drop grain / reuse)`);
-    else if (buf.length > WEIGHT_WARN) W(i + 1, "WEIGHT", `bg ${(buf.length / 1024 | 0)}KB > ${WEIGHT_WARN / 1024}KB`);
-    const dims = imageDims(buf);
-    if (!dims) { E(i + 1, "FORMAT", "cannot read image dimensions (not PNG/JPEG?)"); continue; }
-    // (2) resolution
-    if (dims.w < needPxW * 0.75 || dims.h < needPxH * 0.75) E(i + 1, "RESOLUTION", `bg ${dims.w}x${dims.h} < ~2x placement (${Math.round(needPxW)}x${Math.round(needPxH)}) — upscale blur`);
-    else if (dims.w < needPxW || dims.h < needPxH) W(i + 1, "RESOLUTION", `bg ${dims.w}x${dims.h} below 2x placement (${Math.round(needPxW)}x${Math.round(needPxH)})`);
-    // (3) aspect
-    const imgAspect = dims.w / dims.h, dev = Math.abs(imgAspect - placeAspect) / placeAspect;
-    if (dev > 0.15) E(i + 1, "ASPECT", `bg aspect ${imgAspect.toFixed(3)} vs slide ${placeAspect.toFixed(3)} (${(dev * 100).toFixed(0)}% stretch)`);
-    else if (dev > 0.05) W(i + 1, "ASPECT", `bg aspect ${imgAspect.toFixed(3)} vs slide ${placeAspect.toFixed(3)} (${(dev * 100).toFixed(0)}% off)`);
-    // (1) scrim/contrast + (4) scrim edge — sample each text region
-    for (const tr of textRegions(slides[i], T)) {
-      const s = await sampleRegion(buf, dims.fmt, tr.region);
-      const cr = contrast(lumHex(tr.color), s.maxL); // worst-case: brightest bg pixel under the text
-      if (cr < CONTRAST_ERR) E(i + 1, "SCRIM", `${tr.name}: text/bg contrast ${cr.toFixed(2)} < ${CONTRAST_ERR} (scrim too weak — text illegible over the background)`);
-      else if (cr < CONTRAST_WARN) W(i + 1, "SCRIM", `${tr.name}: text/bg contrast ${cr.toFixed(2)} < ${CONTRAST_WARN}`);
-      const step = maxStep(s.prof);
-      if (step > 0.55) W(i + 1, "SCRIM-EDGE", `${tr.name}: scrim has a hard edge (max step ${(step * 100).toFixed(0)}% of range — feather it)`);
+    const c = slides[i].content || {};
+    // ---- full-bleed layers: opaque bg (WCAG scrim) + decoration motif/pattern
+    //      (must NOT intrude into the text zone) — both share weight/res/aspect ----
+    const layers = [];
+    if (c.bg) layers.push({ path: c.bg, kind: "bg", name: "bg" });
+    if (c.bgPattern) layers.push({ path: c.bgPattern, kind: "decor", name: "bgPattern" });
+    if (c.bgMotif) layers.push({ path: c.bgMotif, kind: "decor", name: "bgMotif" });
+    for (const layer of layers) {
+      images++;
+      const p = path.isAbsolute(layer.path) ? layer.path : path.join(dir, layer.path);
+      if (!fs.existsSync(p)) { E(i + 1, "MISSING", `${layer.name} image not found: ${layer.path}`); continue; }
+      const buf = fs.readFileSync(p);
+      deckBytes += buf.length;
+      if (buf.length > WEIGHT_ERR) E(i + 1, "WEIGHT", `${layer.name} ${(buf.length / 1024 | 0)}KB > ${WEIGHT_ERR / 1024}KB (use JPEG / drop grain / reuse)`);
+      else if (buf.length > WEIGHT_WARN) W(i + 1, "WEIGHT", `${layer.name} ${(buf.length / 1024 | 0)}KB > ${WEIGHT_WARN / 1024}KB`);
+      const dims = imageDims(buf);
+      if (!dims) { E(i + 1, "FORMAT", `${layer.name}: cannot read image dimensions (not PNG/JPEG?)`); continue; }
+      if (dims.w < needPxW * 0.75 || dims.h < needPxH * 0.75) E(i + 1, "RESOLUTION", `${layer.name} ${dims.w}x${dims.h} < ~2x placement (${Math.round(needPxW)}x${Math.round(needPxH)}) — upscale blur`);
+      else if (dims.w < needPxW || dims.h < needPxH) W(i + 1, "RESOLUTION", `${layer.name} ${dims.w}x${dims.h} below 2x placement (${Math.round(needPxW)}x${Math.round(needPxH)})`);
+      const imgAspect = dims.w / dims.h, dev = Math.abs(imgAspect - placeAspect) / placeAspect;
+      if (dev > 0.15) E(i + 1, "ASPECT", `${layer.name} aspect ${imgAspect.toFixed(3)} vs slide ${placeAspect.toFixed(3)} (${(dev * 100).toFixed(0)}% stretch)`);
+      else if (dev > 0.05) W(i + 1, "ASPECT", `${layer.name} aspect ${imgAspect.toFixed(3)} vs slide ${placeAspect.toFixed(3)} (${(dev * 100).toFixed(0)}% off)`);
+      for (const tr of textRegions(slides[i], T)) {
+        const smp = await sampleRegion(buf, dims.fmt, tr.region);
+        if (layer.kind === "bg") { // opaque bg: WCAG scrim contrast (worst-case brightest pixel) + edge
+          const cr = contrast(lumHex(tr.color), smp.maxL);
+          if (cr < CONTRAST_ERR) E(i + 1, "SCRIM", `${tr.name}: text/bg contrast ${cr.toFixed(2)} < ${CONTRAST_ERR} (scrim too weak — text illegible over the background)`);
+          else if (cr < CONTRAST_WARN) W(i + 1, "SCRIM", `${tr.name}: text/bg contrast ${cr.toFixed(2)} < ${CONTRAST_WARN}`);
+          const step = maxStep(smp.prof);
+          if (step > 0.55) W(i + 1, "SCRIM-EDGE", `${tr.name}: scrim has a hard edge (max step ${(step * 100).toFixed(0)}% of range — feather it)`);
+        } else { // decoration: keep it out of the text zone (corners/bands only)
+          if (smp.inkCov > INTRUDE_ERR) E(i + 1, "MOTIF-INTRUDE", `${layer.name} covers ${(smp.inkCov * 100) | 0}% of the ${tr.name} text zone (> ${(INTRUDE_ERR * 100) | 0}%) — keep motifs in corners/bands, clear of text`);
+          else if (smp.inkCov > INTRUDE_WARN) W(i + 1, "MOTIF-INTRUDE", `${layer.name} covers ${(smp.inkCov * 100) | 0}% of the ${tr.name} text zone (> ${(INTRUDE_WARN * 100) | 0}%) — verify it doesn't crowd the text`);
+        }
+      }
+    }
+    // ---- icon set: optical-size + stroke/weight consistency (the gap the pop
+    //      generality test surfaced — no lint judged icon uniformity) ----
+    const iconStats = [];
+    for (const ic of slideIcons(slides[i])) {
+      const p = path.isAbsolute(ic.path) ? ic.path : path.join(dir, ic.path);
+      if (!fs.existsSync(p)) { E(i + 1, "MISSING", `icon not found: ${ic.path}`); continue; }
+      const buf = fs.readFileSync(p);
+      deckBytes += buf.length; images++;
+      const dims = imageDims(buf);
+      if (!dims) { E(i + 1, "FORMAT", `icon ${ic.where}: cannot read dimensions`); continue; }
+      if (Math.min(dims.w, dims.h) < ICON_MIN_PX) W(i + 1, "ICON-RES", `icon ${ic.where} ${dims.w}x${dims.h} below ~2x placement (${Math.round(ICON_MIN_PX / 0.75)}px) — upscale blur`);
+      const smp = await sampleRegion(buf, dims.fmt, { x: 0, y: 0, w: 1, h: 1 }); // whole-icon ink (alpha) coverage ~= weight
+      iconStats.push({ where: ic.where, dim: Math.max(dims.w, dims.h), ink: smp.inkCov });
+    }
+    if (iconStats.length >= 2) {
+      const ds = iconStats.map((s) => s.dim), inks = iconStats.map((s) => s.ink);
+      const dimRatio = Math.max(...ds) / Math.min(...ds), inkSpread = Math.max(...inks) - Math.min(...inks);
+      if (dimRatio > ICON_DIM_RATIO) E(i + 1, "ICON-SET", `icon optical sizes vary ${dimRatio.toFixed(2)}x (${Math.min(...ds)}..${Math.max(...ds)}px) — render the set at one size`);
+      if (inkSpread > ICON_INK_SPREAD) E(i + 1, "ICON-SET", `icon stroke/weight varies (ink coverage ${(Math.min(...inks) * 100) | 0}%..${(Math.max(...inks) * 100) | 0}%, spread ${(inkSpread * 100) | 0}% > ${(ICON_INK_SPREAD * 100) | 0}%) — use one stroke width across the set`);
     }
   }
   if (deckBytes > DECK_ERR) E(null, "WEIGHT", `total embedded images ${(deckBytes / 1024 / 1024).toFixed(1)}MB > ${DECK_ERR / 1024 / 1024}MB`);
@@ -177,7 +224,7 @@ async function main() {
   const res = await lintPlan(a.plan, a.theme);
   if (a.json) { console.log(JSON.stringify(res)); return res.pass ? 0 : 1; }
   console.log(`image-lint: ${res.plan}\n`);
-  console.log(`bg images: ${res.images}  |  total embedded: ${res.deckKB}KB`);
+  console.log(`images (bg/motif/icon): ${res.images}  |  total embedded: ${res.deckKB}KB`);
   const errs = res.findings.filter((f) => f.level === "ERROR");
   const warns = res.findings.filter((f) => f.level === "WARN");
   console.log(`\nERRORS (${errs.length})`); errs.forEach((f) => console.log(`  [${f.slide == null ? "deck" : "slide " + f.slide}] ${f.check}: ${f.msg}`)); if (!errs.length) console.log("  none");
