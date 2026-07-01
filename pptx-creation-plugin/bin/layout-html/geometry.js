@@ -76,6 +76,21 @@ function heightBoxes(slide, T) {
   const c = slide.content || {};
   const s = T.s, lead = T.lead;
   const out = [];
+  // TITLE height box: an enlarged heading that wraps to 2+ lines must not run
+  // past where the slide body starts (topY = title y, bottomY = first content
+  // below). Geometry mirrors the title() calls in generate.js; sizes track the
+  // theme, so a bigger heading (ad-hoc) is caught before it collides.
+  const sT = s.sectionTitle || s.title;
+  const TITLE_BOX = {
+    "two-column": { topY: 1.15, bottomY: 2.55, sizePt: s.title },
+    "comparison": { topY: 1.15, bottomY: 2.5, sizePt: s.title },
+    "chart":      { topY: 1.15, bottomY: 2.2, sizePt: s.title },
+    "section":    { topY: 3.5, bottomY: 4.85, sizePt: sT },
+    "stat-grid":  { topY: 1.15, bottomY: 2.7, sizePt: s.title },
+    "table":      { topY: 1.15, bottomY: 2.25, sizePt: s.title },
+  };
+  const tb = TITLE_BOX[slide.pattern];
+  if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
   switch (slide.pattern) {
     case "chart":
       // takeaway card: card(cx, 2.4, cw, 3.85) -> bottom 6.25; body box y=3.78.
@@ -125,6 +140,17 @@ function wrappingFields(slide, T) {
       out.push({ path, lines: val, baked: true, widthIn, sizePt, role, leading, bullet });
     }
   };
+  // The auto-wrapping heading string (`title`) per pattern that uses one — its
+  // box width matches the title() call in generate.js. cover/cta use author-
+  // controlled `titleLines` ARRAYS (already broken by hand), so they are not
+  // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
+  const sectionTitleSize = s.sectionTitle || s.title;
+  const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m };
+  if (TITLE_W[slide.pattern] != null) {
+    const size = slide.pattern === "section" ? sectionTitleSize : s.title;
+    push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
+  }
   switch (slide.pattern) {
     case "message":
       push("statCaption", c.statCaption, W - 5.2, s.small, "caption", lead.caption);

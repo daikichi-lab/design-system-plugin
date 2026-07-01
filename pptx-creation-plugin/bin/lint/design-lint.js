@@ -280,8 +280,8 @@ function checkOverflow(slides, T, F) {
       if (v.over) {
         const pct = Math.round(v.pct * 100);
         F.error(idx, "OVERFLOW",
-          `${box.id} (${box.path}): ${nLines} lines = ${pct}% of card inner height ` +
-          `(over the ${Math.round(v.safety * 100)}% fill limit) — text overflows the card; shorten it or split the slide`);
+          `${box.id} (${box.path}): ${nLines} lines = ${pct}% of its box height ` +
+          `(over the ${Math.round(v.safety * 100)}% fill limit) — text overflows its box; shorten it or split the slide`);
       }
     }
   });

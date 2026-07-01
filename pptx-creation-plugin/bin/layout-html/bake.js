@@ -68,16 +68,23 @@ async function bakePlan(planPath, themePath, lexicon = []) {
       const cardMultiline = cardFieldPaths.has(f.path) && auto.count > 1;
       if (!orphan && !rawSplits && !cardMultiline) continue;
 
-      // Priority (1) no orphan > (2) no compound split > (3) balance.
-      // budoux-balance satisfies 2 & 3; if it re-introduces an orphan, drop the
-      // no-split constraint to honor priority 1 (and log the sacrifice).
-      const budBal = await M("balance", true);
       let lines, mode;
-      if (budBal.count > 1 && !budBal.hasOrphan) { lines = budBal.lines; mode = "budoux-balance"; }
-      else {
-        const bal = await M("balance", false);
-        if (bal.count > 1 && !bal.hasOrphan) { lines = bal.lines; mode = "balance(split allowed to avoid orphan)"; }
-        else { lines = auto.lines; mode = "auto(could not clear orphan)"; }
+      if (!orphan && !rawSplits) {
+        // Pure height-visibility bake (a card/title that wraps cleanly): keep the
+        // NATURAL wrap verbatim — we only make the breaks explicit so the height
+        // gate can count lines. No restyle (minimal intervention; render-identical).
+        lines = auto.lines; mode = "card-fit(natural, no restyle)";
+      } else {
+        // Defect present. Priority (1) no orphan > (2) no compound split > (3)
+        // balance. budoux-balance satisfies 2 & 3; if it re-introduces an orphan,
+        // drop the no-split constraint to honor priority 1 (and log the sacrifice).
+        const budBal = await M("balance", true);
+        if (budBal.count > 1 && !budBal.hasOrphan) { lines = budBal.lines; mode = "budoux-balance"; }
+        else {
+          const bal = await M("balance", false);
+          if (bal.count > 1 && !bal.hasOrphan) { lines = bal.lines; mode = "balance(split allowed to avoid orphan)"; }
+          else { lines = auto.lines; mode = "auto(could not clear orphan)"; }
+        }
       }
       const outSplits = countSplits(lines.map((l) => [...l].length), lines.join(""), lexicon);
       setByPath(sl.content, f.path, lines);

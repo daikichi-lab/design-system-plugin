@@ -98,10 +98,16 @@ predicts Japanese line breaks and flags 泣き別れ/orphans; §5.5). Clear thei
 first — a design-lint ERROR is a **blocking gate**: `build.sh` still renders the
 deck so you can look, but exits non-zero so a break can't ship unnoticed.
 
+Orphan / compound-split / height protection covers both the **prose** fields and
+the auto-wrapping **heading** (`title`) — so an enlarged heading that wraps and
+strands a tail (e.g. 「…まで上／昇」) is caught and re-balanced (上昇 kept intact),
+and a heading that wraps past its header region is a height ERROR. cover/cta
+`titleLines` are author-controlled arrays (break them by hand).
+
 The **card-overflow** check is the machine version of the top failure mode below:
-it counts a card field's baked lines and fails when they exceed the card's inner
-height (chart `takeaway`, cta `offerBody`, stat-grid `sub`; the safety margin and
-per-card geometry live in [`bin/layout-html/geometry.js`](../../bin/layout-html/geometry.js)).
+it counts a field's baked lines and fails when they exceed the box's inner height
+(chart `takeaway`, cta `offerBody`, stat-grid `sub`, and each pattern's `title`;
+the safety margin and per-box geometry live in [`bin/layout-html/geometry.js`](../../bin/layout-html/geometry.js)).
 It is a **soffice/Yu-Gothic proxy** — real PowerPoint's line height can differ, so
 the margin absorbs jitter but the on-machine look still matters. These gates are a
 cheap pre-filter that saves a QA round, **not** a replacement for the render-and-look
