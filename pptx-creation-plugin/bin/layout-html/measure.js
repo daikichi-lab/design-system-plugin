@@ -50,6 +50,56 @@ const ROLE_CSS = {
   caption: { family: "Yu Gothic", weight: 400 },
 };
 
+/* ---------------- budoux word segmentation ---------------- */
+// budoux gives phrase/word boundaries so we can forbid breaking INSIDE a compound
+// (決/算, 管/理会計). This is the MECHANISM tier of a three-tier stance
+// (mechanism -> typo-lint residual -> project lexicon). kuromoji.js / MeCab are a
+// future higher-precision option, deliberately not used here.
+// Priority when constraints conflict: (1) orphan avoidance > (2) no compound
+// split > (3) line-length balance — enforced by the callers (bake.js/typo-lint).
+let _parser = null;
+function budouxParser() {
+  if (!_parser) _parser = require("budoux").loadDefaultJapaneseParser();
+  return _parser;
+}
+
+// Char indices where a line break is ALLOWED (budoux phrase boundaries), minus
+// any boundary strictly inside a protected lexicon word (brand/terms never split).
+// Index i means a break may fall between char i-1 and char i.
+function breakPoints(text, lexicon = []) {
+  const chars = [...text];
+  const allowed = new Set();
+  let idx = 0;
+  for (const seg of budouxParser().parse(text)) { idx += [...seg].length; allowed.add(idx); }
+  allowed.delete(chars.length); // end of text is not a break
+  for (const word of (lexicon || [])) {
+    const w = [...(word || "")];
+    if (!w.length) continue;
+    for (let i = 0; i + w.length <= chars.length; i++) {
+      if (chars.slice(i, i + w.length).join("") === word) {
+        for (let k = i + 1; k < i + w.length; k++) allowed.delete(k); // no break inside the word
+      }
+    }
+  }
+  return allowed;
+}
+
+// Between every pair of characters, insert a marker: ZWSP (U+200B) where a break
+// is ALLOWED (a budoux boundary), or WORD JOINER (U+2060) where it is NOT. The
+// WORD JOINER glues, so the browser breaks ONLY at boundaries — this also
+// suppresses the browser's own intrinsic break opportunities (e.g. at 〜 in
+// "7〜8月", at ASCII/CJK script transitions) that word-break:keep-all leaks.
+function markBreaks(text, allowed) {
+  const chars = [...text];
+  if (!chars.length) return "";
+  let out = chars[0];
+  for (let i = 1; i < chars.length; i++) {
+    out += allowed.has(i) ? "​" : "⁠";
+    out += chars[i];
+  }
+  return out;
+}
+
 let _browser = null;
 async function getBrowser() {
   if (_browser) return _browser;
@@ -66,11 +116,14 @@ async function closeBrowser() { if (_browser) { await _browser.close(); _browser
 /* Measure how `text` wraps in a `widthIn`-inch box at `sizePt`, font `role`,
  * `leading` multiple, and `wrap` strategy ('pretty' | 'balance' | 'auto').
  * Returns { lines:[string], count, lastLen, hasOrphan, lineLens }. */
-async function measure({ text, widthIn, sizePt, role = "body", leading = 1.5, wrap = "pretty" }) {
+async function measure({ text, widthIn, sizePt, role = "body", leading = 1.5, wrap = "pretty", budoux = false, lexicon = [] }) {
   const css = ROLE_CSS[role] || ROLE_CSS.body;
   const widthPx = widthIn * PX_PER_IN;
   const sizePx = sizePt * PX_PER_PT;
   const wrapCss = wrap === "auto" ? "wrap" : wrap;
+  // budoux mode: only break at word boundaries (keep-all + ZWSP-marked breaks).
+  const wordBreak = budoux ? "keep-all" : "normal";
+  const rendered = budoux ? markBreaks(text, breakPoints(text, lexicon)) : text;
   const browser = await getBrowser();
   const page = await browser.newPage({ viewport: { width: Math.ceil(widthPx) + 60, height: 900 } });
   try {
@@ -79,9 +132,9 @@ async function measure({ text, widthIn, sizePt, role = "body", leading = 1.5, wr
         *{margin:0;padding:0;box-sizing:border-box;}
         #box{position:absolute;top:0;left:0;width:${widthPx}px;
           font-family:'${css.family}';font-weight:${css.weight};font-size:${sizePx}px;
-          line-height:${leading};line-break:strict;word-break:normal;overflow-wrap:normal;
+          line-height:${leading};line-break:strict;word-break:${wordBreak};overflow-wrap:normal;
           text-wrap:${wrapCss};white-space:normal;}
-      </style><div id="box"><span id="t">${escapeHtml(text)}</span></div>`,
+      </style><div id="box"><span id="t">${escapeHtml(rendered)}</span></div>`,
       { waitUntil: "load" });
     await page.evaluate(() => document.fonts && document.fonts.ready);
     // Group characters into visual lines by the top of each character's client rect.
@@ -94,6 +147,7 @@ async function measure({ text, widthIn, sizePt, role = "body", leading = 1.5, wr
       let top = null, cur = "", minL = Infinity, maxR = -Infinity;
       const flush = () => { rows.push(cur); widths.push(maxR > minL ? maxR - minL : 0); cur = ""; minL = Infinity; maxR = -Infinity; };
       for (let i = 0; i < s.length; i++) {
+        { const cc = s.charCodeAt(i); if (cc === 0x200B || cc === 0x2060) continue; } // skip ZW break/join markers (budoux)
         const r = document.createRange();
         r.setStart(node, i); r.setEnd(node, i + 1);
         const rect = r.getClientRects()[0];
@@ -153,7 +207,7 @@ async function renderPng({ lines, widthIn, sizePt, role = "body", leading = 1.5,
   }
 }
 
-module.exports = { measure, renderPng, getBrowser, closeBrowser, findChromium, ROLE_CSS, PX_PER_IN, PX_PER_PT };
+module.exports = { measure, renderPng, getBrowser, closeBrowser, findChromium, ROLE_CSS, PX_PER_IN, PX_PER_PT, breakPoints, budouxParser };
 
 /* ---- CLI: measure a text block three wrap strategies (auto/pretty/balance) ----
  * node measure.js [--text <s>] [--width <in>] [--size <pt>] [--role <r>] [--lead <n>]

@@ -44,6 +44,32 @@ node bin/generate.js --plan plan.baked.json --out deck.pptx
 bash bin/build.sh --plan plan.json --out deck.pptx
 ```
 
+## Compound-word protection (budoux + lexicon)
+
+Japanese may wrap at any character, so splitting a compound (決/算, 管/理会計) is
+not a kinsoku *violation* — but it reads as machine-set. `measure.js` runs
+**budoux** to get word/phrase boundaries and, in budoux mode, glues every
+non-boundary gap with a WORD JOINER (U+2060) so the browser breaks **only** at
+word boundaries (this also suppresses the browser's own break at `〜`, ASCII/CJK
+transitions, etc.). Priority when constraints collide is **(1) orphan avoidance >
+(2) no compound split > (3) line-length balance** — enforced in `bake.js`: it
+tries budoux-balance first, and only drops the no-split constraint if that would
+re-introduce an orphan (logged).
+
+Three tiers, because budoux isn't perfect: **mechanism** (budoux) → **lint**
+(`typo-lint` scores 熟語分割 residual) → **lexicon**. Brand/terms budoux would
+split live in a PROJECT file, never the plugin:
+
+```bash
+# project assets/lexicon.json — a JSON array of protected words
+["大吉会計", "ひだまりこそだち", "管理会計"]
+node bin/layout-html/bake.js --plan p.json --lexicon assets/lexicon.json --out p.baked.json
+# or: bash bin/build.sh --plan p.json --lexicon assets/lexicon.json --out deck.pptx
+```
+
+The plugin ships **no** lexicon (empty default); it only provides the `--lexicon`
+loader. kuromoji.js / MeCab are a future higher-precision option, not used here.
+
 ## Honest caveats (do not pretend these away)
 
 - **Conversion rate never reaches 100%** — Chromium and PowerPoint/LibreOffice

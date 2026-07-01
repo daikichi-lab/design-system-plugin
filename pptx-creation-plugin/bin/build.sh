@@ -17,19 +17,21 @@
 # ============================================================
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-PLAN=""; THEME=""; OUT=""; BAKE=1
+PLAN=""; THEME=""; OUT=""; BAKE=1; LEX=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --plan) PLAN="$2"; shift 2;;
     --theme) THEME="$2"; shift 2;;
     --out) OUT="$2"; shift 2;;
+    --lexicon) LEX="$2"; shift 2;;
     --no-bake) BAKE=0; shift;;
     -h|--help) sed -n '20,21p' "$0"; exit 0;;
     *) echo "unknown arg: $1"; exit 2;;
   esac
 done
-[ -n "$PLAN" ] && [ -n "$OUT" ] || { echo "usage: build.sh --plan P [--theme T] --out O [--no-bake]"; exit 2; }
+[ -n "$PLAN" ] && [ -n "$OUT" ] || { echo "usage: build.sh --plan P [--theme T] [--lexicon L] --out O [--no-bake]"; exit 2; }
 THEMEARG=(); [ -n "$THEME" ] && THEMEARG=(--theme "$THEME")
+LEXARG=(); [ -n "$LEX" ] && LEXARG=(--lexicon "$LEX")
 
 WORK="$(dirname "$OUT")"; mkdir -p "$WORK"
 GENPLAN="$PLAN"
@@ -38,7 +40,7 @@ GENPLAN="$PLAN"
 if [ "$BAKE" = 1 ]; then
   BAKED="$WORK/$(basename "${OUT%.pptx}").baked.json"
   echo "== bake =="
-  if node "$HERE/layout-html/bake.js" --plan "$PLAN" "${THEMEARG[@]}" --out "$BAKED" 2>"$WORK/.bake.err"; then
+  if node "$HERE/layout-html/bake.js" --plan "$PLAN" "${THEMEARG[@]}" "${LEXARG[@]}" --out "$BAKED" 2>"$WORK/.bake.err"; then
     GENPLAN="$BAKED"
   else
     echo "  WARN: bake skipped (typesetting engine not set up — run bin/layout-html/setup.sh):"
@@ -57,7 +59,7 @@ node "$HERE/lint/design-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" || echo "  d
 
 # 4. typo-lint (typesetting; skip gracefully if no browser)
 echo "== typo-lint =="
-node "$HERE/lint/typo-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" || echo "  typo-lint skipped or found orphans (see above)."
+node "$HERE/lint/typo-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" "${LEXARG[@]}" || echo "  typo-lint skipped or found orphans (see above)."
 
 # 5. render for the visual QA loop (you still OPEN and LOOK — M-2)
 echo "== render (then OPEN every slide-*.jpg and inspect — M-2) =="

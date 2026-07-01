@@ -20,10 +20,21 @@
  * ============================================================ */
 "use strict";
 
+const fs = require("fs");
 const path = require("path");
 const { loadPlan, loadTheme } = require("../generate.js");
-const { measure, closeBrowser } = require("../layout-html/measure.js");
+const { measure, closeBrowser, breakPoints } = require("../layout-html/measure.js");
 const { wrappingFields, effectiveWidth } = require("../layout-html/geometry.js");
+
+// Count line breaks that fall INSIDE a budoux word/phrase (熟語分割) — i.e. an
+// actual break index not among budoux's allowed boundaries (minus lexicon words).
+function countSplits(lineLens, text, lexicon) {
+  if (!lineLens || lineLens.length < 2) return 0;
+  const allowed = breakPoints(text, lexicon);
+  let acc = 0, n = 0;
+  for (let k = 0; k < lineLens.length - 1; k++) { acc += lineLens[k]; if (!allowed.has(acc)) n++; }
+  return n;
+}
 
 function parseArgs(argv) {
   const a = { plan: null, theme: null, json: false };
@@ -32,16 +43,17 @@ function parseArgs(argv) {
     if (k === "--plan") a.plan = argv[++i];
     else if (k === "--theme") a.theme = argv[++i];
     else if (k === "--json") a.json = true;
+    else if (k === "--lexicon") a.lexicon = argv[++i];
     else if (k === "-h" || k === "--help") a.help = true;
   }
   return a;
 }
 
-async function lintPlan(planPath, themePath) {
+async function lintPlan(planPath, themePath, lexicon = []) {
   const T = loadTheme(themePath);
   const { slides } = loadPlan(planPath);
   const findings = [];
-  let measured = 0, multiline = 0, orphans = 0;
+  let measured = 0, multiline = 0, orphans = 0, splits = 0;
   let varSum = 0, fillSum = 0;
 
   for (let i = 0; i < slides.length; i++) {
@@ -50,7 +62,7 @@ async function lintPlan(planPath, themePath) {
       const ew = effectiveWidth(f.widthIn, { bullet: f.bullet });
       measured++;
       if (f.baked) {
-        // validate baked explicit lines: no orphan, and no line silently re-wraps.
+        // validate baked explicit lines: no orphan, no silent re-wrap, no split.
         const lens = f.lines.map((l) => [...l].length);
         const lastLen = lens[lens.length - 1] || 0;
         if (f.lines.length > 1) multiline++;
@@ -60,26 +72,27 @@ async function lintPlan(planPath, themePath) {
           const rr = await measure({ text: ln, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "auto" });
           if (rr.count > 1) { overflow = ln; break; }
         }
-        if (lineOrphan || overflow) {
-          orphans++;
+        const sp = countSplits(lens, f.lines.join(""), lexicon);
+        splits += sp;
+        if (lineOrphan || overflow) orphans++;
+        if (lineOrphan || overflow || sp) {
           findings.push({
-            slide: i + 1, pattern: sl.pattern, path: f.path, lines: f.lines.length, lens, lastLen,
+            slide: i + 1, pattern: sl.pattern, path: f.path, lens, lastLen, splits: sp,
+            issue: (lineOrphan || overflow) ? "orphan" : "compound-split",
             snippet: (overflow || f.lines[f.lines.length - 1]).slice(0, 22) + (overflow ? " (baked line overflows)" : ""),
           });
         }
         continue;
       }
       const r = await measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "auto" });
-      if (r.count > 1) {
-        multiline++;
-        varSum += r.lenVar;
-        fillSum += r.fill;
-      }
-      if (r.hasOrphan) {
-        orphans++;
+      if (r.count > 1) { multiline++; varSum += r.lenVar; fillSum += r.fill; }
+      const sp = countSplits(r.lineLens, f.text, lexicon);
+      splits += sp;
+      if (r.hasOrphan) orphans++;
+      if (r.hasOrphan || sp) {
         findings.push({
-          slide: i + 1, pattern: sl.pattern, path: f.path,
-          lines: r.count, lens: r.lineLens, lastLen: r.lastLen,
+          slide: i + 1, pattern: sl.pattern, path: f.path, lens: r.lineLens, lastLen: r.lastLen, splits: sp,
+          issue: r.hasOrphan ? "orphan" : "compound-split",
           snippet: f.text.slice(0, 22) + (f.text.length > 22 ? "…" : ""),
         });
       }
@@ -87,10 +100,12 @@ async function lintPlan(planPath, themePath) {
   }
   return {
     plan: planPath,
-    measured, multiline, orphans,
+    measured, multiline, orphans, splits,
     avgLenVar: multiline ? +(varSum / multiline).toFixed(2) : 0,
     avgFill: multiline ? +(fillSum / multiline).toFixed(3) : 0,
     findings,
+    // Exit gate is ORPHANS only (priority 1, hard). Compound splits (priority 2)
+    // are tracked and driven down by bake + the project lexicon, not a hard fail.
     pass: orphans === 0,
   };
 }
@@ -103,22 +118,29 @@ async function main() {
   if (a.help) { console.log(USAGE); return 0; }
   if (!a.plan) { console.error("Missing --plan.\n\n" + USAGE); return 2; }
   if (!a.theme) a.theme = path.join(__dirname, "..", "..", "themes", "_default-neutral", "theme.json");
+  let lexicon = [];
+  if (a.lexicon) {
+    try { lexicon = JSON.parse(fs.readFileSync(a.lexicon, "utf8")); }
+    catch (e) { console.error("lexicon load failed (" + a.lexicon + "): " + e.message); }
+  }
 
-  const res = await lintPlan(a.plan, a.theme);
+  const res = await lintPlan(a.plan, a.theme, lexicon);
   if (a.json) {
     console.log(JSON.stringify(res));
   } else {
     console.log(`typo-lint: ${res.plan}\n`);
     console.log(`fields measured: ${res.measured}  (multi-line: ${res.multiline})`);
-    console.log(`泣き別れ / orphans: ${res.orphans}`);
-    console.log(`avg line-length variance: ${res.avgLenVar}  |  avg fill ratio: ${res.avgFill}`);
+    console.log(`泣き別れ / orphans:         ${res.orphans}   (priority 1 — hard gate)`);
+    console.log(`熟語分割 / compound splits: ${res.splits}   (priority 2 — bake fixes; residual -> lexicon)`);
+    console.log(`avg line-length variance:  ${res.avgLenVar}  |  avg fill: ${res.avgFill}   (priority 3)`);
     if (res.findings.length) {
-      console.log(`\nORPHANS (${res.findings.length}):`);
+      console.log(`\nFINDINGS (${res.findings.length}):`);
       for (const f of res.findings) {
-        console.log(`  [slide ${f.slide} ${f.pattern} ${f.path}] lens=[${f.lens}] lastLen=${f.lastLen}  "${f.snippet}"`);
+        console.log(`  [${f.issue}] slide ${f.slide} ${f.pattern} ${f.path}  lens=[${f.lens}]` +
+          (f.splits ? `  splits=${f.splits}` : "") + `  "${f.snippet}"`);
       }
     }
-    console.log(`\nSUMMARY: ${res.orphans} orphan(s) — ${res.pass ? "PASS" : "FAIL"}`);
+    console.log(`\nSUMMARY: ${res.orphans} orphan(s), ${res.splits} split(s) — ${res.pass ? "PASS" : "FAIL"} (gate = orphans)`);
   }
   return res.pass ? 0 : 1;
 }

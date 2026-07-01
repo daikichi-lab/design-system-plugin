@@ -67,11 +67,13 @@ balanced breaks in real Yu Gothic → explicit line arrays, spec §5) →
 
 - **Baking is the typesetting floor**
   ([`typography.md`](../../references/principles/typography.md),
-  [`kinsoku.md`](../../references/principles/kinsoku.md)): it removes orphaned
-  trailing characters mechanically, so you don't hand-split lines. It needs the
-  one-time Phase-B setup — `bash bin/layout-html/setup.sh` (Yu Gothic + Playwright).
-  If that engine isn't present, `build.sh` **falls back** to the un-baked plan and
-  the visual QA loop still backstops you — the deck still builds.
+  [`kinsoku.md`](../../references/principles/kinsoku.md)): it mechanically removes
+  orphaned trailing characters (泣き別れ) AND compound-word splits (熟語分割, via
+  budoux), so you don't hand-split lines — priority is 泣き別れ > 熟語 > balance.
+  For project brand/terms that must never split, pass `--lexicon <assets/lexicon.json>`.
+  It needs the one-time Phase-B setup — `bash bin/layout-html/setup.sh` (Yu Gothic +
+  Playwright + budoux). If that engine isn't present, `build.sh` **falls back** to
+  the un-baked plan and the visual QA loop still backstops you — the deck still builds.
 - To run the raw engine alone (debugging):
   `node bin/generate.js --plan <p> --theme <t> --out <o>`. `--theme` defaults to
   `themes/_default-neutral/theme.json`.

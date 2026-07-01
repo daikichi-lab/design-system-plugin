@@ -6,7 +6,7 @@
 #    1. Yu Gothic registered with fontconfig — so BOTH headless Chromium and
 #       LibreOffice render real Yu Gothic. Without it, computed line breaks
 #       won't match PowerPoint and the SSIM conversion rate is understated.
-#    2. Node deps: playwright-core + pngjs (from package.json).
+#    2. Node deps: playwright-core + pngjs + budoux (from package.json).
 #    3. A Playwright chromium browser binary.
 #
 #  Free, WSL2-friendly, no GPU, no image generation (M-7).
@@ -35,7 +35,7 @@ for q in "Yu Gothic" "Yu Gothic:weight=bold" "Yu Gothic Medium"; do
   printf "    fc-match %-22s -> %s\n" "$q" "$(fc-match "$q" 2>/dev/null)"
 done
 
-echo "== 2. Node deps (playwright-core, pngjs) =="
+echo "== 2. Node deps (playwright-core, pngjs, budoux) =="
 if ( cd "$PLUGIN" && npm install --no-audit --no-fund >/dev/null 2>&1 ); then
   echo "  npm install ok"
 else

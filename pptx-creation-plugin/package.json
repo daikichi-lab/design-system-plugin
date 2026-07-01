@@ -12,6 +12,7 @@
     "validate": "node bin/validate.js"
   },
   "dependencies": {
+    "budoux": "^0.8.4",
     "playwright-core": "^1.61.1",
     "pngjs": "^7.0.0",
     "pptxgenjs": "^3.12.0"

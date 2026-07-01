@@ -18,8 +18,17 @@
 const fs = require("fs");
 const path = require("path");
 const { loadTheme } = require("../generate.js");
-const { measure, closeBrowser } = require("./measure.js");
+const { measure, closeBrowser, breakPoints } = require("./measure.js");
 const { wrappingFields, effectiveWidth } = require("./geometry.js");
+
+// Count line breaks that fall inside a budoux word/phrase (熟語分割).
+function countSplits(lineLens, text, lexicon) {
+  if (!lineLens || lineLens.length < 2) return 0;
+  const allowed = breakPoints(text, lexicon);
+  let acc = 0, n = 0;
+  for (let k = 0; k < lineLens.length - 1; k++) { acc += lineLens[k]; if (!allowed.has(acc)) n++; }
+  return n;
+}
 
 // Set a value at a path like "statCaption" | "items[1].body" | "left.points[0]" | "stats[2].sub".
 function setByPath(obj, p, value) {
@@ -29,7 +38,7 @@ function setByPath(obj, p, value) {
   o[parts[parts.length - 1]] = value;
 }
 
-async function bakePlan(planPath, themePath) {
+async function bakePlan(planPath, themePath, lexicon = []) {
   const T = loadTheme(themePath);
   const raw = JSON.parse(fs.readFileSync(planPath, "utf8"));
   const slides = Array.isArray(raw) ? raw : raw.slides;
@@ -41,41 +50,65 @@ async function bakePlan(planPath, themePath) {
       if (f.baked) continue; // already an explicit line array
       considered++;
       const ew = effectiveWidth(f.widthIn, { bullet: f.bullet });
+      const M = (wrap, budoux) => measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap, budoux, lexicon });
+
       // Minimal intervention: only re-break a field whose natural (greedy) wrap
-      // would ORPHAN (泣き別れ). A clean multi-line wrap is left as a plain string
-      // so the deck's own typesetting is preserved — we fix orphans, not restyle.
-      const auto = await measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "auto" });
-      if (!auto.hasOrphan) continue;
-      const bal = await measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "balance" });
-      // prefer the balanced break; fall back to auto if balance can't clear it
-      const lines = (bal.count > 1 && !bal.hasOrphan) ? bal.lines : auto.lines;
+      // would ORPHAN (泣き別れ) OR split a compound (熟語分割). A field that does
+      // neither is left as a plain string — we fix defects, not restyle.
+      const auto = await M("auto", false);
+      const orphan = auto.hasOrphan;
+      const rawSplits = countSplits(auto.lineLens, f.text, lexicon);
+      if (!orphan && !rawSplits) continue;
+
+      // Priority (1) no orphan > (2) no compound split > (3) balance.
+      // budoux-balance satisfies 2 & 3; if it re-introduces an orphan, drop the
+      // no-split constraint to honor priority 1 (and log the sacrifice).
+      const budBal = await M("balance", true);
+      let lines, mode;
+      if (budBal.count > 1 && !budBal.hasOrphan) { lines = budBal.lines; mode = "budoux-balance"; }
+      else {
+        const bal = await M("balance", false);
+        if (bal.count > 1 && !bal.hasOrphan) { lines = bal.lines; mode = "balance(split allowed to avoid orphan)"; }
+        else { lines = auto.lines; mode = "auto(could not clear orphan)"; }
+      }
+      const outSplits = countSplits(lines.map((l) => [...l].length), lines.join(""), lexicon);
       setByPath(sl.content, f.path, lines);
       baked++;
-      changes.push({ slide: i + 1, pattern: sl.pattern, path: f.path, from: auto.lineLens, to: lines.map((l) => [...l].length) });
+      changes.push({
+        slide: i + 1, pattern: sl.pattern, path: f.path, trigger: orphan ? "orphan" : "split", mode,
+        from: auto.lineLens, to: lines.map((l) => [...l].length), splitsFrom: rawSplits, splitsTo: outSplits,
+      });
     }
   }
   return { out: raw, baked, considered, changes };
 }
 
-const USAGE = `bake — compute & bake balanced kinsoku line breaks into a deck plan
-  node bin/layout-html/bake.js --plan <in.json> [--theme <theme.json>] --out <baked.json>`;
+const USAGE = `bake — compute & bake balanced, orphan-free, compound-safe line breaks into a deck plan
+  node bin/layout-html/bake.js --plan <in.json> [--theme <theme.json>] [--lexicon <words.json>] --out <baked.json>
+  --lexicon  JSON array of project-protected words (brand/terms) never split (assets/lexicon.json)`;
 
 async function main() {
-  const a = { plan: null, theme: null, out: null };
+  const a = { plan: null, theme: null, out: null, lexicon: null };
   for (let i = 2; i < process.argv.length; i++) {
     const k = process.argv[i];
     if (k === "--plan") a.plan = process.argv[++i];
     else if (k === "--theme") a.theme = process.argv[++i];
     else if (k === "--out") a.out = process.argv[++i];
+    else if (k === "--lexicon") a.lexicon = process.argv[++i];
     else if (k === "-h" || k === "--help") { console.log(USAGE); return 0; }
   }
   if (!a.plan || !a.out) { console.error("Missing --plan and/or --out.\n\n" + USAGE); return 2; }
   if (!a.theme) a.theme = path.join(__dirname, "..", "..", "themes", "_default-neutral", "theme.json");
+  let lexicon = [];
+  if (a.lexicon) {
+    try { lexicon = JSON.parse(fs.readFileSync(a.lexicon, "utf8")); }
+    catch (e) { console.error("lexicon load failed (" + a.lexicon + "): " + e.message); }
+  }
 
-  const { out, baked, considered, changes } = await bakePlan(a.plan, a.theme);
+  const { out, baked, considered, changes } = await bakePlan(a.plan, a.theme, lexicon);
   fs.writeFileSync(a.out, JSON.stringify(out, null, 2) + "\n");
   console.log(`baked ${baked}/${considered} wrapping field(s) -> ${a.out}`);
-  for (const c of changes) console.log(`  slide ${c.slide} ${c.pattern} ${c.path}: [${c.from}] -> [${c.to}]`);
+  for (const c of changes) console.log(`  slide ${c.slide} ${c.pattern} ${c.path} (${c.trigger}, ${c.mode}): [${c.from}]->[${c.to}]  splits ${c.splitsFrom}->${c.splitsTo}`);
   return 0;
 }
 

@@ -17,8 +17,8 @@
 # ============================================================
 #  Node + system toolchain (the ACTUAL requirements)
 # ============================================================
-#  Runtime:    Node >=18, then `npm install` (pptxgenjs; playwright-core + pngjs
-#              for the Phase-B typesetting engine; ajv/ajv-formats for the dev validator).
+#  Runtime:    Node >=18, then `npm install` (pptxgenjs; playwright-core + pngjs +
+#              budoux for the Phase-B typesetting engine; ajv/ajv-formats for the dev validator).
 #  QA render:  LibreOffice (soffice) + poppler (pdftoppm).            [bin/qa.sh]
 #  Typesetting (Phase B, spec §5/§10) — run ONCE per environment:
 #              bash bin/layout-html/setup.sh
