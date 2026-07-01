@@ -1,99 +1,97 @@
 # design-system-plugins
 
-A **Claude Code plugin marketplace** (`daikichi-plugins`) that ships one plugin:
+**Claude Code プラグイン・マーケットプレイス**（`daikichi-plugins`）です。次のプラグインを配布しています。
 
-- **[`pptx-creation`](pptx-creation-plugin/)** — plans, composes, generates, and
-  reviews high-quality PowerPoint (`.pptx`) decks, tuned for clean **Japanese
-  business slides**. One engine, many decks; a bookshelf of design languages; a
-  mandatory verification loop (lint + render + score) so a deck never ships
-  broken. Full docs: **[pptx-creation-plugin/README.md](pptx-creation-plugin/README.md)**.
+- **[`pptx-creation`](pptx-creation-plugin/)** — 高品質な PowerPoint（`.pptx`）デッキを
+  「設計 → 構成 → 生成 → レビュー」する、**日本語ビジネス資料**に最適化したプラグイン。
+  エンジンは1つ、デッキは無数。デザイン言語の"本棚"を備え、**検証ループ（lint＋レンダ＋
+  採点）を必須**にすることで、崩れたデッキが世に出ないようにしています。
+  詳細ドキュメント：**[pptx-creation-plugin/README.md](pptx-creation-plugin/README.md)**。
 
 ---
 
-## Install (in Claude Code)
+## 導入方法（Claude Code）
 
 ```text
-# 1. add this marketplace
+# 1. このマーケットプレイスを追加
 /plugin marketplace add daikichi-lab/design-system-plugin
 
-# 2. install the plugin from it
+# 2. プラグインをインストール
 /plugin install pptx-creation@daikichi-plugins
 ```
 
-Or just run **`/plugin`** and pick **pptx-creation** from the menu. (Developing
-locally? Point step 1 at the repo path instead: `/plugin marketplace add .`)
+もしくは **`/plugin`** を実行してメニューから **pptx-creation** を選んでも構いません。
+（ローカルで開発する場合は手順1をリポジトリのパスに：`/plugin marketplace add .`）
 
-**Confirm it loaded:** run `/plugin` — `pptx-creation` shows as enabled, and its
-skills are callable namespaced, e.g. `/pptx-creation:deck-brief`,
-`/pptx-creation:create-deck`.
+**読み込み確認：** `/plugin` を実行すると `pptx-creation` が有効化されて表示され、
+スキルが名前空間付きで呼べます（例：`/pptx-creation:deck-brief`、`/pptx-creation:create-deck`）。
 
-### Prerequisites (the engine + the QA render)
+### 前提ツール（エンジン＋QAレンダ）
 
-The skills shell out to a small Node engine and render for the QA loop, so the
-machine that runs Claude Code needs:
+スキルは小さな Node エンジンを呼び出し、QAループでレンダするので、Claude Code を
+動かすマシンに次が必要です。
 
-| Need | For | Install |
+| 必要なもの | 用途 | 導入 |
 |---|---|---|
-| **Node.js** + the plugin's deps | `bin/generate.js` (pptxgenjs) | run `npm install` **once** in the plugin dir (path below) |
-| **LibreOffice** (`soffice`) + **poppler** (`pdftoppm`) on PATH | QA render (PPTX→PDF→JPG) | your OS package manager · **no Java needed** |
-| *(optional)* Playwright Chromium + **Yu Gothic** fonts | JP typesetting precision (`bake` / `typo-lint`) | `bin/layout-html/setup.sh`; without it the build **falls back gracefully** |
+| **Node.js** ＋ プラグインの依存 | `bin/generate.js`（pptxgenjs） | プラグインのディレクトリで `npm install` を**一度**（場所は下記） |
+| **LibreOffice**（`soffice`）＋ **poppler**（`pdftoppm`）を PATH に | QAレンダ（PPTX→PDF→JPG） | OS のパッケージマネージャ・**Java 不要** |
+| *(任意)* Playwright Chromium ＋ **游ゴシック** フォント | 日本語組版の精度（`bake` / `typo-lint`） | `bin/layout-html/setup.sh`。無くてもビルドは**自動フォールバック** |
 
-> **Where to `npm install`:** Claude Code does **not** auto-install a plugin's
-> npm deps. A marketplace-installed plugin lives at
-> `~/.claude/plugins/cache/daikichi-plugins/pptx-creation/<version>/` — `cd`
-> there and run `npm install` once. (Developing locally? Run it in
-> `pptx-creation-plugin/`.) Symptom if you skip it: a skill fails with
-> *"Cannot find module 'pptxgenjs'."*
+> **`npm install` の場所：** Claude Code はプラグインの npm 依存を自動では入れません。
+> マーケットプレイス経由で入れたプラグインは
+> `~/.claude/plugins/cache/daikichi-plugins/pptx-creation/<version>/` に置かれます。
+> そこへ `cd` して一度 `npm install` してください。（ローカル開発なら
+> `pptx-creation-plugin/` で実行）。飛ばした場合の症状：スキルが
+> *「Cannot find module 'pptxgenjs'」* で失敗します。
 
-Details and the one-command pipeline are in the plugin README's
-[*How to load it*](pptx-creation-plugin/README.md#how-to-load-it).
+詳細とワンコマンドのパイプラインは、プラグイン README の
+[*How to load it*](pptx-creation-plugin/README.md#how-to-load-it) を参照してください。
 
 ---
 
-## First steps (right after installing)
+## 導入したら、まず何をするか
 
-1. **Make a deck — start here.** Run **`/pptx-creation:deck-brief`** and describe
-   your goal in your own words (even vaguely). It asks only the few things it
-   can't guess — **who it's for, the action you want, the one message, and which
-   numbers are estimates** — then drives the rest: strategy → generation → the
-   mandatory QA loop → a scored review. This intake is what sets the quality
-   ceiling; see [*Writing the brief*](pptx-creation-plugin/README.md#writing-the-brief-the-input-that-sets-the-ceiling).
+1. **デッキを作る — ここから始める。** **`/pptx-creation:deck-brief`** を実行し、
+   目的を自分の言葉で（曖昧でも構わず）投げてください。推測できない数点だけ
+   ——**誰向けか・取ってほしい行動・一番の結論・どの数字が概算か**——を質問し、
+   あとは自動で進めます：構成（strategy）→ 生成 → 必須のQAループ → 採点レビュー。
+   この"入力"こそが品質の上限を決めます。
+   → [*Writing the brief*](pptx-creation-plugin/README.md#writing-the-brief-the-input-that-sets-the-ceiling)
 
-   > Already have clear requirements? Fill the brief template in that section and
-   > call **`/pptx-creation:create-deck`** directly.
+   > 要件がもう固まっている？ その節のブリーフ雛形を埋めて、直接
+   > **`/pptx-creation:create-deck`** を呼んでください。
 
-2. **See the bar.** Open
-   [`pptx-creation-plugin/examples/seminar-kanrikaikei/`](pptx-creation-plugin/examples/seminar-kanrikaikei) —
-   the reference render that defines "acceptable." Nothing you ship should look
-   worse than it.
+2. **合格ラインを見る。**
+   [`pptx-creation-plugin/examples/seminar-kanrikaikei/`](pptx-creation-plugin/examples/seminar-kanrikaikei)
+   を開いてください。「これ以上崩れてはいけない」基準となる参照レンダです。
 
-3. **Set up a project (optional).** To make a repo deck-ready with your own brand
-   theme: **`/pptx-creation:project-scaffold`** then **`/pptx-creation:theme-init`**.
-   Per-project content and themes live in *your* repo; the plugin stays generic.
+3. **プロジェクトを用意（任意）。** 自社ブランドのテーマでリポジトリをデッキ対応に
+   するには **`/pptx-creation:project-scaffold`** → **`/pptx-creation:theme-init`**。
+   案件ごとの中身とテーマは*あなたの*リポジトリに置き、プラグインは汎用のまま保ちます。
 
-The typical flow end to end:
+全体の流れ：
 
 ```text
-deck-brief → deck-strategy → create-deck (generate + QA loop) → deck-review (scored)
-  intent        plan             the .pptx                        ship / fix
+deck-brief → deck-strategy → create-deck（生成＋QAループ） → deck-review（採点）
+  意図           構成            .pptx                          出荷 / 修正
 ```
 
-You don't need a perfect one-shot instruction — the verification loop and your
-real-machine (PowerPoint) feedback refine it. Fixing **audience, goal-action,
-message, and honesty** in the brief is enough to start.
+一発で完璧な指示は要りません。検証ループと、あなたの**実機（PowerPoint）での確認**が
+精度を磨きます。ブリーフで **読み手・目的（行動）・結論・正直さ** の4点を固めれば、
+着手には十分です。
 
 ---
 
-## What's in this repo
+## このリポジトリの中身
 
 ```
 design-system-plugin/
-├── .claude-plugin/marketplace.json   # the marketplace manifest (daikichi-plugins)
-├── pptx-creation-plugin/             # the plugin — engine, skills, references, themes, examples
-│   └── README.md                     # full architecture + usage docs
-└── README.md                         # you are here (install + first steps)
+├── .claude-plugin/marketplace.json   # マーケットプレイスの定義（daikichi-plugins）
+├── pptx-creation-plugin/             # プラグイン本体 — エンジン・スキル・references・themes・examples
+│   └── README.md                     # アーキテクチャ＋使い方の詳細
+└── README.md                         # このファイル（導入＋最初の一歩）
 ```
 
-## License
+## ライセンス
 
 MIT.
