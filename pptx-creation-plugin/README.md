@@ -44,13 +44,13 @@ deck content      -> deck_plan.json               (per-project content: ordered 
 **Data flow:**
 
 ```
-deck-strategy  ─►  deck plan (ordered pattern list)
-                       │  (+ project theme.json)
-                       ▼
-                 bin/generate.js  ─►  output.pptx
-                       │
-                       ▼
-                 QA loop (render → look → fix)  ─►  deck-review (scored)
+deck-brief  ─►  deck-strategy  ─►  deck plan (ordered pattern list)
+ (intent)                              │  (+ project theme.json)
+                                       ▼
+                                 bin/generate.js  ─►  output.pptx
+                                       │
+                                       ▼
+                                 QA loop (render → look → fix)  ─►  deck-review (scored)
 ```
 
 ## How to load it
@@ -77,18 +77,61 @@ headless.)
 2. **`/pptx-creation:theme-init`** — create the project's `theme.json` (derive a
    palette from a logo / existing deck, or adjust the neutral default), then
    render a 1-slide preview for sign-off. Visual identity **only**.
-3. **`/pptx-creation:deck-strategy`** — turn a goal + 原稿 into a **deck plan**
+3. **`/pptx-creation:deck-brief`** — turn a vague or partial ask into a complete,
+   structured **brief** (audience, goal-action, one message, data + honesty
+   labels, design, constraints, verification). Asks only what can't be guessed;
+   the intake that sets the quality ceiling. See [Writing the brief](#writing-the-brief-the-input-that-sets-the-ceiling).
+4. **`/pptx-creation:deck-strategy`** — turn the brief + 原稿 into a **deck plan**
    (audience → scene → goal-action → message → narrative frame → pattern
    sequence). Structure + wording only; theme-agnostic.
-4. **`/pptx-creation:create-deck`** — generate the `.pptx`, run the **mandatory
+5. **`/pptx-creation:create-deck`** — generate the `.pptx`, run the **mandatory
    QA loop**, then call review.
-5. **`/pptx-creation:deck-review`** — score it against the quality bar and emit
+6. **`/pptx-creation:deck-review`** — score it against the quality bar and emit
    a `deck_review` JSON (bands: <80 reject · 80–89 internal · ≥90 external).
+
+## Writing the brief (the input that sets the ceiling)
+
+The engine guards geometry, kinsoku, orphans, overflow, and the AI-tell blocklist
+**for you**. What it can't invent is *intent* — so the instruction you give sets
+the ceiling on quality. Don't spend words on geometry ("20pt blue, left-aligned");
+spend them on the four layers the plugin separates but can't guess: **the message,
+the honest material, the audience, and the bar.** Fill this brief (or just run
+[`deck-brief`](skills/deck-brief/SKILL.md) and let it ask only for the gaps):
+
+```text
+【読み手】    誰に（例：取締役会／金融機関・財務リテラシー高）        ← 推測不可、必ず指定
+【場面】      いつ・何分・対面/配布（密度とトーンが決まる）
+【目的＝行動】読後に取ってほしい行動（例：来期投資の承認）           ← "理解させる"ではなく行動
+【結論】      一番言いたい主張ひとつ（例：増収しながら収益性も改善）  ← ラベルでなく言い切り
+【素材】      実データ・原稿を貼る（数字はここで渡す）
+【正直ラベル】どれが会社予想/概算/採用値/定義違い                    ← 財務系はこれが外部通過の鍵
+【構成】      おまかせ（deck-strategyに組ませる）／「SCQAで10枚以内」等
+【デザイン】  bookshelf名（neutral/swiss/editorial/…）／アドホック指定
+【制約】      枚数・禁止（キャラIP不可/数字は与えた物のみ）・ブランド/フォント・出力先
+【検証】      QAループ＋各lint＋deck-reviewを回す。external(≥90)狙い。直せない崩れは止めて報告
+```
+
+**Three slots do the heavy lifting** — put your effort here:
+
+- **結論 (one message)** — if each section is a *claim*, the engine's titles become
+  conclusions, and the deck argues instead of listing. Push "海外について" →
+  "海外が利益率を底上げしている".
+- **正直ラベル** — labelled estimates / bases / forecasts / metric definitions are
+  what carry a business deck into the `external` band (house bar §4).
+- **読み手** — board vs beginners changes tone, density, pattern, even the design
+  language. Never assume it.
+
+**Weak vs strong:** "サンリオでいい感じに" → topic-label titles + a fact dump; but
+"投資初心者向け勉強会、『権利で稼ぐ高利益率企業』を結論に、台本の数字で、会社予想は明示"
+→ a deck that argues. You don't need a perfect one-shot brief — the QA loop and your
+real-machine feedback refine it; fixing audience, goal-action, message, and honesty
+is enough to start.
 
 ## Skills
 
 | Skill | Use it to… |
 |---|---|
+| [`deck-brief`](skills/deck-brief/SKILL.md) | turn a vague ask into a complete, structured brief (the intake that sets the ceiling) |
 | [`design-language`](skills/design-language/SKILL.md) | pick one design language from the bookshelf (theme + principles) |
 | [`deck-strategy`](skills/deck-strategy/SKILL.md) | turn a goal/原稿 into a validated deck plan (pattern order) |
 | [`create-deck`](skills/create-deck/SKILL.md) | generate the `.pptx` + run the QA loop + call review |
