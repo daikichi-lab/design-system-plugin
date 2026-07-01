@@ -79,7 +79,7 @@
               "kicker": { "type": "string" },
               "messageLines": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 2 },
               "statBig": { "type": "string" },
-              "statCaption": { "type": "string" },
+              "statCaption": { "type": ["string", "array"], "items": { "type": "string" }, "description": "Sub-caption under the big stat. A string auto-wraps; an array of strings is rendered as author-controlled lines (manual kinsoku control until the line-break engine lands)." },
               "notes": { "type": "string" }
             }
           } } }

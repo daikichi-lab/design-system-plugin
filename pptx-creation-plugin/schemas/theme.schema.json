@@ -34,7 +34,10 @@
       "required": ["family"],
       "additionalProperties": false,
       "properties": {
-        "family": { "type": "string", "minLength": 1 }
+        "family": { "type": "string", "minLength": 1, "description": "Base/fallback face. Used for any weight role left unset." },
+        "heading": { "type": "string", "minLength": 1, "description": "Heading face, rendered bold (e.g. 'Yu Gothic'). Falls back to family." },
+        "body": { "type": "string", "minLength": 1, "description": "Body-copy face (e.g. 'Yu Gothic Medium' — medium reads better than regular for JP body). Falls back to family." },
+        "caption": { "type": "string", "minLength": 1, "description": "Caption / footer / muted face (e.g. 'Yu Gothic' regular). Falls back to family." }
       }
     },
     "colors": {
@@ -104,6 +107,18 @@
         "sectionTitle": { "description": "Optional. Section-divider title (pattern 'section'). Engine falls back to 36 if absent." },
         "sectionIndex": { "description": "Optional. Section-divider watermark index number (pattern 'section'). Engine falls back to 150 if absent." },
         "statCard": { "description": "Optional. Big value in a KPI card (pattern 'stat-grid'). Engine falls back to 40 if absent." }
+      }
+    },
+    "lead": {
+      "type": "object",
+      "description": "Line-spacing multipliers by role (optional; engine falls back to sensible defaults). JP body wants air (1.5-1.7); headings want to be tight (1.05-1.12). §3 typography floor.",
+      "additionalProperties": false,
+      "properties": {
+        "title":   { "type": "number", "exclusiveMinimum": 0, "description": "Headings — tight (~1.08)." },
+        "display": { "type": "number", "exclusiveMinimum": 0, "description": "Centered message statement (~1.18)." },
+        "body":    { "type": "number", "exclusiveMinimum": 0, "description": "Body paragraphs — airy JP leading (~1.6)." },
+        "caption": { "type": "number", "exclusiveMinimum": 0, "description": "Captions / muted multi-line (~1.5)." },
+        "tight":   { "type": "number", "exclusiveMinimum": 0, "description": "Compact multi-line: bullets, sub-rows, offer body (~1.4)." }
       }
     },
     "brand": {

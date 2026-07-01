@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "title": "四半期事業レビュー（アドバーサリアル検証用）",
+    "author": "経営企画部",
+    "footerLabel": "株式会社サンプル",
+    "showPageNumbers": true
+  },
+  "slides": [
+    {
+      "pattern": "cover",
+      "content": {
+        "kicker": "2026年度 第1四半期",
+        "titleLines": ["四半期事業レビュー", "成長ドライバーと次の一手"],
+        "subtitle": "主要指標の振り返りと下期に向けた重点施策",
+        "footer": "株式会社サンプル | 2026-07-01",
+        "notes": "このスライド自体は健全（表紙・title 2行以内）。以降の本文スライドが各チェックを意図的に踏む土台。"
+      }
+    },
+    {
+      "pattern": "chart",
+      "content": {
+        "kicker": "売上推移",
+        "title": "月次売上は緩やかな回復基調にあるが、粒度が細かすぎて要点が埋もれている",
+        "series": {
+          "name": "月次売上（百万円）",
+          "labels": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月"],
+          "values": [128, 134, 141, 137, 149, 152, 158, 161, 166, 172, 178]
+        },
+        "takeawayHead": "早期把握 → 早期対応",
+        "takeaway": "回復基調は明確だが、11か月分の棒グラフは視認性を損なう。四半期集計へ丸めるべき。",
+        "notes": "【DENSITY-CHART チェックを狙う】series.labels/values の長さが11で、catalog capacity の『>8 crowds』に該当。CONTRAST/PLACEHOLDER には触れない純粋な密度過多。→ CAPACITY: chart series.values length 11 > 8 で WARN(crowds) を期待。"
+      }
+    },
+    {
+      "pattern": "table",
+      "content": {
+        "kicker": "セグメント別業績",
+        "title": "セグメント別の売上・利益率一覧",
+        "columns": ["セグメント", "売上（百万円）", "前年比", "営業利益率"],
+        "rows": [
+          ["国内法人", 482, "+8.2%", "14.1%"],
+          ["国内個人", 316, "+3.4%", "9.8%"],
+          ["海外", 254, "+21.0%", "6.2%"],
+          ["新規事業", 88, "+62.0%", "-4.5%"],
+          ["ライセンス", 61, "+2.1%", "31.0%"],
+          ["保守サービス", 143, "+5.5%", "22.4%"],
+          ["コンサルティング", 97, "+11.8%", "18.6%"],
+          ["その他", 22, "-1.2%", "7.0%"]
+        ],
+        "note": "単位：百万円。前年比は同四半期比。営業利益率は各セグメント売上を分母とする。",
+        "notes": "【TABLE-ROWS チェックを狙う】body rows が8行（ヘッダ除く）。catalog の『<=6 rows incl header』ルールに対し body 8 行 > 5 で ERROR を期待。columns は4列でルール内（>5でWARN/>6でERRORには触れない）。→ CAPACITY: table body rows 8 > 5 で ERROR。"
+      }
+    },
+    {
+      "pattern": "message",
+      "content": {
+        "kicker": "重点メッセージ",
+        "messageLines": ["下期は海外セグメントに投資を集中する"],
+        "statBig": "約60%",
+        "statCaption": "海外の前年比成長率（速報値）。TODO: 実数を insert すること。数値は仮置きで lorem ipsum 相当のダミー。",
+        "notes": "【PLACEHOLDER チェックを狙う】statCaption に『TODO』『insert』『lorem ipsum』を混入。PLACEHOLDER の deep-walk で lorem / ipsum / TODO / [insert のいずれもがヒットするよう複数語を仕込んだ（ここでは『TODO』と『insert』と『lorem ipsum』を含む。なお仕様の [insert 判定は角括弧付きなのでここでは素の insert のみ→ lorem/ipsum/TODO の3語で確実にERROR）。→ PLACEHOLDER: 'lorem'・'ipsum'・'TODO' の case-insensitive 一致で ERROR。"
+      }
+    },
+    {
+      "pattern": "two-column",
+      "content": {
+        "kicker": "下期の重点施策",
+        "title": "海外投資を軸に、体制・製品・パートナーを同時に強化する",
+        "lead": "海外セグメントの高成長を持続させるため、営業体制の増強、現地化した製品ラインナップ、そして販売パートナー網の拡充を並行して進める。",
+        "items": [
+          {
+            "n": 1,
+            "head": "現地営業体制の増強",
+            "body": "• 主要3拠点に営業責任者を配置し、現地採用を前倒しで進める📈（本物の中点ビュレット U+2022 と絵文字をベタ打ちしたAI風の箇条書き）。"
+          },
+          {
+            "n": 2,
+            "head": "製品の現地化",
+            "body": "言語・通貨・規制対応を優先度順に実装し、四半期ごとにリリースする。"
+          },
+          {
+            "n": 3,
+            "head": "パートナー網の拡充",
+            "body": "販売代理店との共同マーケティングを開始し、リード獲得単価を下げる。"
+          }
+        ],
+        "notes": "【AI-TELL チェックを狙う】items[0].body に本物の中点ビュレット（U+2022『•』）と絵文字（📈）をベタ打ち。house-quality-bar §2 の『native bullets を使え／絵文字をアイコンにするな』に反する。日本語の中黒（U+30FB『・』）は正当な約物なので検出対象外。items 数は3（理想値）で CAPACITY には触れず、AI-TELL（bullet + emoji）だけを発火させる設計。→ AI-TELL: リテラル中点ビュレットで WARN、絵文字で WARN。"
+      }
+    },
+    {
+      "pattern": "cta",
+      "content": {
+        "kicker": "次のステップ",
+        "titleLines": ["下期の投資計画を、一緒に詰めませんか？"],
+        "offerHead": "経営レビュー個別セッション（無料・45分）",
+        "offerBody": "本レビューの前提と数値を貴部門の視点で再検証し、下期アクションに落とし込みます。売り込みはありません。",
+        "contact": "社内フォーム: /keiei-review",
+        "notes": "このスライドは健全（title 1行・オファー1件）。サンドイッチを閉じるための正常な締め。チェックには意図的に触れない。"
+      }
+    }
+  ]
+}

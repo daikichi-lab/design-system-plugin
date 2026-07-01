@@ -1,0 +1,47 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "$comment": "ADVERSARIAL FIXTURE — do NOT ship. Identical to themes/_default-neutral/theme.json EXCEPT: colors.muted (9AA6B2) and colors.faint (C9D2DA) are set very light on the white bg so the text-muted contrast pairs [muted,bg] and [faint,bg] fall below 4.5 (WARN, and faint likely below 3.0 = ERROR); colors.onDarkMuted (2A3646) is set close to the dark bg (1E2A3A) so the [onDarkMut,dark] pair collapses (ERROR). All primary ink/accent/dark pairs are left untouched so ONLY the secondary/text-muted CONTRAST checks fire. canvas.margin stays 0.7 (healthy) so MARGIN does not fire.",
+  "name": "adversarial-low-contrast",
+  "canvas": { "w": 13.333, "h": 7.5, "margin": 0.7 },
+  "font": { "family": "Meiryo" },
+  "colors": {
+    "bg": "FFFFFF",
+    "ink": "1B2735",
+    "muted": "9AA6B2",
+    "faint": "C9D2DA",
+    "surface": "F3F5F7",
+    "surfaceAccent": "E9F3F3",
+    "line": "DCE2E8",
+    "dark": "1E2A3A",
+    "darkAlt": "26384C",
+    "onDark": "FFFFFF",
+    "onDarkMuted": "2A3646",
+    "accent": "0E7C86",
+    "accentDeep": "0A5E66",
+    "accentSoft": "5FA8AE",
+    "onAccentMuted": "EAF7F7"
+  },
+  "sizes": {
+    "cover": 40,
+    "coverSub": 17,
+    "title": 28,
+    "kicker": 12.5,
+    "message": 32,
+    "stat": 62,
+    "head": 18,
+    "body": 15,
+    "small": 13,
+    "cap": 11,
+    "num": 17,
+    "compareLabel": 22,
+    "takeawayHead": 19,
+    "offerHead": 21,
+    "footer": 12.5,
+    "sectionTitle": 36,
+    "sectionIndex": 150,
+    "statCard": 40
+  },
+  "brand": {
+    "footerLabel": ""
+  }
+}
