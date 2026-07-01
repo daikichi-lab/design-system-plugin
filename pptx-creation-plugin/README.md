@@ -71,22 +71,32 @@ headless.)
 
 ## How to use it from a project repo
 
+**Set the project up once:**
+
 1. **`/pptx-creation:project-scaffold`** — make the repo deck-ready (`docs/`,
    a `theme.json` stub, `outputs/`). Never overwrites; emits `.example` on
    conflict.
-2. **`/pptx-creation:theme-init`** — create the project's `theme.json` (derive a
-   palette from a logo / existing deck, or adjust the neutral default), then
-   render a 1-slide preview for sign-off. Visual identity **only**.
-3. **`/pptx-creation:deck-brief`** — turn a vague or partial ask into a complete,
-   structured **brief** (audience, goal-action, one message, data + honesty
-   labels, design, constraints, verification). Asks only what can't be guessed;
-   the intake that sets the quality ceiling. See [Writing the brief](#writing-the-brief-the-input-that-sets-the-ceiling).
-4. **`/pptx-creation:deck-strategy`** — turn the brief + 原稿 into a **deck plan**
+2. **`/pptx-creation:design-doc`** — author the repo's **`DESIGN.md`**: the
+   standing design system + deck conventions (brand + design language,
+   per-audience presets, honesty house rules, constraints, verification bar).
+   `deck-brief` reads this on every deck, so all your decks come out on-brand and
+   consistent. Once per project; update on brand changes.
+3. **`/pptx-creation:theme-init`** — create the project's `theme.json` from
+   DESIGN.md §2 (derive a palette from a logo / existing deck, or adjust the
+   neutral default), then render a 1-slide preview for sign-off. Visual identity **only**.
+
+**Then, per deck:**
+
+4. **`/pptx-creation:deck-brief`** — turn a vague or partial ask into a complete,
+   structured **brief**. Reads `DESIGN.md` for the stable slots and asks only the
+   per-deck delta (this deck's message + data); the intake that sets the quality
+   ceiling. See [Writing the brief](#writing-the-brief-the-input-that-sets-the-ceiling).
+5. **`/pptx-creation:deck-strategy`** — turn the brief + 原稿 into a **deck plan**
    (audience → scene → goal-action → message → narrative frame → pattern
    sequence). Structure + wording only; theme-agnostic.
-5. **`/pptx-creation:create-deck`** — generate the `.pptx`, run the **mandatory
+6. **`/pptx-creation:create-deck`** — generate the `.pptx`, run the **mandatory
    QA loop**, then call review.
-6. **`/pptx-creation:deck-review`** — score it against the quality bar and emit
+7. **`/pptx-creation:deck-review`** — score it against the quality bar and emit
    a `deck_review` JSON (bands: <80 reject · 80–89 internal · ≥90 external).
 
 ## Writing the brief (the input that sets the ceiling)
@@ -127,10 +137,17 @@ the honest material, the audience, and the bar.** Fill this brief (or just run
 real-machine feedback refine it; fixing audience, goal-action, message, and honesty
 is enough to start.
 
+**Making many decks?** Capture the *stable* answers — brand, per-audience presets,
+honesty house rules, constraints, the bar — once in a project **`DESIGN.md`** via
+[`design-doc`](skills/design-doc/SKILL.md). `deck-brief` reads it and then asks
+only each deck's message and data, so every deck is on-brand without re-briefing.
+DESIGN.md (project, standing) × the brief (one deck) is the precision multiplier.
+
 ## Skills
 
 | Skill | Use it to… |
 |---|---|
+| [`design-doc`](skills/design-doc/SKILL.md) | author the project's `DESIGN.md` — its standing design system + deck conventions (read by `deck-brief`) |
 | [`deck-brief`](skills/deck-brief/SKILL.md) | turn a vague ask into a complete, structured brief (the intake that sets the ceiling) |
 | [`design-language`](skills/design-language/SKILL.md) | pick one design language from the bookshelf (theme + principles) |
 | [`deck-strategy`](skills/deck-strategy/SKILL.md) | turn a goal/原稿 into a validated deck plan (pattern order) |

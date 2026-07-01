@@ -65,9 +65,13 @@
    [`pptx-creation-plugin/examples/seminar-kanrikaikei/`](pptx-creation-plugin/examples/seminar-kanrikaikei)
    を開いてください。「これ以上崩れてはいけない」基準となる参照レンダです。
 
-3. **プロジェクトを用意（任意）。** 自社ブランドのテーマでリポジトリをデッキ対応に
-   するには **`/pptx-creation:project-scaffold`** → **`/pptx-creation:theme-init`**。
-   案件ごとの中身とテーマは*あなたの*リポジトリに置き、プラグインは汎用のまま保ちます。
+3. **プロジェクトを用意（任意・何本も作るなら推奨）。** リポジトリをデッキ対応にするには
+   **`/pptx-creation:project-scaffold`** → **`/pptx-creation:design-doc`** →
+   **`/pptx-creation:theme-init`**。`design-doc` はそのリポジトリの **`DESIGN.md`**
+   （常設の設計システム：ブランド・デザイン言語・オーディエンス別プリセット・正直さの
+   house rules・制約・検証バー）を作ります。以後 `deck-brief` がそれを読み、**毎回は
+   差分だけ**聞くので、全デッキが一貫して on-brand になります。案件ごとの中身とテーマは
+   *あなたの*リポジトリに置き、プラグインは汎用のまま保ちます。
 
 全体の流れ：
 

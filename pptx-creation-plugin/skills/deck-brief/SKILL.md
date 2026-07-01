@@ -34,19 +34,28 @@ or render anything — you set the intent, then hand off.
 
 ## Procedure
 
-1. **Parse what's given.** Map the request onto the 10 slots; mark each *have* /
-   *inferable* / *missing-critical*.
-2. **Ask only the critical-unguessable slots**, batched into one round (use the
+1. **Load the project `DESIGN.md` (if present** at the repo root, from
+   [`design-doc`](../design-doc/SKILL.md)**).** It pre-fills the *stable* slots —
+   **design, the per-audience presets, the honesty house rules, constraints, and
+   the verification bar** — so those become **defaults, not questions**. With a
+   DESIGN.md, your asks collapse to little more than *which audience preset*, this
+   deck's *one message*, and its *data*. No DESIGN.md → default from the plugin as
+   below (and suggest running `design-doc` if this repo will make many decks).
+2. **Parse what's given.** Map the request onto the 10 slots; mark each *have
+   (incl. from DESIGN.md)* / *inferable* / *missing-critical*.
+3. **Ask only the critical-unguessable slots**, batched into one round (use the
    question tool, ≤4 items). The usual asks: **audience + scene**, **goal-action
    + one message**, and — for anything with numbers — **which figures are
-   estimates / forecasts / non-standard definitions**. Do **not** ask what you can
-   default; do not interrogate slot by slot.
-3. **Infer the rest and say so**, e.g. "構成はおまかせ（deck-strategy に SCQA で
-   組ませます）／デザインは neutral-business（対外も通る）／12枚以内／出力は Desktop
+   estimates / forecasts / non-standard definitions** (beyond the DESIGN.md §4
+   rules already applied). Do **not** ask what you can default; do not interrogate
+   slot by slot.
+4. **Infer the rest and say so**, e.g. "構成はおまかせ（deck-strategy に SCQA で
+   組ませます）／デザインは DESIGN.md の neutral-business／12枚以内／出力は Desktop
    — 変えたい所だけ教えてください。"
-4. **Emit the filled brief** as a short, scannable block (the 10 slots), so the
-   user sees the whole intent at a glance and can veto one line.
-5. **Hand off:** for a substantial deck → **deck-strategy** (spine → plan) then
+5. **Emit the filled brief** as a short, scannable block (the 10 slots, noting
+   which came from DESIGN.md), so the user sees the whole intent at a glance and
+   can veto one line.
+6. **Hand off:** for a substantial deck → **deck-strategy** (spine → plan) then
    **create-deck**; if a design language matters, note it for **design-language**.
    For a tiny/one-slide ask you may go straight to create-deck with the brief.
 
