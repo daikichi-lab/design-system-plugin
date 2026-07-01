@@ -156,9 +156,17 @@ function footer(slide, T, brand, page, showPage) {
 function slideCover(pres, d, T) {
   const s = pres.addSlide();
   s.background = { color: T.c.dark };
-  // depth motif: large soft oval, partly off-canvas (NOT a stripe)
-  s.addShape("ellipse", { x: 9.2, y: 3.7, w: 7.2, h: 7.2,
-    fill: { color: T.c.darkAlt }, line: { type: "none" } });
+  if (d.bg) {
+    // hybrid-editorial image slot: a code-drawn SVG atmosphere (with a baked,
+    // feathered scrim for legibility) as a full-bleed picture; native text sits
+    // on top (M-8). The path is a per-project asset (assets/generated/), never
+    // generated inline here (separation principle).
+    s.addImage({ path: d.bg, x: 0, y: 0, w: T.W, h: T.H });
+  } else {
+    // depth motif: large soft oval, partly off-canvas (NOT a stripe)
+    s.addShape("ellipse", { x: 9.2, y: 3.7, w: 7.2, h: 7.2,
+      fill: { color: T.c.darkAlt }, line: { type: "none" } });
+  }
   kicker(s, T, d.kicker, 1.55, { onDark: true });
   title(s, T, d.titleLines, 2.2, { onDark: true, size: T.s.cover, w: 10 });
   if (d.subtitle) s.addText(d.subtitle, { x: T.m, y: 4.7, w: 9.5, h: 0.5, margin: 0,

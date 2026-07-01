@@ -61,6 +61,10 @@ node "$HERE/lint/design-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" || echo "  d
 echo "== typo-lint =="
 node "$HERE/lint/typo-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" "${LEXARG[@]}" || echo "  typo-lint skipped or found orphans (see above)."
 
+# 4b. image-lint (hybrid decks — pixel gate for bg images; no-op if none)
+echo "== image-lint =="
+node "$HERE/lint/image-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" || echo "  image-lint found issues or skipped (see above)."
+
 # 5. render for the visual QA loop (you still OPEN and LOOK — M-2)
 echo "== render (then OPEN every slide-*.jpg and inspect — M-2) =="
 bash "$HERE/qa.sh" "$OUT"
