@@ -22,7 +22,7 @@ the pattern contracts you are filling live in
 
 You need two files:
 
-- **A deck plan** — an ordered list of slides, each naming one of the six
+- **A deck plan** — an ordered list of slides, each naming one of the nine
   patterns plus that pattern's content slots. It must validate against
   [`../../schemas/deck_plan.schema.json`](../../schemas/deck_plan.schema.json).
   Normally `deck-strategy` produces this; if no plan exists, author one first
@@ -50,20 +50,35 @@ the engine throw.
 
 ---
 
-## 2. Generate
+## 2. Generate (bake → generate → lint → render)
+
+Run the whole pipeline in one command. It **bakes balanced Japanese line breaks**
+(kinsoku — no 泣き別れ) into the plan, generates the native pptx, runs the two
+automatic gates, and renders for the QA loop:
 
 ```bash
-node bin/generate.js --plan <plan.json> --theme <theme.json> --out <out.pptx>
+bash bin/build.sh --plan <plan.json> --theme <theme.json> --out <out.pptx>
 ```
 
-`--theme` defaults to `themes/_default-neutral/theme.json` if omitted. The engine
-([`../../bin/generate.js`](../../bin/generate.js)) looks each slide's `pattern` up
-in its registry and draws it with the theme tokens. The engine is the **source of
-truth for every coordinate and size** — never pass geometry through the plan, and
-never edit the produced `.pptx` by hand (see §6).
+Under the hood: [`bin/layout-html/bake.js`](../../bin/layout-html/bake.js) (compute
+balanced breaks in real Yu Gothic → explicit line arrays, spec §5) →
+[`bin/generate.js`](../../bin/generate.js) (draw natively) → `design-lint` +
+`typo-lint` (§3) → [`bin/qa.sh`](../../bin/qa.sh) (render).
 
-If the engine throws (`Unknown pattern …`, a schema-shaped content gap), fix the
-**plan**, not the engine, and re-run.
+- **Baking is the typesetting floor**
+  ([`typography.md`](../../references/principles/typography.md),
+  [`kinsoku.md`](../../references/principles/kinsoku.md)): it removes orphaned
+  trailing characters mechanically, so you don't hand-split lines. It needs the
+  one-time Phase-B setup — `bash bin/layout-html/setup.sh` (Yu Gothic + Playwright).
+  If that engine isn't present, `build.sh` **falls back** to the un-baked plan and
+  the visual QA loop still backstops you — the deck still builds.
+- To run the raw engine alone (debugging):
+  `node bin/generate.js --plan <p> --theme <t> --out <o>`. `--theme` defaults to
+  `themes/_default-neutral/theme.json`.
+- The engine is the **source of truth for every coordinate and size** — never pass
+  geometry through the plan, and never edit the produced `.pptx` by hand (see §6).
+- If the engine throws (`Unknown pattern …`, a schema-shaped content gap), fix the
+  **plan**, not the engine, and re-run.
 
 ---
 
@@ -72,6 +87,14 @@ If the engine throws (`Unknown pattern …`, a schema-shaped content gap), fix t
 A written `.pptx` is **not** a finished deck. The first render almost always has a
 few breaks. Run this loop every single generation. Full procedure:
 [`house-quality-bar.md` §5](../../references/principles/house-quality-bar.md).
+
+**Two automatic gates run first (no eyes needed — `build.sh` runs them):**
+**design-lint** ([`bin/lint/design-lint.js`](../../bin/lint/design-lint.js) —
+contrast, margins, capacity, AI-tell characters, placeholders; §6-1) and
+**typo-lint** ([`bin/lint/typo-lint.js`](../../bin/lint/typo-lint.js) — predicts
+Japanese line breaks and flags 泣き別れ/orphans; §5.5). Clear their ERRORs first.
+They are a cheap pre-filter, **not** a replacement for the render-and-look below —
+overflow/overlap/contrast *in context* still need eyes.
 
 ### a. Render to images
 
@@ -98,7 +121,7 @@ not what's actually on the slide. Checklist, most-frequent failure first:
 - **Overlap** — text through shapes, the cover/CTA oval running under glyphs, a
   number-circle colliding with its heading.
 - **Edge margin < 0.5"** — reads as "too tight." The neutral default margin is
-  `0.7`; honor it.
+  `0.75`; honor it.
 - **Contrast** — light text on light, or muted text too faint to read.
 - **Alignment** — columns and cards not on a shared grid; body text that drifted
   to center (only titles may center).

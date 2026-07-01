@@ -13,3 +13,16 @@
 # python-pptx>=0.6.23   # future numeric/python-pptx engine track
 # Pillow>=10.0.0        # optional: logo colour extraction for theme-init
                         # (sharp in Node works too — no Python dependency required)
+
+# ============================================================
+#  Node + system toolchain (the ACTUAL requirements)
+# ============================================================
+#  Runtime:    Node >=18, then `npm install` (pptxgenjs; playwright-core + pngjs
+#              for the Phase-B typesetting engine; ajv/ajv-formats for the dev validator).
+#  QA render:  LibreOffice (soffice) + poppler (pdftoppm).            [bin/qa.sh]
+#  Typesetting (Phase B, spec §5/§10) — run ONCE per environment:
+#              bash bin/layout-html/setup.sh
+#                - Yu Gothic registered with fontconfig
+#                  (WSL2: copied from /mnt/c/Windows/Fonts/YuGoth*.ttc)
+#                - a Playwright chromium binary (npx playwright install chromium)
+#  No GPU, and no image-generation API/MCP anywhere (M-7).

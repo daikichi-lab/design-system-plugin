@@ -8,5 +8,11 @@ node_modules/
 **/slide-*.jpeg
 **/slide-*.png
 
+# baked plans (regenerate with bin/layout-html/bake.js — an intermediate, not source)
+*.baked.json
+
+# per-project generated assets live in each project repo, never in the plugin (M-6/M-8)
+assets/generated/
+
 # OS / editor noise
 .DS_Store
