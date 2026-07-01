@@ -1,0 +1,19 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "name": "data-driven",
+  "canvas": { "w": 13.333, "h": 7.5, "margin": 0.55 },
+  "font": { "family": "BIZ UDGothic", "heading": "BIZ UDGothic", "body": "BIZ UDGothic", "caption": "BIZ UDGothic" },
+  "colors": {
+    "bg": "FFFFFF", "ink": "1B2733", "muted": "515C67", "faint": "8A939C",
+    "surface": "F1F4F7", "surfaceAccent": "E6F0FA", "line": "DCE1E7",
+    "dark": "15202B", "darkAlt": "22303D", "onDark": "FFFFFF", "onDarkMuted": "A6B0BA",
+    "accent": "1A6FC4", "accentDeep": "11548E", "accentSoft": "6AA0D6", "onAccentMuted": "E7F1FB"
+  },
+  "sizes": {
+    "cover": 40, "coverSub": 16, "title": 26, "kicker": 12, "message": 30, "stat": 58,
+    "head": 17, "body": 14, "small": 12.5, "cap": 11, "num": 16, "compareLabel": 21,
+    "takeawayHead": 18, "offerHead": 20, "footer": 12, "sectionTitle": 32, "sectionIndex": 140, "statCard": 38
+  },
+  "lead": { "title": 1.08, "display": 1.16, "body": 1.5, "caption": 1.4, "tight": 1.3 },
+  "brand": { "footerLabel": "" }
+}

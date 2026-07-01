@@ -1,0 +1,19 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "name": "swiss",
+  "canvas": { "w": 13.333, "h": 7.5, "margin": 0.9 },
+  "font": { "family": "BIZ UDGothic", "heading": "BIZ UDGothic", "body": "BIZ UDGothic", "caption": "BIZ UDGothic" },
+  "colors": {
+    "bg": "FFFFFF", "ink": "111417", "muted": "545B62", "faint": "949BA2",
+    "surface": "F2F3F4", "surfaceAccent": "FBE7EA", "line": "E2E4E6",
+    "dark": "111417", "darkAlt": "24282C", "onDark": "FFFFFF", "onDarkMuted": "AAB0B6",
+    "accent": "D6001C", "accentDeep": "A80016", "accentSoft": "E8697A", "onAccentMuted": "FBE1E5"
+  },
+  "sizes": {
+    "cover": 48, "coverSub": 18, "title": 32, "kicker": 12, "message": 34, "stat": 66,
+    "head": 19, "body": 15, "small": 13.5, "cap": 12, "num": 17, "compareLabel": 23,
+    "takeawayHead": 19, "offerHead": 21, "footer": 12.5, "sectionTitle": 38, "sectionIndex": 160, "statCard": 42
+  },
+  "lead": { "title": 1.06, "display": 1.14, "body": 1.6, "caption": 1.5, "tight": 1.4 },
+  "brand": { "footerLabel": "" }
+}

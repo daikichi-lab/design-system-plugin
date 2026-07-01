@@ -1,0 +1,19 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "name": "editorial",
+  "canvas": { "w": 13.333, "h": 7.5, "margin": 0.8 },
+  "font": { "family": "Yu Gothic", "heading": "Yu Mincho", "body": "Yu Gothic Medium", "caption": "Yu Gothic" },
+  "colors": {
+    "bg": "FBF8F3", "ink": "2A2620", "muted": "665E51", "faint": "A69C8A",
+    "surface": "F3EEE4", "surfaceAccent": "F0E4DB", "line": "E4DBCB",
+    "dark": "2A2620", "darkAlt": "3E382E", "onDark": "FBF8F3", "onDarkMuted": "BDB4A2",
+    "accent": "A8442C", "accentDeep": "82331F", "accentSoft": "CE8571", "onAccentMuted": "F6E8E2"
+  },
+  "sizes": {
+    "cover": 50, "coverSub": 18, "title": 33, "kicker": 12, "message": 34, "stat": 66,
+    "head": 19, "body": 15, "small": 13.5, "cap": 12, "num": 17, "compareLabel": 23,
+    "takeawayHead": 20, "offerHead": 21, "footer": 12.5, "sectionTitle": 40, "sectionIndex": 150, "statCard": 42
+  },
+  "lead": { "title": 1.1, "display": 1.2, "body": 1.65, "caption": 1.55, "tight": 1.45 },
+  "brand": { "footerLabel": "" }
+}

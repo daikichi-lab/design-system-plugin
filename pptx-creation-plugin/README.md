@@ -23,11 +23,15 @@ titles, or title underlines).
 | The theme **schema** + one neutral default | The generated `.pptx` outputs |
 | Review + the quality bar | — |
 
-The plugin ships **exactly one** neutral theme. It never stores a brand's
-colours or fonts, and a theme never stores chapter structure or slide order —
-that separation is the whole point (and is verified in
-[`examples/theme-swap-demo/`](examples/theme-swap-demo), where the same deck
-renders under a second brand).
+The plugin ships a **bookshelf of design languages** — `neutral-business` (the
+default), `swiss`, `editorial`, `minimal`, `data-driven`, `wa-modern`, and
+`hybrid-editorial` — each a **style template** (palette / type / whitespace /
+font), not a brand. It never stores a *brand's* colours, and a theme never stores
+chapter structure or slide order — that separation is the whole point (verified in
+[`examples/theme-swap-demo/`](examples/theme-swap-demo)). Pick **one** language
+per deck via the [`design-language`](skills/design-language/SKILL.md) skill; a
+project copies a shelf theme and adjusts its brand colours. See
+[`references/design-languages/`](references/design-languages).
 
 ## Architecture (three layers that never bleed)
 
@@ -85,6 +89,7 @@ headless.)
 
 | Skill | Use it to… |
 |---|---|
+| [`design-language`](skills/design-language/SKILL.md) | pick one design language from the bookshelf (theme + principles) |
 | [`deck-strategy`](skills/deck-strategy/SKILL.md) | turn a goal/原稿 into a validated deck plan (pattern order) |
 | [`create-deck`](skills/create-deck/SKILL.md) | generate the `.pptx` + run the QA loop + call review |
 | [`theme-init`](skills/theme-init/SKILL.md) | create a project's `theme.json` (visual identity only) |
