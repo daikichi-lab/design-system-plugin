@@ -1,0 +1,10 @@
+# Local Claude Code state (per-machine, not shared)
+.claude/
+
+# Node
+node_modules/
+
+# OS / editor junk
+.DS_Store
+*.log
+*.tmp
