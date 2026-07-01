@@ -111,8 +111,11 @@ async function measure({ text, widthIn, sizePt, role = "body", leading = 1.5, wr
     const lineLens = lines.map((l) => [...l].length);
     const count = lines.length;
     const lastLen = count ? lineLens[count - 1] : 0;
-    // Orphan (泣き別れ): a trailing line of <=2 chars dangling under a multi-line block.
-    const hasOrphan = count > 1 && lastLen <= 2;
+    // Orphan (泣き別れ): a trailing line of <=3 chars dangling under a multi-line
+    // block. <=3 (not <=2) because a stranded 2-3 char tail reads as machine-set,
+    // AND it absorbs the +-1-2 char break-point jitter between Chromium and
+    // PowerPoint/LibreOffice — a 3-char tail here can be a 1-2 char orphan there.
+    const hasOrphan = count > 1 && lastLen <= 3;
     // fill = widest line / box width; lenVar = stdev of line char-lengths (balance quality).
     const fill = box.boxWidthPx ? Math.max(0, ...box.widths) / box.boxWidthPx : 0;
     const mean = lineLens.reduce((a, b) => a + b, 0) / (count || 1);

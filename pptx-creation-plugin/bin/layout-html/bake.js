@@ -41,12 +41,17 @@ async function bakePlan(planPath, themePath) {
       if (f.baked) continue; // already an explicit line array
       considered++;
       const ew = effectiveWidth(f.widthIn, { bullet: f.bullet });
-      const r = await measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "balance" });
-      if (r.count > 1) {
-        setByPath(sl.content, f.path, r.lines);
-        baked++;
-        changes.push({ slide: i + 1, pattern: sl.pattern, path: f.path, lines: r.lineLens });
-      }
+      // Minimal intervention: only re-break a field whose natural (greedy) wrap
+      // would ORPHAN (泣き別れ). A clean multi-line wrap is left as a plain string
+      // so the deck's own typesetting is preserved — we fix orphans, not restyle.
+      const auto = await measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "auto" });
+      if (!auto.hasOrphan) continue;
+      const bal = await measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "balance" });
+      // prefer the balanced break; fall back to auto if balance can't clear it
+      const lines = (bal.count > 1 && !bal.hasOrphan) ? bal.lines : auto.lines;
+      setByPath(sl.content, f.path, lines);
+      baked++;
+      changes.push({ slide: i + 1, pattern: sl.pattern, path: f.path, from: auto.lineLens, to: lines.map((l) => [...l].length) });
     }
   }
   return { out: raw, baked, considered, changes };
@@ -70,7 +75,7 @@ async function main() {
   const { out, baked, considered, changes } = await bakePlan(a.plan, a.theme);
   fs.writeFileSync(a.out, JSON.stringify(out, null, 2) + "\n");
   console.log(`baked ${baked}/${considered} wrapping field(s) -> ${a.out}`);
-  for (const c of changes) console.log(`  slide ${c.slide} ${c.pattern} ${c.path}: lines [${c.lines}]`);
+  for (const c of changes) console.log(`  slide ${c.slide} ${c.pattern} ${c.path}: [${c.from}] -> [${c.to}]`);
   return 0;
 }
 

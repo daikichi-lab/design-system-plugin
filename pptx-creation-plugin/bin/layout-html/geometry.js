@@ -12,13 +12,18 @@
  *  not auto-wrapped, so they are intentionally NOT listed here.
  * ============================================================ */
 
-// pptx text boxes inset the text; PowerPoint's default is 0.1in per side.
-// Computing breaks at (box - this) keeps a baked line inside the real box.
-const EFFECTIVE_INSET_IN = 0.2;
+// The engine draws text with margin:0 (no pptx text inset), so the effective
+// wrap width is ~the full box — NOT box minus a 0.1in-per-side inset. The only
+// reduction is metric noise: chromium fits marginally more per line than
+// LibreOffice/PowerPoint. Calibrated against soffice Yu Gothic — the chart
+// takeaway and the financial caption both match soffice at ~0.95*box (a ~5%
+// safety that also keeps baked lines inside the box). Bullets add their real
+// hanging indent on top. (Earlier box-0.2in over-narrowed and invented orphans.)
+const EFFECTIVE_FACTOR = 0.95;
 const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
-  return rawIn - EFFECTIVE_INSET_IN - (bullet ? BULLET_INDENT_IN : 0);
+  return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
 }
 
 // Returns [{ path, text, widthIn (raw box), sizePt, role, leading, bullet }].
@@ -82,4 +87,4 @@ function wrappingFields(slide, T) {
   return out;
 }
 
-module.exports = { wrappingFields, effectiveWidth, EFFECTIVE_INSET_IN, BULLET_INDENT_IN };
+module.exports = { wrappingFields, effectiveWidth, EFFECTIVE_FACTOR, BULLET_INDENT_IN };

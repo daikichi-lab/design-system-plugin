@@ -54,7 +54,7 @@ async function lintPlan(planPath, themePath) {
         const lens = f.lines.map((l) => [...l].length);
         const lastLen = lens[lens.length - 1] || 0;
         if (f.lines.length > 1) multiline++;
-        const lineOrphan = f.lines.length > 1 && lastLen <= 2;
+        const lineOrphan = f.lines.length > 1 && lastLen <= 3;
         let overflow = null;
         for (const ln of f.lines) {
           const rr = await measure({ text: ln, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap: "auto" });
