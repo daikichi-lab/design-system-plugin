@@ -4,9 +4,12 @@
  *
  *  A CI-friendly linter that catches the deck breaks you can find
  *  WITHOUT rendering: leftover placeholders, over-capacity slides,
- *  low theme contrast, too-tight margins, and AI-tell characters.
- *  It is the cheap first pass BEFORE the mandatory visual QA loop
- *  (house-quality-bar.md §5) — not a replacement for it.
+ *  card overflow (a baked card field taller than its card), low theme
+ *  contrast, too-tight margins, and AI-tell characters. It is the cheap
+ *  first pass BEFORE the mandatory visual QA loop (house-quality-bar.md
+ *  §5) — not a replacement for it. The card-overflow check reads baked
+ *  line arrays (no browser); on a raw plan it under-reports rather than
+ *  false-positives (the full build.sh pipeline bakes first).
  *
  *  Usage:
  *    node bin/lint/design-lint.js --plan <plan.json> [--theme <theme.json>] [--json]
@@ -23,6 +26,8 @@
 const path = require("path");
 // Reuse the engine's loaders so we parse plan/theme exactly once, the same way.
 const { loadPlan, loadTheme } = require("../generate.js");
+// Card geometry for the height-overflow check (shared with bake / typo-lint).
+const { heightBoxes, boxVerdict } = require("../layout-html/geometry.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -237,6 +242,51 @@ function checkCapacity(slides, F) {
   });
 }
 
+/* ---------------- CHECK: CARD OVERFLOW (height capacity) ---------------- */
+// Read a value at a path like "takeaway" | "offerBody" | "stats[2].sub".
+function getByPath(obj, p) {
+  const parts = p.replace(/\[(\d+)\]/g, ".$1").split(".");
+  let o = obj;
+  for (const part of parts) {
+    if (o == null) return undefined;
+    o = o[part];
+  }
+  return o;
+}
+
+// A multi-line PROSE field inside a bounded card can render taller than the
+// card and spill its last lines below the card's bottom edge — a real break
+// (text outside its container). This is a hard ERROR (exit 1), a different
+// tier from typo-lint's advisory compound-split.
+//
+// STATIC by design (no browser / no new dependency): the line COUNT comes from
+// the baked plan's explicit line arrays. bake.js bakes every multi-line card
+// field to an array precisely so this count is visible here. A field that is
+// still a plain STRING at this point fit on a single line (bake leaves 1-line
+// fields as strings), so it counts as 1 line. Run on a RAW (un-baked) plan this
+// check therefore under-reports rather than false-positives — the full pipeline
+// (build.sh bakes first) is where it has complete coverage. Card geometry and
+// the safety margin live in layout-html/geometry.js (one calibration knob).
+function checkOverflow(slides, T, F) {
+  slides.forEach((sl, i) => {
+    const idx = i + 1;
+    for (const box of heightBoxes(sl, T)) {
+      const val = getByPath(sl.content || {}, box.path);
+      let nLines;
+      if (Array.isArray(val)) nLines = val.length;
+      else if (typeof val === "string" && val.trim()) nLines = 1;
+      else continue; // missing / empty — nothing to render
+      const v = boxVerdict(box, nLines);
+      if (v.over) {
+        const pct = Math.round(v.pct * 100);
+        F.error(idx, "OVERFLOW",
+          `${box.id} (${box.path}): ${nLines} lines = ${pct}% of card inner height ` +
+          `(over the ${Math.round(v.safety * 100)}% fill limit) — text overflows the card; shorten it or split the slide`);
+      }
+    }
+  });
+}
+
 /* ---------------- CHECK: CONTRAST (theme token pairs) ---------------- */
 // Pairs are [fg, bg] short-key token names. Primary = must be readable body/UI
 // text (>=4.5 or ERROR). Secondary = intentionally muted text (WARN <4.5,
@@ -359,6 +409,7 @@ function run(args) {
   const F = makeFindings();
   checkPlaceholders(slides, F);
   checkCapacity(slides, F);
+  checkOverflow(slides, T, F);
   checkContrast(T, F);
   checkMargin(T, F);
   checkAiTells(slides, F);
@@ -407,7 +458,7 @@ function main() {
 if (require.main === module) main();
 
 module.exports = {
-  contrastRatio, relLuminance, walkStrings,
-  checkPlaceholders, checkCapacity, checkContrast, checkMargin, checkAiTells,
+  contrastRatio, relLuminance, walkStrings, getByPath,
+  checkPlaceholders, checkCapacity, checkOverflow, checkContrast, checkMargin, checkAiTells,
   run,
 };

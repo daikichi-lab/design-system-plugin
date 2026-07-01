@@ -92,11 +92,21 @@ few breaks. Run this loop every single generation. Full procedure:
 
 **Two automatic gates run first (no eyes needed — `build.sh` runs them):**
 **design-lint** ([`bin/lint/design-lint.js`](../../bin/lint/design-lint.js) —
-contrast, margins, capacity, AI-tell characters, placeholders; §6-1) and
-**typo-lint** ([`bin/lint/typo-lint.js`](../../bin/lint/typo-lint.js) — predicts
-Japanese line breaks and flags 泣き別れ/orphans; §5.5). Clear their ERRORs first.
-They are a cheap pre-filter, **not** a replacement for the render-and-look below —
-overflow/overlap/contrast *in context* still need eyes.
+contrast, margins, capacity, **card overflow**, AI-tell characters, placeholders;
+§6-1) and **typo-lint** ([`bin/lint/typo-lint.js`](../../bin/lint/typo-lint.js) —
+predicts Japanese line breaks and flags 泣き別れ/orphans; §5.5). Clear their ERRORs
+first — a design-lint ERROR is a **blocking gate**: `build.sh` still renders the
+deck so you can look, but exits non-zero so a break can't ship unnoticed.
+
+The **card-overflow** check is the machine version of the top failure mode below:
+it counts a card field's baked lines and fails when they exceed the card's inner
+height (chart `takeaway`, cta `offerBody`, stat-grid `sub`; the safety margin and
+per-card geometry live in [`bin/layout-html/geometry.js`](../../bin/layout-html/geometry.js)).
+It is a **soffice/Yu-Gothic proxy** — real PowerPoint's line height can differ, so
+the margin absorbs jitter but the on-machine look still matters. These gates are a
+cheap pre-filter that saves a QA round, **not** a replacement for the render-and-look
+below: composition, emphasis, overlap, and contrast *in context* still need eyes,
+and `comparison` cards aren't height-checked yet (measured by eye).
 
 ### a. Render to images
 

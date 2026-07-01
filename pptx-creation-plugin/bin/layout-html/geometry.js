@@ -26,6 +26,91 @@ function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
 }
 
+/* ============================================================
+ *  Height-overflow geometry (card-overflow gate)
+ *
+ *  A multi-line PROSE field inside a BOUNDED CARD can render taller than the
+ *  card and spill its last lines below the card's bottom edge — a real break
+ *  (text outside its container), not a cosmetic one. Width-wrapping (above)
+ *  tells us the LINE COUNT; this section tells us the card's INNER HEIGHT. The
+ *  gate (design-lint's OVERFLOW check) just crosses the two.
+ *
+ *  Each box below is a single richText() field sitting in a card, with:
+ *    topY      the y (in) where the field's text box starts (from generate.js)
+ *    bottomY   the y (in) of the card's bottom edge (cardY + cardH)
+ *  The available height is (bottomY - topY); the rendered height is
+ *  lineCount * (sizePt * leading / 72). We flag ERROR when rendered exceeds
+ *  available * OVERFLOW_SAFETY.
+ *
+ *  OVERFLOW_SAFETY (the one calibration knob): we do NOT allow "fits exactly."
+ *  Line height is renderer-dependent — this is calibrated to the soffice/Yu
+ *  Gothic proxy (line box = leading * fontSize, which matches what qa.sh
+ *  renders), and real PowerPoint's Yu Gothic line height can run slightly
+ *  taller, so a field that touches the card edge in soffice may spill on a
+ *  real machine. Reserving 8% (0.92) as bottom padding absorbs that jitter —
+ *  the same reasoning as the orphan <=3 threshold. Lower this constant (e.g.
+ *  0.88) if real-machine testing shows PowerPoint overflowing where the gate
+ *  passed; raise it toward 0.95 if it proves too eager. Keep it here, one place.
+ *
+ *  These y-coordinates DUPLICATE the card geometry in bin/generate.js (the
+ *  source of truth). If a card's y/height changes there, update it here too —
+ *  same contract as wrappingFields() above.
+ * ============================================================ */
+const OVERFLOW_SAFETY = 0.92;
+
+// Rendered height (in) of `nLines` at `sizePt` with `leading` multiple. The
+// soffice/CSS line box is leading*fontSize (see qa.sh / measure.js renderPng).
+function renderedHeightIn(nLines, sizePt, leading) {
+  return (nLines * sizePt * leading) / 72;
+}
+
+// The height-constrained card fields, per pattern. Only single richText()
+// fields inside a bounded card (which bake to explicit line arrays, so their
+// line count is statically visible in a baked plan). Comparison's native-bullet
+// points are deliberately NOT here: they render as typed bullets (not richText),
+// don't bake to line arrays, and would need a builder change to height-check —
+// tracked as a follow-up. Open boxes with no card behind them (two-column item
+// bodies, message caption, section/cover subtitles) can't "overflow a card" and
+// are out of scope by design.
+function heightBoxes(slide, T) {
+  const c = slide.content || {};
+  const s = T.s, lead = T.lead;
+  const out = [];
+  switch (slide.pattern) {
+    case "chart":
+      // takeaway card: card(cx, 2.4, cw, 3.85) -> bottom 6.25; body box y=3.78.
+      out.push({ id: "takeaway card", path: "takeaway", topY: 3.78, bottomY: 2.4 + 3.85,
+        sizePt: s.body, leading: lead.body });
+      break;
+    case "cta":
+      // offer panel: roundRect(px, 4.25, pw, 1.85) -> bottom 6.10; body box y=py+0.95=5.20.
+      out.push({ id: "offer panel", path: "offerBody", topY: 4.25 + 0.95, bottomY: 4.25 + 1.85,
+        sizePt: s.small, leading: lead.tight });
+      break;
+    case "stat-grid": {
+      // each card: card(x, 2.7, w, 3.45) -> bottom 6.15; sub box y=top+2.32=5.02.
+      (c.stats || []).forEach((st, i) => {
+        if (st && st.sub) out.push({ id: `stat card ${i + 1}`, path: `stats[${i}].sub`,
+          topY: 2.7 + 2.32, bottomY: 2.7 + 3.45, sizePt: s.small, leading: lead.tight });
+      });
+      break;
+    }
+    default:
+      break;
+  }
+  return out;
+}
+
+// Verdict for one box given its rendered line count. `over` is the hard-fail
+// signal; `pct` is rendered/available (so 1.08 = "108% of card inner height",
+// and anything above OVERFLOW_SAFETY fails).
+function boxVerdict(box, nLines) {
+  const avail = box.bottomY - box.topY;
+  const rendered = renderedHeightIn(nLines, box.sizePt, box.leading);
+  const pct = avail > 0 ? rendered / avail : Infinity;
+  return { over: pct > OVERFLOW_SAFETY, pct, rendered, avail, nLines, safety: OVERFLOW_SAFETY };
+}
+
 // Returns [{ path, text, widthIn (raw box), sizePt, role, leading, bullet }].
 // Only string fields (auto-wrap candidates); array (already-baked) fields are skipped.
 function wrappingFields(slide, T) {
@@ -87,4 +172,7 @@ function wrappingFields(slide, T) {
   return out;
 }
 
-module.exports = { wrappingFields, effectiveWidth, EFFECTIVE_FACTOR, BULLET_INDENT_IN };
+module.exports = {
+  wrappingFields, effectiveWidth, EFFECTIVE_FACTOR, BULLET_INDENT_IN,
+  heightBoxes, boxVerdict, renderedHeightIn, OVERFLOW_SAFETY,
+};

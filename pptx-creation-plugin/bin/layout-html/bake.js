@@ -19,7 +19,7 @@ const fs = require("fs");
 const path = require("path");
 const { loadTheme } = require("../generate.js");
 const { measure, closeBrowser, breakPoints } = require("./measure.js");
-const { wrappingFields, effectiveWidth } = require("./geometry.js");
+const { wrappingFields, effectiveWidth, heightBoxes } = require("./geometry.js");
 
 // Count line breaks that fall inside a budoux word/phrase (熟語分割).
 function countSplits(lineLens, text, lexicon) {
@@ -46,19 +46,27 @@ async function bakePlan(planPath, themePath, lexicon = []) {
   const changes = [];
   for (let i = 0; i < slides.length; i++) {
     const sl = slides[i];
+    // Fields that live in a bounded card (heightBoxes): bake these to explicit
+    // line arrays whenever they wrap to >1 line — even if they neither orphan
+    // nor split — so the card-overflow gate (design-lint) can read their line
+    // count statically from the baked plan. Baking a clean field is harmless:
+    // text-wrap:balance keeps the same line count, just better balanced.
+    const cardFieldPaths = new Set(heightBoxes(sl, T).map((b) => b.path));
     for (const f of wrappingFields(sl, T)) {
       if (f.baked) continue; // already an explicit line array
       considered++;
       const ew = effectiveWidth(f.widthIn, { bullet: f.bullet });
       const M = (wrap, budoux) => measure({ text: f.text, widthIn: ew, sizePt: f.sizePt, role: f.role, leading: f.leading, wrap, budoux, lexicon });
 
-      // Minimal intervention: only re-break a field whose natural (greedy) wrap
-      // would ORPHAN (泣き別れ) OR split a compound (熟語分割). A field that does
-      // neither is left as a plain string — we fix defects, not restyle.
+      // Minimal intervention: re-break a field whose natural (greedy) wrap would
+      // ORPHAN (泣き別れ) OR split a compound (熟語分割) — OR that sits in a card
+      // and wraps to >1 line (so its height is checkable downstream). A plain
+      // open-box field that does none of these is left as a string.
       const auto = await M("auto", false);
       const orphan = auto.hasOrphan;
       const rawSplits = countSplits(auto.lineLens, f.text, lexicon);
-      if (!orphan && !rawSplits) continue;
+      const cardMultiline = cardFieldPaths.has(f.path) && auto.count > 1;
+      if (!orphan && !rawSplits && !cardMultiline) continue;
 
       // Priority (1) no orphan > (2) no compound split > (3) balance.
       // budoux-balance satisfies 2 & 3; if it re-introduces an orphan, drop the
@@ -75,7 +83,8 @@ async function bakePlan(planPath, themePath, lexicon = []) {
       setByPath(sl.content, f.path, lines);
       baked++;
       changes.push({
-        slide: i + 1, pattern: sl.pattern, path: f.path, trigger: orphan ? "orphan" : "split", mode,
+        slide: i + 1, pattern: sl.pattern, path: f.path,
+        trigger: orphan ? "orphan" : rawSplits ? "split" : "card-fit", mode,
         from: auto.lineLens, to: lines.map((l) => [...l].length), splitsFrom: rawSplits, splitsTo: outSplits,
       });
     }

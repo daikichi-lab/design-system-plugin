@@ -53,9 +53,10 @@ fi
 echo "== generate =="
 node "$HERE/generate.js" --plan "$GENPLAN" "${THEMEARG[@]}" --out "$OUT" || { echo "generate FAILED"; exit 1; }
 
-# 3. design-lint (static gate, always)
+# 3. design-lint (static gate, always — BLOCKING on ERROR, incl. card overflow)
 echo "== design-lint =="
-node "$HERE/lint/design-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" || echo "  design-lint reported ERRORs — fix before shipping."
+node "$HERE/lint/design-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}"; DL=$?
+[ "$DL" -ne 0 ] && echo "  design-lint reported blocking ERROR(s) above (fix the plan before shipping)."
 
 # 4. typo-lint (typesetting; skip gracefully if no browser)
 echo "== typo-lint =="
@@ -68,3 +69,13 @@ node "$HERE/lint/image-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" || echo "  im
 # 5. render for the visual QA loop (you still OPEN and LOOK — M-2)
 echo "== render (then OPEN every slide-*.jpg and inspect — M-2) =="
 bash "$HERE/qa.sh" "$OUT"
+
+# 6. blocking verdict — design-lint ERRORs (e.g. card overflow) fail the build.
+# The deck is still rendered above so a break can be inspected, but a non-zero
+# exit tells create-deck / CI the deck is NOT clean (M-4: don't ship it).
+if [ "${DL:-0}" -ne 0 ]; then
+  echo ""
+  echo "BLOCKED: design-lint found blocking error(s) — the deck rendered for inspection but is NOT clean."
+  echo "        Fix the plan (shorten the flagged field or split the slide) and rebuild."
+  exit 1
+fi
