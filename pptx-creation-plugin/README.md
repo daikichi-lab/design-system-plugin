@@ -26,7 +26,8 @@ titles, or title underlines).
 The plugin ships a **bookshelf of design languages** — `neutral-business` (the
 default), `swiss`, `editorial`, `minimal`, `data-driven`, `wa-modern`, and
 `hybrid-editorial` — each a **style template** (palette / type / whitespace /
-font), not a brand. It never stores a *brand's* colours, and a theme never stores
+font, and **composition** via `theme.layout` — card shape, kicker, cover motif),
+not a brand. It never stores a *brand's* colours, and a theme never stores
 chapter structure or slide order — that separation is the whole point (verified in
 [`examples/theme-swap-demo/`](examples/theme-swap-demo)). Pick **one** language
 per deck via the [`design-language`](skills/design-language/SKILL.md) skill; a
@@ -164,6 +165,7 @@ dev-only memo):
 - [`references/principles/slide-design-principles.md`](references/principles/slide-design-principles.md) — the method (audience-first, 1 slide 1 message, narrative frames).
 - [`references/principles/chart-design.md`](references/principles/chart-design.md) — native charts, chart choice, data integrity.
 - [`references/patterns/catalog.md`](references/patterns/catalog.md) — the machine-readable pattern recipes.
+- [`references/graphics/`](references/graphics) — code-drawn SVG recipes (backgrounds / icons / motifs / patterns) and the diagram skeletons (`flow` / `cycle` / `matrix`).
 - [`references/usecases/`](references/usecases) — per-type beat orders (seminar, financial, proposal).
 
 ## The contract (engine input)
@@ -184,13 +186,25 @@ bash bin/qa.sh <out.pptx>
 node bin/validate.js
 ```
 
-## Pattern catalog (9 patterns)
+## Pattern catalog (12 patterns)
 
-`cover` · `message` · `two-column` · `comparison` · `chart` · `stat-grid` ·
-`table` · `section` · `cta`. Each has a documented job, content slots, and a
-hard **capacity** (split rather than cram). See
-[`catalog.md`](references/patterns/catalog.md). Roadmap: `process`, `timeline`,
-`quote`.
+Content patterns: `cover` · `message` · `two-column` · `comparison` · `chart` ·
+`stat-grid` · `table` · `section` · `cta`. Plus three **diagram skeletons** that
+turn text into a base structure — `flow` (ordered steps), `cycle` (a repeating
+loop), `matrix` (a 2×2 of two axes) — drawn as native shapes + native labels,
+robust for a variable element count, and gated per cell by the height floor. Each
+pattern has a documented job, content slots, and a hard **capacity** (split rather
+than cram); diagrams are chosen **conservatively** (default to text — see
+[`diagram-recipes.md`](references/graphics/diagram-recipes.md) and deck-strategy
+§3b). See [`catalog.md`](references/patterns/catalog.md). Roadmap: `timeline`,
+`quote`, and further diagram skeletons (hierarchy / venn) as real decks need them.
+
+The `chart` pattern also supports data-viz emphasis (one highlighted bar), a
+`line` type, a dashed `targetLine`, and a `unit` label; every design language can
+shift **composition** (card shape, kicker, cover motif, section index) via
+`theme.layout`, and any slide can carry a code-drawn `bgMotif` / `icon`
+([`svg-recipes.md`](references/graphics/svg-recipes.md)) — all optional and empty
+by default.
 
 ## The mandatory QA loop
 
@@ -245,11 +259,14 @@ pptx-creation-plugin/
 ├── .claude-plugin/plugin.json   # manifest (the ONLY thing in .claude-plugin/)
 ├── CLAUDE.md                    # dev memo (NOT the quality core)
 ├── README.md
-├── bin/                         # generate.js (engine) · qa.sh (QA render) · validate.js (dev)
-├── skills/                      # deck-strategy · create-deck · theme-init · deck-review · project-scaffold
-├── references/                  # principles/ · patterns/ · usecases/   (the design brain)
+├── bin/                         # generate.js (engine) · build.sh (pipeline) · qa.sh (render) · validate.js
+│   ├── lint/                    #   design-lint · typo-lint · image-lint · ssim
+│   ├── layout-html/             #   bake · measure · geometry (Phase-B kinsoku engine)
+│   └── graphics/                #   svg-render · recipes (icons/motifs) · diagrams (flow/cycle/matrix)
+├── skills/                      # design-doc · deck-brief · design-language · deck-strategy · create-deck · theme-init · deck-review · project-scaffold
+├── references/                  # principles/ · patterns/ · graphics/ · design-languages/ · usecases/  (the design brain)
 ├── schemas/                     # theme · deck_plan · deck_review
-├── themes/_default-neutral/     # the one shipped neutral theme
+├── themes/                      # neutral (default) + swiss · editorial · minimal · data-driven · wa-modern
 └── examples/                    # seminar-kanrikaikei · financial-analysis · theme-swap-demo
 ```
 
