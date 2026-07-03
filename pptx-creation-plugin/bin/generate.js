@@ -280,23 +280,46 @@ function slideChart(pres, d, T, ctx) {
   // Data-label precision must not misrepresent the values: if any value has a
   // fractional part, keep one decimal (so 21.8 and 23.1 don't both read "23").
   // An explicit d.valueFormat overrides the auto-detection.
-  const hasDecimal = (d.series.values || []).some((v) => typeof v === "number" && !Number.isInteger(v));
+  const vals = d.series.values || [];
+  const hasDecimal = vals.some((v) => typeof v === "number" && !Number.isInteger(v));
   const valueFormat = d.valueFormat || (hasDecimal ? "#,##0.0" : "#,##0");
-  // native column chart (editable in PowerPoint)
-  s.addChart(pres.charts.BAR, [{
-    name: d.series.name, labels: d.series.labels, values: d.series.values
-  }], {
-    x: T.m, y: 2.2, w: 7.4, h: 4.4, barDir: "col",
-    chartColors: [T.c.accent],
+  // Emphasis: colour ONE bar (accentDeep) and mute the rest (accentSoft) to steer
+  // the eye to the point the takeaway makes. No emphasizeIndex => all-accent
+  // (unchanged). Data labels stay on every bar — colour directs, it never hides data.
+  const emph = Number.isInteger(d.emphasizeIndex) ? d.emphasizeIndex : -1;
+  const barColors = emph >= 0 ? vals.map((_, i) => (i === emph ? T.c.accentDp : T.c.accentSft)) : [T.c.accent];
+  const axisOpts = {
+    x: T.m, y: 2.2, w: 7.4, h: 4.4,
     chartArea: { fill: { color: T.c.bg } },
     showLegend: false, showTitle: false,
     valAxisHidden: true, valGridLine: { style: "none" }, catGridLine: { style: "none" },
     catAxisLabelColor: T.c.muted, catAxisLabelFontFace: T.font.body, catAxisLabelFontSize: 12,
     catAxisLineShow: false,
+  };
+  const labelOpts = {
     showValue: true, dataLabelPosition: "outEnd",
     dataLabelColor: T.c.ink, dataLabelFontFace: T.font.body, dataLabelFontSize: 12, dataLabelFormatCode: valueFormat,
-    barGapWidthPct: 55,
-  });
+  };
+  const series = [{ name: d.series.name, labels: d.series.labels, values: vals }];
+  if (d.chartType === "line") {
+    // a trend reads better as a line than as bars (native line chart)
+    s.addChart(pres.charts.LINE, series, { ...axisOpts, ...labelOpts, dataLabelPosition: "t",
+      chartColors: [T.c.accent], lineSize: 3, lineSmooth: false });
+  } else if (d.targetLine && typeof d.targetLine.value === "number") {
+    // bars + a dashed reference line (前年 / 目標 …); its meaning goes in the takeaway
+    const tvals = (d.series.labels || []).map(() => d.targetLine.value);
+    s.addChart([
+      { type: pres.charts.BAR, data: series, options: { chartColors: barColors, barDir: "col", barGapWidthPct: 55, ...labelOpts } },
+      { type: pres.charts.LINE, data: [{ name: d.targetLine.label || "基準", labels: d.series.labels, values: tvals }],
+        options: { chartColors: [T.c.accentDp], lineSize: 1.5, lineDash: "dash", lineDataSymbol: "none", showValue: false } },
+    ], axisOpts);
+  } else {
+    // native column chart (editable in PowerPoint) — the default
+    s.addChart(pres.charts.BAR, series, { ...axisOpts, barDir: "col", chartColors: barColors, barGapWidthPct: 55, ...labelOpts });
+  }
+  // unit shown ONCE (top-left), never repeated on every bar (data-viz hygiene)
+  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 2.16, w: 2.6, h: 0.28, margin: 0,
+    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
   // takeaway card on the right
   const cx = 8.55, cw = T.W - T.m - cx;
   card(s, T, cx, 2.4, cw, 3.85, { fill: T.c.surfaceA });

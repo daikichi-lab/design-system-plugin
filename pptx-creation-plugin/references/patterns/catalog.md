@@ -172,13 +172,19 @@ content:
   series:       { type: object, required: true, note: "{name:string, labels:string[], values:number[]}" }
   takeawayHead: { type: string, required: true, note: "short arrow phrase, e.g. 早期把握 → 早期対応" }
   takeaway:     { type: string, required: true, note: "1-3 sentences: what to conclude / do" }
+  emphasizeIndex:{ type: int, required: false, note: "colour ONE bar (accentDeep), mute the rest (accentSoft) — steer the eye to the point; labels stay on every bar" }
+  chartType:    { type: string, required: false, note: "'line' for a continuous trend; default column (bar)" }
+  targetLine:   { type: object, required: false, note: "{value:number, label?:string} — a dashed reference line (前年/目標); state its meaning in the takeaway" }
+  unit:         { type: string, required: false, note: "e.g. 億円 / % — shown ONCE top-left, never repeated on every bar" }
   notes:        { type: string, required: false }
 params:
   background:  colors.bg
-  chart:       "NATIVE column chart; x m, y 2.15, w 7.5, h 4.4; chartColors [accent]; valAxis hidden; data labels outEnd #,##0"
-  takeaway_card:"x 8.55, w (W-m-8.55), y 2.35, h 3.9; fill surfaceAccent; head(sizes.takeawayHead 19 accentDeep) + body(sizes.body)"
+  chart:       "NATIVE column chart; x m, y 2.2, w 7.4, h 4.4; chartColors [accent] (or per-bar when emphasized); valAxis hidden; data labels outEnd #,##0"
+  emphasis:    "emphasizeIndex -> per-bar colours [accentSoft…, accentDeep at index, …]; out-of-range degrades to all-muted (no crash)"
+  target_line: "combo bar + dashed LINE at targetLine.value, markers hidden; shares the value axis so 'above/below target' reads at a glance"
+  takeaway_card:"x 8.55, w (W-m-8.55), y 2.4, h 3.85; fill surfaceAccent; head(sizes.takeawayHead 19 accentDeep) + body(sizes.body)"
   footer:      brand + page number
-chart_default: column (bar). For other chart types see references/principles/chart-design.md.
+chart_default: column (bar). Emphasis / line / target-line / unit are OPTIONAL — omit them all and the chart is byte-for-byte unchanged. See references/principles/chart-design.md.
 capacity: "labels/values: 4-7 bars read cleanly (sample uses 6); >8 crowds. takeaway <= ~4 lines at the card width."
 ```
 
