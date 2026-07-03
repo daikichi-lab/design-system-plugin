@@ -49,6 +49,29 @@ look:     "node fill surface + accent border, corner radius from theme.layout.ca
 error at 125% of the node box, seen in the render; n=7 → CAPACITY error; n=2 →
 CAPACITY error). Existing patterns byte-identical (flow is additive).
 
+## `cycle` — N nodes on a ring, cyclic arrows
+
+A repeating loop (PDCA, a lifecycle). Native roundRect nodes on an elliptical ring
++ arrows between adjacent nodes going clockwise.
+
+```yaml
+id: cycle
+content:
+  kicker: { type: string, required: false }
+  title:  { type: string|string[], required: false }
+  steps:  { type: string[], required: true, note: "3-6 node labels; native text, one per node" }
+capacity: "3-6 nodes (CAPS.cycle). <3 -> use text/flow; >6 -> split or a list."
+geometry: "nodes evenly placed on an elliptical ring (top, then clockwise); arrows
+           stop at the box EDGE (ray->box) + a small gap, so the arrowhead always
+           shows the direction instead of hiding under the next node"
+floor:    "each node label is baked (kinsoku) and height-gated; overflow = ERROR"
+look:     "same tokens as flow (surface fill, accent border+arrows, radius from theme.layout.card)"
+```
+
+**Verified** (n=3/4/5/6 render clean with visible clockwise arrows; a long node
+label → OVERFLOW error at 510% of the small node box; n=7 / n=2 → CAPACITY errors).
+The arrow-direction fix (edge clearance) was caught and corrected by the render QA.
+
 ## Honest residuals
 
 - **Meaning is a visual axis, not a lint.** The floor guarantees no overflow /
@@ -61,6 +84,6 @@ CAPACITY error). Existing patterns byte-identical (flow is additive).
 
 ## Roadmap
 
-`flow` is implemented. `cycle` (N on a ring) and `matrix` (2×2) are the next two
+`flow` and `cycle` are implemented. `matrix` (2×2) is the last of the three
 skeletons in this scope; hierarchy / venn / list / timeline variants are a later
 scope, added only when a real deck needs them.

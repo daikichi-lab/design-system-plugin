@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, nodeTextBox } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, nodeTextBox } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -527,6 +527,41 @@ function slideFlow(pres, d, T, ctx) {
   return s;
 }
 
+/* ---------------- DIAGRAM: cycle (N nodes on a ring, cyclic arrows) ----------------
+ * A repeating loop (PDCA, a lifecycle). Native roundRect nodes placed on an
+ * elliptical ring + native arrows between adjacent nodes (stopping short so the
+ * head shows the clockwise direction). Robust for 3-6 nodes (design-lint caps it);
+ * the floor gates each node label like a card. */
+function slideCycle(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const steps = d.steps || [];
+  const { nodes, arrows } = cycleLayout(T, steps.length);
+  const rad = T.layout.card.radius;
+  arrows.forEach((a) => {
+    s.addShape("line", {
+      x: Math.min(a.x1, a.x2), y: Math.min(a.y1, a.y2),
+      w: Math.abs(a.x2 - a.x1), h: Math.abs(a.y2 - a.y1),
+      flipH: a.x2 < a.x1, flipV: a.y2 < a.y1,
+      line: { color: T.c.accent, width: 2, endArrowType: "triangle" },
+    });
+  });
+  steps.forEach((st, i) => {
+    const node = nodes[i]; if (!node) return;
+    s.addShape("roundRect", { x: node.x, y: node.y, w: node.w, h: node.h, rectRadius: rad,
+      fill: { color: T.c.surface }, line: { color: T.c.accent, width: 1.25 } });
+    const tb = nodeTextBox(node);
+    s.addText(richText(st), { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.ink,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 const PATTERNS = {
   "cover": slideCover,
   "message": slideMessage,
@@ -538,6 +573,7 @@ const PATTERNS = {
   "stat-grid": slideStatGrid,
   "table": slideTable,
   "flow": slideFlow,
+  "cycle": slideCycle,
 };
 
 /* ---------------- deck plan ---------------- */

@@ -55,9 +55,39 @@ function flowLayout(T, n, direction) {
   return { orientation: "vertical", nodes, arrows, area };
 }
 
+/* ---------------- cycle: N nodes on a ring, cyclic arrows ---------------- */
+// Nodes evenly placed on an ELLIPTICAL ring (wider than tall, to use the 16:9
+// space) starting at the top and going clockwise. Arrows connect adjacent nodes
+// and stop SHORT of each box (a clearance gap) so the arrowhead shows the
+// direction instead of hiding under the next node. Robust for any n (angle and
+// node placement derive from n).
+function cycleLayout(T, n) {
+  const area = diagramArea(T);
+  const cx = area.x + area.w / 2, cy = area.y + area.h / 2;
+  const rx = Math.min(3.1, area.w * 0.30), ry = Math.min(1.5, area.h * 0.38);
+  const nodeW = 1.9, nodeH = 0.9, gap = 0.12;
+  const hw = nodeW / 2, hh = nodeH / 2;
+  const nodes = [], centers = [], arrows = [];
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n;      // top, then clockwise
+    const ccx = cx + rx * Math.cos(a), ccy = cy + ry * Math.sin(a);
+    centers.push([ccx, ccy]);
+    nodes.push({ x: ccx - nodeW / 2, y: ccy - nodeH / 2, w: nodeW, h: nodeH });
+  }
+  for (let i = 0; i < n; i++) {
+    const [px, py] = centers[i], [qx, qy] = centers[(i + 1) % n];
+    const dx = qx - px, dy = qy - py, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+    // ray->box edge distance from a node centre along (ux,uy), so the arrow starts
+    // and ends AT the box edge (+gap) — the head always clears the next node.
+    const edge = Math.min(hw / (Math.abs(ux) || 1e-6), hh / (Math.abs(uy) || 1e-6)) + gap;
+    arrows.push({ x1: px + ux * edge, y1: py + uy * edge, x2: qx - ux * edge, y2: qy - uy * edge });
+  }
+  return { nodes, arrows, area };
+}
+
 // Inner text box of a node (labels + the floor both use this).
 function nodeTextBox(node) {
   return { x: node.x + NODE_PAD, y: node.y + NODE_PAD, w: node.w - 2 * NODE_PAD, h: node.h - 2 * NODE_PAD };
 }
 
-module.exports = { diagramArea, flowLayout, nodeTextBox, NODE_PAD, CAPS };
+module.exports = { diagramArea, flowLayout, cycleLayout, nodeTextBox, NODE_PAD, CAPS };

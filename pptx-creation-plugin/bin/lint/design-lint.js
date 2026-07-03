@@ -218,6 +218,13 @@ function checkCapacity(slides, F) {
         else if (n < min) F.error(idx, "CAPACITY", `flow has ${n} steps (min ${min}; too few to diagram — use text / two-column)`);
         break;
       }
+      case "cycle": {
+        const n = len(c.steps);
+        const [min, max] = CAPS.cycle;
+        if (n > max) F.error(idx, "CAPACITY", `cycle has ${n} nodes (max ${max}; split or use a list)`);
+        else if (n < min) F.error(idx, "CAPACITY", `cycle has ${n} nodes (min ${min}; too few to loop — use text / flow)`);
+        break;
+      }
       case "table": {
         const bodyRows = len(c.rows);
         if (bodyRows > 5) F.error(idx, "CAPACITY", `table has ${bodyRows} body rows (max 5 => <=6 incl. header)`);
