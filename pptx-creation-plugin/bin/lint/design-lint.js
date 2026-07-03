@@ -225,6 +225,11 @@ function checkCapacity(slides, F) {
         else if (n < min) F.error(idx, "CAPACITY", `cycle has ${n} nodes (min ${min}; too few to loop — use text / flow)`);
         break;
       }
+      case "matrix": {
+        const n = len(c.quadrants);
+        if (n !== 4) F.error(idx, "CAPACITY", `matrix has ${n} quadrants (must be exactly 4 — it is a fixed 2x2)`);
+        break;
+      }
       case "table": {
         const bodyRows = len(c.rows);
         if (bodyRows > 5) F.error(idx, "CAPACITY", `table has ${bodyRows} body rows (max 5 => <=6 incl. header)`);

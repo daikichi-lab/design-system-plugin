@@ -72,6 +72,33 @@ look:     "same tokens as flow (surface fill, accent border+arrows, radius from 
 label → OVERFLOW error at 510% of the small node box; n=7 / n=2 → CAPACITY errors).
 The arrow-direction fix (edge clearance) was caught and corrected by the render QA.
 
+## `matrix` — 2×2, two axes + four quadrants
+
+A 2-axis positioning (BCG, effort×impact, SWOT). Native frame + cross + axis labels
+in reserved bands + a head/body per quadrant. **Fixed 4 quadrants.**
+
+```yaml
+id: matrix
+content:
+  kicker: { type: string, required: false }
+  title:  { type: string|string[], required: false }
+  axisX:  { type: string[], required: false, note: "[left, right] X-axis ends, shown top" }
+  axisY:  { type: string[], required: false, note: "[top, bottom] Y-axis ends, shown left" }
+  emphasizeIndex: { type: int, required: false, note: "tint one quadrant (0=TL,1=TR,2=BL,3=BR)" }
+  quadrants: { type: array, required: true, note: "EXACTLY 4 (TL,TR,BL,BR), each {head?, body?}" }
+capacity: "exactly 4 quadrants (a fixed 2x2); anything else is an error"
+layout:   "axis labels live in reserved bands (top strip / left column), so they can
+           never collide with quadrant text"
+floor:    "each quadrant is a bounded CELL like a card — its body is baked (kinsoku)
+           and height-gated; a too-long X-axis label also overflows its band = ERROR"
+look:     "frame/cross in the line token, emphasis tint = surfaceAccent, radius from
+           theme.layout.card"
+```
+
+**Verified** (normal 2×2 clean, all gates pass; a long quadrant body → OVERFLOW at
+97%; a 45-char axis label → OVERFLOW at 119% of the top band; 3 quadrants → CAPACITY;
+a quadrant orphan was auto-fixed by bake). Existing patterns byte-identical.
+
 ## Honest residuals
 
 - **Meaning is a visual axis, not a lint.** The floor guarantees no overflow /
@@ -84,6 +111,8 @@ The arrow-direction fix (edge clearance) was caught and corrected by the render 
 
 ## Roadmap
 
-`flow` and `cycle` are implemented. `matrix` (2×2) is the last of the three
-skeletons in this scope; hierarchy / venn / list / timeline variants are a later
-scope, added only when a real deck needs them.
+`flow`, `cycle`, and `matrix` — the three base structures in this scope — are all
+implemented and verified. The **conservative classification step** (deck-strategy
+deciding *whether* to diagram and *which* skeleton) is the next stage. Hierarchy /
+venn / list / timeline variants are a later scope, added only when a real deck
+needs them.

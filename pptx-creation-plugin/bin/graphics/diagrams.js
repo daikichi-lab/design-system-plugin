@@ -90,4 +90,43 @@ function nodeTextBox(node) {
   return { x: node.x + NODE_PAD, y: node.y + NODE_PAD, w: node.w - 2 * NODE_PAD, h: node.h - 2 * NODE_PAD };
 }
 
-module.exports = { diagramArea, flowLayout, cycleLayout, nodeTextBox, NODE_PAD, CAPS };
+/* ---------------- matrix: 2x2, axis labels + 4 quadrants ---------------- */
+// Fixed 4 quadrants (TL, TR, BL, BR). Reserved bands hold the axis labels so
+// they can never collide with quadrant content: X labels sit in a top strip,
+// Y labels in a left column; the grid is inset below/right of them.
+const MATRIX_LY = 1.2, MATRIX_TX = 0.44, QUAD_PAD = 0.24, QUAD_HEAD_H = 0.46;
+
+function matrixLayout(T) {
+  const area = diagramArea(T);
+  const gx = area.x + MATRIX_LY, gy = area.y + MATRIX_TX;
+  const gw = area.w - MATRIX_LY, gh = area.h - MATRIX_TX;
+  const qw = gw / 2, qh = gh / 2;
+  const quads = []; // reading order: TL, TR, BL, BR
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) quads.push({ x: gx + c * qw, y: gy + r * qh, w: qw, h: qh });
+  return {
+    area, grid: { x: gx, y: gy, w: gw, h: gh }, qw, qh, quads,
+    // X-axis labels: a top strip, over the left half and right half.
+    xLabelBoxes: [
+      { x: gx, y: area.y, w: qw, h: MATRIX_TX, align: "left" },
+      { x: gx + qw, y: area.y, w: qw, h: MATRIX_TX, align: "right" },
+    ],
+    // Y-axis labels: a left column, beside the top row and bottom row.
+    yLabelBoxes: [
+      { x: area.x, y: gy, w: MATRIX_LY - 0.12, h: qh, align: "right" },
+      { x: area.x, y: gy + qh, w: MATRIX_LY - 0.12, h: qh, align: "right" },
+    ],
+  };
+}
+
+// A quadrant is a bounded cell (like a card): optional head band, then the body.
+// The floor height-gates the body against the space that's actually left.
+function quadHeadBox(q) { return { x: q.x + QUAD_PAD, y: q.y + QUAD_PAD, w: q.w - 2 * QUAD_PAD, h: QUAD_HEAD_H }; }
+function quadBodyBox(q, hasHead) {
+  const top = q.y + QUAD_PAD + (hasHead ? QUAD_HEAD_H : 0);
+  return { x: q.x + QUAD_PAD, y: top, w: q.w - 2 * QUAD_PAD, h: q.y + q.h - QUAD_PAD - top };
+}
+
+module.exports = {
+  diagramArea, flowLayout, cycleLayout, matrixLayout,
+  nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
+};

@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 // Diagram skeletons compute their node geometry here too, so the floor
 // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
 // engine draws labels into.
-const { flowLayout, cycleLayout, nodeTextBox } = require("../graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
@@ -94,6 +94,7 @@ function heightBoxes(slide, T) {
     "table":      { topY: 1.15, bottomY: 2.25, sizePt: s.title },
     "flow":       { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "cycle":      { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "matrix":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
   };
   const tb = TITLE_BOX[slide.pattern];
   if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
@@ -124,6 +125,23 @@ function heightBoxes(slide, T) {
         const ntb = nodeTextBox(nodes[i]);
         out.push({ id: `cycle node ${i + 1}`, path: `steps[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h,
           sizePt: s.head, leading: lead.tight });
+      });
+      break;
+    }
+    case "matrix": {
+      // each quadrant is a bounded cell (like a card): its body must fit. X-axis
+      // labels sit in a short top band, so a 2-line axis label overflows -> ERROR.
+      const L = matrixLayout(T);
+      (c.quadrants || []).slice(0, 4).forEach((qd, i) => {
+        if (!qd || !qd.body || !L.quads[i]) return;
+        const bb = quadBodyBox(L.quads[i], !!qd.head);
+        out.push({ id: `matrix quadrant ${i + 1}`, path: `quadrants[${i}].body`, topY: bb.y, bottomY: bb.y + bb.h,
+          sizePt: s.small, leading: lead.tight });
+      });
+      (c.axisX || []).slice(0, 2).forEach((t, i) => {
+        if (!t) return; const b = L.xLabelBoxes[i];
+        out.push({ id: `matrix X-axis label ${i + 1}`, path: `axisX[${i}]`, topY: b.y, bottomY: b.y + b.h,
+          sizePt: s.small, leading: lead.tight });
       });
       break;
     }
@@ -176,7 +194,7 @@ function wrappingFields(slide, T) {
   // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
   const sectionTitleSize = s.sectionTitle || s.title;
   const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
-    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m };
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m };
   if (TITLE_W[slide.pattern] != null) {
     const size = slide.pattern === "section" ? sectionTitleSize : s.title;
     push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
@@ -203,6 +221,19 @@ function wrappingFields(slide, T) {
       steps.forEach((st, i) => {
         if (!nodes[i]) return;
         push(`steps[${i}]`, st, nodeTextBox(nodes[i]).w, s.head, "heading", lead.tight);
+      });
+      break;
+    }
+    case "matrix": {
+      // each quadrant body is measured at its inner cell width (kinsoku per cell);
+      // X-axis labels are measured too so a too-long axis label is caught.
+      const L = matrixLayout(T);
+      (c.quadrants || []).slice(0, 4).forEach((qd, i) => {
+        if (!qd || !qd.body || !L.quads[i]) return;
+        push(`quadrants[${i}].body`, qd.body, quadBodyBox(L.quads[i], !!qd.head).w, s.small, "body", lead.tight);
+      });
+      (c.axisX || []).slice(0, 2).forEach((t, i) => {
+        if (t) push(`axisX[${i}]`, t, L.xLabelBoxes[i].w, s.small, "caption", lead.tight);
       });
       break;
     }

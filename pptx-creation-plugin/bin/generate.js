@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, nodeTextBox } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -562,6 +562,54 @@ function slideCycle(pres, d, T, ctx) {
   return s;
 }
 
+/* ---------------- DIAGRAM: matrix (2x2 — two axes, four quadrants) ----------------
+ * A 2-axis positioning (BCG / effort-impact / SWOT). Native frame + cross lines +
+ * axis labels (X on top, Y on the left, in reserved bands that never touch the
+ * cells) + a head/body per quadrant. Each quadrant is a BOUNDED CELL: the floor
+ * height-gates its body exactly like a card. Optional emphasizeIndex tints one
+ * quadrant. */
+function slideMatrix(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const L = matrixLayout(T), g = L.grid, rad = T.layout.card.radius;
+  const emph = Number.isInteger(d.emphasizeIndex) ? d.emphasizeIndex : -1;
+  // emphasized quadrant tint (drawn first, under the frame/cross)
+  if (emph >= 0 && L.quads[emph]) {
+    const q = L.quads[emph];
+    s.addShape("rect", { x: q.x, y: q.y, w: q.w, h: q.h, fill: { color: T.c.surfaceA }, line: { type: "none" } });
+  }
+  // outer frame + cross (two axes)
+  s.addShape("roundRect", { x: g.x, y: g.y, w: g.w, h: g.h, rectRadius: rad, fill: { type: "none" }, line: { color: T.c.line, width: 1.5 } });
+  s.addShape("line", { x: g.x + g.w / 2, y: g.y, w: 0, h: g.h, line: { color: T.c.line, width: 1.25 } });
+  s.addShape("line", { x: g.x, y: g.y + g.h / 2, w: g.w, h: 0, line: { color: T.c.line, width: 1.25 } });
+  // axis labels (in the reserved bands — cannot collide with quadrant text)
+  (d.axisX || []).slice(0, 2).forEach((t, i) => {
+    if (!t) return; const b = L.xLabelBoxes[i];
+    s.addText(richText(t), { x: b.x, y: b.y, w: b.w, h: b.h, margin: 0, fontFace: T.font.caption, fontSize: T.s.small, bold: true, color: T.c.muted, align: b.align, valign: "bottom" });
+  });
+  (d.axisY || []).slice(0, 2).forEach((t, i) => {
+    if (!t) return; const b = L.yLabelBoxes[i];
+    s.addText(richText(t), { x: b.x, y: b.y, w: b.w, h: b.h, margin: 0, fontFace: T.font.caption, fontSize: T.s.small, bold: true, color: T.c.muted, align: b.align, valign: "middle" });
+  });
+  // quadrant head + body
+  (d.quadrants || []).slice(0, 4).forEach((qd, i) => {
+    const q = L.quads[i]; if (!q || !qd) return;
+    if (qd.head) {
+      const hb = quadHeadBox(q);
+      s.addText(qd.head, { x: hb.x, y: hb.y, w: hb.w, h: hb.h, margin: 0, fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: i === emph ? T.c.accentDp : T.c.ink, align: "left", valign: "top" });
+    }
+    if (qd.body) {
+      const bb = quadBodyBox(q, !!qd.head);
+      s.addText(richText(qd.body), { x: bb.x, y: bb.y, w: bb.w, h: bb.h, margin: 0, fontFace: T.font.body, fontSize: T.s.small, color: T.c.muted, align: "left", valign: "top", lineSpacingMultiple: T.lead.tight });
+    }
+  });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 const PATTERNS = {
   "cover": slideCover,
   "message": slideMessage,
@@ -574,6 +622,7 @@ const PATTERNS = {
   "table": slideTable,
   "flow": slideFlow,
   "cycle": slideCycle,
+  "matrix": slideMatrix,
 };
 
 /* ---------------- deck plan ---------------- */
