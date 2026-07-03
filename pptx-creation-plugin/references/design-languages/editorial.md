@@ -13,5 +13,9 @@ a deck that reads like a considered article, not a slide dump.
 - **Avoid for:** dense financial tables (the serif + air fight the data — use
   `data-driven`) and hard board packs (use `neutral-business`).
 
+**Composition (`theme.layout`):** flat (shadowless) cards, a short-rule **bar**
+kicker, no cover oval, and no section numeral — quiet and type-led, so the serif
+headings carry the page.
+
 Serif headings still obey the AI-tell blocklist and kinsoku. Requires Yu Mincho
 installed (setup.sh registers it on WSL2). See [`../../themes/editorial/theme.json`].

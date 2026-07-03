@@ -15,5 +15,6 @@
     "takeawayHead": 18, "offerHead": 20, "footer": 12, "sectionTitle": 32, "sectionIndex": 140, "statCard": 38
   },
   "lead": { "title": 1.12, "display": 1.2, "body": 1.7, "caption": 1.55, "tight": 1.45 },
+  "layout": { "card": { "radius": 0.02, "shadow": false }, "kicker": "none", "coverMotif": "none", "sectionIndex": "none" },
   "brand": { "footerLabel": "" }
 }

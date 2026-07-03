@@ -63,6 +63,17 @@ const COLOR_MAP = {
 // JP body wants air; headings want to be tight (§3 / references/principles/typography.md).
 const LEAD_DEFAULTS = { title: 1.08, display: 1.18, body: 1.6, caption: 1.5, tight: 1.4 };
 
+// LAYOUT defaults — composition knobs a design language can shift (M-6: layout is
+// look-and-feel, so it lives in the THEME, never the deck plan). Every default
+// reproduces the CURRENT geometry, so a theme without `layout` renders
+// byte-for-byte as before. Only these knobs move — content geometry (box x/y/w/h)
+// is unchanged, so no overflow/kinsoku/height-gate risk.
+//   card.radius/shadow  — card corner rounding + drop shadow (sharp+flat = swiss/minimal)
+//   kicker              — the eyebrow marker: "dot" | "bar" (short rule) | "none"
+//   coverMotif          — cover depth shape: "oval" (off-canvas ellipse) | "none"
+//   sectionIndex        — the section ghost number side: "right" | "left" | "none"
+const LAYOUT_DEFAULTS = { card: { radius: 0.09, shadow: true }, kicker: "dot", coverMotif: "oval", sectionIndex: "right" };
+
 function loadTheme(themePath) {
   let j;
   try {
@@ -83,6 +94,11 @@ function loadTheme(themePath) {
     body: (j.font && j.font.body) || fam,
     caption: (j.font && j.font.caption) || fam,
   };
+  const jl = j.layout || {};
+  const layout = {
+    ...LAYOUT_DEFAULTS, ...jl,
+    card: { ...LAYOUT_DEFAULTS.card, ...(jl.card || {}) },
+  };
   return {
     name: j.name || "theme",
     W: j.canvas.w, H: j.canvas.h, m: j.canvas.margin,
@@ -90,6 +106,7 @@ function loadTheme(themePath) {
     c,
     s: { ...j.sizes },
     lead: { ...LEAD_DEFAULTS, ...(j.lead || {}) },
+    layout,
     brand: j.brand || {},
   };
 }
@@ -128,11 +145,21 @@ function richText(v) {
 }
 
 /* ---------------- low-level helpers ---------------- */
-// Kicker eyebrow: accent dot + bold heading-weight label.
+// Kicker eyebrow: an accent marker + bold heading-weight label. The marker is a
+// theme layout knob: "dot" (default), "bar" (a short rule), or "none".
 function kicker(slide, T, text, y, { x = T.m, onDark = false } = {}) {
-  slide.addShape("ellipse", { x, y: y + 0.055, w: 0.13, h: 0.13,
-    fill: { color: T.c.accent }, line: { type: "none" } });
-  slide.addText(text, { x: x + 0.26, y, w: 8, h: 0.3, margin: 0,
+  const style = T.layout.kicker;
+  let tx = x;
+  if (style === "dot") {
+    slide.addShape("ellipse", { x, y: y + 0.055, w: 0.13, h: 0.13,
+      fill: { color: T.c.accent }, line: { type: "none" } });
+    tx = x + 0.26;
+  } else if (style === "bar") {
+    slide.addShape("rect", { x, y: y + 0.1, w: 0.26, h: 0.05,
+      fill: { color: T.c.accent }, line: { type: "none" } });
+    tx = x + 0.4;
+  } // "none" => no marker; label sits at the margin
+  slide.addText(text, { x: tx, y, w: 8, h: 0.3, margin: 0,
     fontFace: T.font.heading, fontSize: T.s.kicker, bold: true, charSpacing: 1.5,
     color: onDark ? T.c.accentSft : T.c.accent, align: "left", valign: "middle" });
 }
@@ -153,8 +180,10 @@ function numCircle(slide, T, n, x, y, d = 0.46) {
 }
 
 function card(slide, T, x, y, w, h, { fill = T.c.surface } = {}) {
-  slide.addShape("roundRect", { x, y, w, h, rectRadius: 0.09,
-    fill: { color: fill }, line: { type: "none" }, shadow: cardShadow(T) });
+  const L = T.layout.card; // radius + shadow are a theme layout knob (sharp+flat = swiss/minimal)
+  const opt = { x, y, w, h, rectRadius: L.radius, fill: { color: fill }, line: { type: "none" } };
+  if (L.shadow) opt.shadow = cardShadow(T);
+  slide.addShape("roundRect", opt);
 }
 
 function footer(slide, T, brand, page, showPage) {
@@ -182,8 +211,9 @@ function slideCover(pres, d, T) {
     // on top (M-8). The path is a per-project asset (assets/generated/), never
     // generated inline here (separation principle).
     s.addImage({ path: d.bg, x: 0, y: 0, w: T.W, h: T.H });
-  } else {
-    // depth motif: large soft oval, partly off-canvas (NOT a stripe)
+  } else if (T.layout.coverMotif !== "none") {
+    // depth motif: large soft oval, partly off-canvas (NOT a stripe). A theme may
+    // set coverMotif:"none" for an austere, type-only cover (minimal/editorial).
     s.addShape("ellipse", { x: 9.2, y: 3.7, w: 7.2, h: 7.2,
       fill: { color: T.c.darkAlt }, line: { type: "none" } });
   }
@@ -359,9 +389,16 @@ function slideSection(pres, d, T) {
   const s = pres.addSlide();
   s.background = { color: T.c.dark };
   bgLayer(s, T, d);
-  // motif: large faint index number as a watermark (depth via a soft shape, not a stripe)
-  if (d.index != null) s.addText(String(d.index), { x: 8.4, y: 1.2, w: T.W - T.m - 8.4, h: 5.1, margin: 0,
-    fontFace: T.font.heading, fontSize: T.s.sectionIndex || 150, bold: true, color: T.c.darkAlt, align: "right", valign: "middle" });
+  // motif: large faint index number as a watermark (depth via a soft shape, not a
+  // stripe). A theme may set sectionIndex:"none" to drop it for an austere chapter
+  // break (minimal/editorial), or "left" for a big left-anchored numeral.
+  if (d.index != null && T.layout.sectionIndex !== "none") {
+    const left = T.layout.sectionIndex === "left";
+    s.addText(String(d.index), {
+      x: left ? T.m : 8.4, y: 1.2, w: left ? 8.4 - T.m : T.W - T.m - 8.4, h: 5.1, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.sectionIndex || 150, bold: true, color: T.c.darkAlt,
+      align: left ? "left" : "right", valign: "middle" });
+  }
   if (d.kicker) kicker(s, T, d.kicker, 2.95, { onDark: true });
   title(s, T, d.title, 3.5, { onDark: true, size: T.s.sectionTitle || 36, w: 8.0 });
   if (d.subtitle) s.addText(richText(d.subtitle), { x: T.m, y: 4.85, w: 8.0, h: 0.6, margin: 0,

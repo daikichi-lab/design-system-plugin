@@ -121,6 +121,25 @@
         "tight":   { "type": "number", "exclusiveMinimum": 0, "description": "Compact multi-line: bullets, sub-rows, offer body (~1.4)." }
       }
     },
+    "layout": {
+      "type": "object",
+      "description": "Optional composition knobs a design language can shift (M-6: layout is look-and-feel, so it lives in the theme, never the deck plan). Every knob defaults to the current geometry, so a theme without `layout` renders unchanged. Content box geometry is NOT touched — only card shape, the eyebrow marker, the cover motif, and the section-index side.",
+      "additionalProperties": false,
+      "properties": {
+        "card": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Card shape. Sharp + flat reads swiss/minimal; rounded + soft-shadow is the default.",
+          "properties": {
+            "radius": { "type": "number", "minimum": 0, "description": "Corner radius (inches). ~0.09 rounded (default), ~0.02 sharp." },
+            "shadow": { "type": "boolean", "description": "Drop shadow. true (default) or false (flat)." }
+          }
+        },
+        "kicker": { "enum": ["dot", "bar", "none"], "description": "Eyebrow marker: accent dot (default), a short rule, or none." },
+        "coverMotif": { "enum": ["oval", "none"], "description": "Cover depth shape: off-canvas oval (default) or none (austere)." },
+        "sectionIndex": { "enum": ["right", "left", "none"], "description": "Section-divider ghost number side: right (default), left, or none." }
+      }
+    },
     "brand": {
       "type": "object",
       "description": "Optional brand chrome. The plugin's neutral default ships these empty so no brand identity is stored in the plugin (per-project repos fill them).",

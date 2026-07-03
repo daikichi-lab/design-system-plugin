@@ -14,5 +14,9 @@ The message is the only thing on the slide.
 - **Avoid for:** anything dense or persuasive-by-volume; a busy deck in `minimal`
   just looks empty-and-crowded at once.
 
+**Composition (`theme.layout`):** the most austere — sharp, flat cards (no
+shadow), **no** kicker marker, **no** cover oval, and **no** section numeral. Just
+type and whitespace.
+
 The restraint is enforced by the same capacities/QA — minimal means fewer beats,
 not smaller margins. See [`../../themes/minimal/theme.json`].

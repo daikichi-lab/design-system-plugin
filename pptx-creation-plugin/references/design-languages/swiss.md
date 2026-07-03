@@ -14,5 +14,9 @@ decorative — the grid and the type do the work.
 - **Avoid for:** warm/soft brand stories (use `editorial`/`wa-modern`), or
   data-dense readouts where the whitespace wastes room (use `data-driven`).
 
+**Composition (`theme.layout`):** sharp, flat cards (`card.radius` 0.02, no
+shadow), a short-rule **bar** kicker (not a dot), and no cover oval — geometric
+and austere. Keeps the big right-side section numeral (swiss loves a bold index).
+
 Governed by the whole floor (Phase A type, Phase B kinsoku, the AI-tell blocklist
 — the red is an accent, never a stripe). See [`../../themes/swiss/theme.json`].
