@@ -1,6 +1,6 @@
 ---
 name: design-doc
-description: Use ONCE per project (a repo that uses pptx-creation) to author its DESIGN.md — the persistent deck design system: brand + chosen design language, per-audience presets, standing content-integrity (honesty) rules, constraints, and the default verification bar. deck-brief then reads it and asks only per-deck deltas, so every deck the project ships is on-brand and consistent. This is the project's standing design memory; deck-brief is one deck's intent.
+description: Use ONCE per project (a repo that uses pptx-creation) to author its DESIGN.md — the persistent deck design system: brand + chosen design language, per-audience presets, standing content-integrity (honesty) rules, constraints, the default verification bar, and visual/diagram conventions (chart units + emphasis, when to diagram, icons/motifs). deck-brief then reads it and asks only per-deck deltas, so every deck the project ships is on-brand and consistent. This is the project's standing design memory; deck-brief is one deck's intent.
 ---
 
 # design-doc
@@ -59,6 +59,12 @@ each time. Author it once, update it when the brand or rules change.
 ## 6. 検証バー（既定）
 - 既定: bake→generate→design-lint→typo-lint→image-lint→QAループ→deck-review
 - 目標band: 対外=external(≥90) / 社内=internal 以上。直せない崩れは止めて報告（M-4）
+
+## 7. 視覚・図解の方針（standing visual conventions）
+- チャート: 単位は常に明示（unit）／要点は1本だけ強調（emphasizeIndex）／連続量は線（chartType:line）／必要なら参照線（前年・目標＝targetLine）。
+- 図解（flow/cycle/matrix）: **保守的＝既定はテキスト**。構造が1語で言える時だけ（手順=flow／循環=cycle／2軸=matrix）。この案件で頻出する構造: <例: 申込フロー=flow ／ なし>。迷えばテキスト。
+- アイコン/モチーフ: <使う（statの脇に統一線幅アイコン）／使わない>。装飾は隅・帯限定で可読性優先。
+- 構図: 採用言語の `theme.layout`（カード形状・kicker・章番号）に従う（§2で言語を選べば自動）。
 ```
 
 ## Procedure
