@@ -16,15 +16,17 @@ plugin (separation principle). The plugin ships the recipes + engine only.
 
 ## Kinds
 
-| Kind | Recipe(s) | Format |
-|---|---|---|
-| **Background** (atmosphere) | `atmosphere` | **JPEG** (opaque; ~40x lighter than PNG for gradients) |
-| **Icon** (line icons) | `icon` (`trend`/`coin`/`target`/`flow`) | **PNG** (transparent, sits over the deck) |
-| **Special shape** | (add here) | PNG if it needs transparency |
+| Kind | Recipe | Slot it feeds | Format |
+|---|---|---|---|
+| **Background** | `atmosphere` | cover `bg` | **JPEG** (opaque; ~40× lighter than PNG for gradients) |
+| **Icon** | `icon` (24-glyph line family) | `stats[].icon` / `items[].icon` | **PNG** (transparent) |
+| **Motif** | `motif` (corner decoration) | `bgMotif` (any pattern) | **PNG** (transparent) |
+| **Pattern** | `pattern` (faint ground) | `bgPattern` (any pattern) | **PNG** (transparent) |
 
 Format is chosen by the output extension: `.jpg` → JPEG (opaque backgrounds),
-`.png` → transparent (icons/shapes). The rasterizer reuses the Phase-B headless
-Chromium — no resvg/sharp dependency.
+`.png` → transparent (icons / motifs / patterns). The rasterizer reuses the
+Phase-B headless Chromium — no resvg/sharp dependency. Every recipe is
+theme-token-driven, so a graphic can never drift from the native text/cards over it.
 
 ## `atmosphere` (background)
 
@@ -34,10 +36,42 @@ Dark theme-gradient base + one soft accent glow + an optional **feathered scrim*
 feTurbulence texture but is **off by default** — full-canvas noise is
 incompressible (3.3MB vs ~28KB) and image-lint will flag the weight.
 
-## `icon` (line icons)
+## `icon` (line-icon family)
 
-24×24 viewBox, `stroke = accent`, rounded caps. A tiny starter set; grow it here.
-Icons are the sanctioned way to add pictographs — **never emoji** (house bar §2).
+A **consistent** set of 24 line glyphs (one `viewBox` = 24, one `ICON_STROKE`,
+rounded caps, no fill), so any subset placed on a slide passes image-lint's
+**icon-set** check. `stroke = accent` by default (override with `color`). Icons are
+the sanctioned way to add pictographs — **never emoji** (house bar §2).
+
+Current variants (grow the `ICONS` map — keep every glyph line-only at the shared
+stroke so the family stays uniform):
+
+- growth/finance — `trend` `growth` `coin` `pie` `barchart`
+- goals/process — `target` `flow` `check` `settings` `layers` `flag`
+- people/comms — `people` `chat` `briefcase`
+- knowledge/risk — `idea` `alert` `shield`
+- objects/time — `document` `clock` `calendar` `globe` `search` `star` `arrowup`
+
+The **consistency contract** is what makes a set look designed rather than scraped:
+same optical size, same stroke weight. image-lint measures stroke with a
+*density-invariant* proxy (`2·area/perimeter`), so a busy glyph (globe) and a
+sparse one (arrow) at the same stroke read the same — only a genuine
+filled-vs-line or thick-vs-thin mismatch is flagged.
+
+## `motif` (corner decoration → `bgMotif`)
+
+A code-drawn decoration for the `bgMotif` slot, kept in the **top-right region**
+(ink at x > ~0.6w) so it clears the usual left text column — image-lint's
+**motif-intrude** check fails a motif that covers a text zone. Accent-family colour
+only (one hue: `accent`/`accentSoft`/`accentDeep`), so it can never fight the deck's
+single accent ("simple + refined"). Variants: `confetti` `corner-dots`
+`corner-rings` `arcs` `blob` `triangles`.
+
+## `pattern` (faint ground → `bgPattern`)
+
+A faint full-bleed texture for the `bgPattern` slot — low opacity by design so it
+never dents text contrast (motif-intrude passes it because per-pixel alpha stays
+under the opaque threshold). Variants: `dots` `grid` `diagonal`.
 
 ## Weight discipline (image-lint enforces)
 
@@ -48,8 +82,10 @@ Icons are the sanctioned way to add pictographs — **never emoji** (house bar �
 - **Grain off** unless you accept the weight.
 
 `image-lint` (a `build.sh` gate) checks each embedded image: scrim/contrast
-(WCAG, pixel-sampled), resolution vs placement, aspect (no stretch), scrim-edge
-softness, and per-image + whole-deck weight caps.
+(WCAG, pixel-sampled) for opaque backgrounds, **motif-intrude** (a decoration
+motif must stay out of the text zone), **icon-set** (one optical size + stroke
+weight across a slide's icons), resolution vs placement, aspect (no stretch),
+scrim-edge softness, and per-image + whole-deck weight caps.
 
 ## Honest residuals
 

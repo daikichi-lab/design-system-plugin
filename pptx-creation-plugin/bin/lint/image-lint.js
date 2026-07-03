@@ -13,7 +13,9 @@
  *    (6) motif intrude  — a decoration motif (bgMotif/bgPattern) must stay OUT of
  *                         the text zone (corners/bands only), not crowd the words
  *    (7) icon set       — icons meant to look uniform (same slide) must share an
- *                         optical size and a stroke weight (ink-coverage spread)
+ *                         optical size and a stroke weight (a density-invariant
+ *                         2*area/perimeter proxy, so glyph complexity doesn't
+ *                         false-trigger it — the flaw the recipe library exposed)
  *
  *  Needs playwright-core (reused Chromium) for pixel sampling; parses PNG/JPEG
  *  headers itself for dimensions. Exit 1 on any ERROR (a CI gate). M-7/M-8 hold:
@@ -37,7 +39,11 @@ const CONTRAST_ERR = 3.0, CONTRAST_WARN = 4.5;
 const INTRUDE_ERR = 0.18, INTRUDE_WARN = 0.08;
 // icon-set consistency: icons meant to look uniform (same slide) must share an
 // optical size and a stroke weight. ICON_MIN_PX = 0.55in placement @2x, 75% floor.
-const ICON_MIN_PX = 105 * 0.75, ICON_DIM_RATIO = 1.3, ICON_INK_SPREAD = 0.14;
+// ICON_STROKE_SPREAD is on the density-invariant stroke proxy (2*area/perimeter /
+// icon size): the 24 shipped recipe icons cluster at ~0.03; a filled-vs-line or
+// thick-vs-thin mismatch spreads 0.15-0.46. 0.06 passes a uniform set with 2x
+// headroom and still fails a real weight mismatch.
+const ICON_MIN_PX = 105 * 0.75, ICON_DIM_RATIO = 1.3, ICON_STROKE_SPREAD = 0.06;
 
 // The icons on one slide that form a visual SET (should match each other).
 function slideIcons(slide) {
@@ -79,12 +85,12 @@ const contrast = (l1, l2) => (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.0
 /* ---- pixel sampling: load the image as a data URL (same-origin -> canvas not
  * tainted) and read the max/avg luminance of a fractional region, plus a
  * left->right luminance profile across it (for the scrim-edge check). ---- */
-async function sampleRegion(buf, fmt, region) {
+async function sampleRegion(buf, fmt, region, wantStroke = false) {
   const dataUrl = `data:image/${fmt};base64,${buf.toString("base64")}`;
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
-    return await page.evaluate(async ({ src, region }) => {
+    return await page.evaluate(async ({ src, region, wantStroke }) => {
       const img = new Image(); img.src = src; await img.decode();
       const cv = document.createElement("canvas"); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
       cv.getContext("2d").drawImage(img, 0, 0);
@@ -96,6 +102,19 @@ async function sampleRegion(buf, fmt, region) {
       const L = (i) => 0.2126 * lin(d[i] / 255) + 0.7152 * lin(d[i + 1] / 255) + 0.0722 * lin(d[i + 2] / 255);
       let maxL = 0, sum = 0, n = 0, opaque = 0;
       for (let i = 0; i < d.length; i += 4) { const l = L(i); maxL = Math.max(maxL, l); sum += l; n++; if (d[i + 3] > 127) opaque++; }
+      // Stroke-weight proxy (icons only): 2*area/perimeter ~= the line thickness,
+      // INDEPENDENT of how many strokes the glyph has (density-invariant — a busy
+      // globe and a sparse arrow at the same stroke width read the same here).
+      let strokePx = 0;
+      if (wantStroke) {
+        const op = (x, y) => (x < 0 || y < 0 || x >= rw || y >= rh) ? false : d[(y * rw + x) * 4 + 3] > 127;
+        let edge = 0;
+        for (let y = 0; y < rh; y++) for (let x = 0; x < rw; x++) {
+          if (!op(x, y)) continue;
+          if (!op(x - 1, y) || !op(x + 1, y) || !op(x, y - 1) || !op(x, y + 1)) edge++;
+        }
+        strokePx = edge > 0 ? (2 * opaque) / edge : 0;
+      }
       // horizontal luminance profile (column means) for the edge-softness check
       const cols = 24, prof = [];
       for (let c = 0; c < cols; c++) {
@@ -103,8 +122,8 @@ async function sampleRegion(buf, fmt, region) {
         for (let x = x0; x < x1; x++) for (let y = 0; y < rh; y++) { const i = (y * rw + x) * 4; s += L(i); m++; }
         prof.push(m ? s / m : 0);
       }
-      return { maxL, avgL: sum / n, inkCov: n ? opaque / n : 0, prof };
-    }, { src: dataUrl, region });
+      return { maxL, avgL: sum / n, inkCov: n ? opaque / n : 0, strokePx, prof };
+    }, { src: dataUrl, region, wantStroke });
   } finally { await page.close(); }
 }
 
@@ -191,14 +210,14 @@ async function lintPlan(planPath, themePath) {
       const dims = imageDims(buf);
       if (!dims) { E(i + 1, "FORMAT", `icon ${ic.where}: cannot read dimensions`); continue; }
       if (Math.min(dims.w, dims.h) < ICON_MIN_PX) W(i + 1, "ICON-RES", `icon ${ic.where} ${dims.w}x${dims.h} below ~2x placement (${Math.round(ICON_MIN_PX / 0.75)}px) — upscale blur`);
-      const smp = await sampleRegion(buf, dims.fmt, { x: 0, y: 0, w: 1, h: 1 }); // whole-icon ink (alpha) coverage ~= weight
-      iconStats.push({ where: ic.where, dim: Math.max(dims.w, dims.h), ink: smp.inkCov });
+      const smp = await sampleRegion(buf, dims.fmt, { x: 0, y: 0, w: 1, h: 1 }, true); // whole-icon stroke proxy
+      iconStats.push({ where: ic.where, dim: Math.max(dims.w, dims.h), stroke: smp.strokePx / Math.max(dims.w, dims.h) });
     }
     if (iconStats.length >= 2) {
-      const ds = iconStats.map((s) => s.dim), inks = iconStats.map((s) => s.ink);
-      const dimRatio = Math.max(...ds) / Math.min(...ds), inkSpread = Math.max(...inks) - Math.min(...inks);
+      const ds = iconStats.map((s) => s.dim), sw = iconStats.map((s) => s.stroke);
+      const dimRatio = Math.max(...ds) / Math.min(...ds), strokeSpread = Math.max(...sw) - Math.min(...sw);
       if (dimRatio > ICON_DIM_RATIO) E(i + 1, "ICON-SET", `icon optical sizes vary ${dimRatio.toFixed(2)}x (${Math.min(...ds)}..${Math.max(...ds)}px) — render the set at one size`);
-      if (inkSpread > ICON_INK_SPREAD) E(i + 1, "ICON-SET", `icon stroke/weight varies (ink coverage ${(Math.min(...inks) * 100) | 0}%..${(Math.max(...inks) * 100) | 0}%, spread ${(inkSpread * 100) | 0}% > ${(ICON_INK_SPREAD * 100) | 0}%) — use one stroke width across the set`);
+      if (strokeSpread > ICON_STROKE_SPREAD) E(i + 1, "ICON-SET", `icon stroke weight varies (${(Math.min(...sw) * 100).toFixed(1)}%..${(Math.max(...sw) * 100).toFixed(1)}% of icon size, spread ${(strokeSpread * 100).toFixed(1)}% > ${(ICON_STROKE_SPREAD * 100).toFixed(0)}%) — use one stroke width across the set`);
     }
   }
   if (deckBytes > DECK_ERR) E(null, "WEIGHT", `total embedded images ${(deckBytes / 1024 / 1024).toFixed(1)}MB > ${DECK_ERR / 1024 / 1024}MB`);
