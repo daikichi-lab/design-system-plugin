@@ -66,7 +66,7 @@ The frame decides the **order of beats**. Each beat is one idea you must land.
 ## Step 3 — Map each beat to a pattern
 
 For every beat, pick the pattern whose *job* matches it
-(`../../references/patterns/catalog.md`). The nine patterns, by the job they do:
+(`../../references/patterns/catalog.md`). The patterns, by the job they do:
 
 | Beat shape | Pattern |
 |---|---|
@@ -76,9 +76,16 @@ For every beat, pick the pattern whose *job* matches it
 | A trend or magnitude + one takeaway | `chart` |
 | 2–4 KPIs / headline numbers | `stat-grid` |
 | Precise figures in rows & columns | `table` |
+| An ordered process / steps / timeline | `flow` (diagram) |
+| A repeating loop (PDCA, a lifecycle) | `cycle` (diagram) |
+| A 2-axis positioning / four quadrants | `matrix` (diagram) |
 | A chapter break in a longer deck (dark) | `section` |
 | The opening promise (dark) | `cover` |
 | The single next action (dark) | `cta` |
+
+The last three are **diagram skeletons** — read the conservative gate in **Step 3b**
+before choosing one. A diagram that fits the logic is worth a thousand words; one
+that doesn't is worse than text.
 
 **Respect each pattern's `capacity`.** It is a hard limit, not a suggestion:
 
@@ -87,11 +94,40 @@ For every beat, pick the pattern whose *job* matches it
 - `chart`: 4–7 bars read cleanly; >8 crowds.
 - `stat-grid`: 3 ideal, 4 max, 2 min cards.
 - `table`: ≤ 6 rows incl. header, ≤ 5 columns; always add a units/basis `note`.
+- `flow` / `cycle`: 3–6 nodes (each node label short — the height gate fails an
+  overflowing node); `matrix`: exactly 4 quadrants (fixed 2×2).
 - `section`: title ≤ 1 line; index 1–2 chars; only in decks of 8+ slides.
 - `cover` / `cta` / `message`: title ≤ 2 lines.
 
 When a beat exceeds capacity, **split it into two slides** — never shrink the
 copy or cram past the bar. Two clean slides beat one crowded one every time.
+
+## Step 3b — Diagram? (conservative — default to text)
+
+The diagram skeletons (`flow` / `cycle` / `matrix`) are powerful, but the failure
+mode is **over-diagramming and mis-classification** — a wrong diagram distorts the
+logic, and that is *worse* than plain text. So the gate is deliberately strict.
+
+**Diagram a beat ONLY when its structure is unmistakable and a skeleton fits it exactly:**
+
+- **`flow`** — an *ordered* sequence where the order carries meaning (申込 → 審査 →
+  契約 → 納品). 3–6 steps. NOT an unordered list of features (that is `two-column` /
+  text).
+- **`cycle`** — a *repeating loop* that returns to its start (PDCA, a lifecycle, a
+  virtuous circle). 3–6 nodes. If it doesn't truly loop back, it's a `flow`.
+- **`matrix`** — items positioned on *two independent axes* → four quadrants
+  (効果×工数, BCG, SWOT). Exactly 4. NOT comparing two things (that's `comparison`),
+  NOT one axis (that's a `flow` / a list).
+
+**When in doubt, do NOT diagram.** Keep the beat as text / `message` / `two-column`
+/ `stat-grid` / `comparison`. Reach for a skeleton only when you can name the
+structure in one word — *sequence / loop / two-axis* — and the node labels are short.
+
+**Record the decision** in the slide's `notes`: which skeleton and *why* (or why you
+kept it as text). This makes the classification reviewable — the human approving the
+deck catches a mis-classification the lint cannot. The floor guarantees a diagram
+won't *break*; it never guarantees the *structure fits the meaning* — that is a human
+call, so leave the reasoning behind.
 
 ## Step 4 — Sequence (the sandwich)
 
