@@ -21,6 +21,10 @@
 // hanging indent on top. (Earlier box-0.2in over-narrowed and invented orphans.)
 const EFFECTIVE_FACTOR = 0.95;
 const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
+// Diagram skeletons compute their node geometry here too, so the floor
+// (kinsoku / orphan / height gate) applies to the SAME node text boxes the
+// engine draws labels into.
+const { flowLayout, nodeTextBox } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
@@ -88,6 +92,7 @@ function heightBoxes(slide, T) {
     "section":    { topY: 3.5, bottomY: 4.85, sizePt: sT },
     "stat-grid":  { topY: 1.15, bottomY: 2.7, sizePt: s.title },
     "table":      { topY: 1.15, bottomY: 2.25, sizePt: s.title },
+    "flow":       { topY: 1.15, bottomY: 2.45, sizePt: s.title },
   };
   const tb = TITLE_BOX[slide.pattern];
   if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
@@ -97,6 +102,19 @@ function heightBoxes(slide, T) {
       out.push({ id: "takeaway card", path: "takeaway", topY: 3.78, bottomY: 2.4 + 3.85,
         sizePt: s.body, leading: lead.body });
       break;
+    case "flow": {
+      // each flow node: the label must fit its node's inner box (overflow => a
+      // hard error, exactly like a card). Same geometry the engine draws.
+      const steps = c.steps || [];
+      const { nodes } = flowLayout(T, steps.length, c.direction);
+      steps.forEach((st, i) => {
+        if (!nodes[i]) return;
+        const ntb = nodeTextBox(nodes[i]);
+        out.push({ id: `flow node ${i + 1}`, path: `steps[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h,
+          sizePt: s.head, leading: lead.tight });
+      });
+      break;
+    }
     case "cta":
       // offer panel: roundRect(px, 4.25, pw, 1.85) -> bottom 6.10; body box y=py+0.95=5.20.
       out.push({ id: "offer panel", path: "offerBody", topY: 4.25 + 0.95, bottomY: 4.25 + 1.85,
@@ -146,7 +164,7 @@ function wrappingFields(slide, T) {
   // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
   const sectionTitleSize = s.sectionTitle || s.title;
   const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
-    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m };
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m };
   if (TITLE_W[slide.pattern] != null) {
     const size = slide.pattern === "section" ? sectionTitleSize : s.title;
     push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
@@ -155,6 +173,18 @@ function wrappingFields(slide, T) {
     case "message":
       push("statCaption", c.statCaption, W - 5.2, s.small, "caption", lead.caption);
       break;
+    case "flow": {
+      // each step label is centered native text inside its node — measured at the
+      // node's inner box so kinsoku/orphan apply per node (same geometry the
+      // engine draws with).
+      const steps = c.steps || [];
+      const { nodes } = flowLayout(T, steps.length, c.direction);
+      steps.forEach((st, i) => {
+        if (!nodes[i]) return;
+        push(`steps[${i}]`, st, nodeTextBox(nodes[i]).w, s.head, "heading", lead.tight);
+      });
+      break;
+    }
     case "two-column":
       push("lead", c.lead, 5.0, s.body, "body", lead.body);
       (c.items || []).forEach((it, i) =>

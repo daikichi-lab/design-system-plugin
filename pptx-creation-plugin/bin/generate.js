@@ -25,6 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
+const { flowLayout, nodeTextBox } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -488,6 +489,44 @@ function slideTable(pres, d, T, ctx) {
 }
 
 /* ---------------- pattern registry ---------------- */
+/* ---------------- DIAGRAM: flow (N steps, arrow-connected) ----------------
+ * A base structure ("skeleton"): native roundRect nodes + native arrows drawn
+ * from diagrams.js geometry, native labels centered inside. Robust for 3-6 steps
+ * (design-lint caps it); node width auto-computed from n, with a vertical-stack
+ * fallback when horizontal nodes get too narrow. The floor applies per node:
+ * geometry.js measures each node label (kinsoku/orphan) and the height gate fails
+ * a node whose text overflows its box. */
+function slideFlow(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const steps = d.steps || [];
+  const { nodes, arrows } = flowLayout(T, steps.length, d.direction);
+  const rad = T.layout.card.radius;
+  // arrows first (behind the nodes)
+  arrows.forEach((a) => {
+    s.addShape("line", {
+      x: Math.min(a.x1, a.x2), y: Math.min(a.y1, a.y2),
+      w: Math.abs(a.x2 - a.x1), h: Math.abs(a.y2 - a.y1),
+      flipH: a.x2 < a.x1, flipV: a.y2 < a.y1,
+      line: { color: T.c.accent, width: 2, endArrowType: "triangle" },
+    });
+  });
+  steps.forEach((st, i) => {
+    const node = nodes[i]; if (!node) return;
+    s.addShape("roundRect", { x: node.x, y: node.y, w: node.w, h: node.h, rectRadius: rad,
+      fill: { color: T.c.surface }, line: { color: T.c.accent, width: 1.25 } });
+    const tb = nodeTextBox(node);
+    s.addText(richText(st), { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.ink,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 const PATTERNS = {
   "cover": slideCover,
   "message": slideMessage,
@@ -498,6 +537,7 @@ const PATTERNS = {
   "section": slideSection,
   "stat-grid": slideStatGrid,
   "table": slideTable,
+  "flow": slideFlow,
 };
 
 /* ---------------- deck plan ---------------- */

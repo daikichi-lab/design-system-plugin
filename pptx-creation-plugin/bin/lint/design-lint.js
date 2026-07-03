@@ -28,6 +28,8 @@ const path = require("path");
 const { loadPlan, loadTheme } = require("../generate.js");
 // Card geometry for the height-overflow check (shared with bake / typo-lint).
 const { heightBoxes, boxVerdict } = require("../layout-html/geometry.js");
+// Diagram element-count caps (single source of truth in diagrams.js).
+const { CAPS } = require("../graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -207,6 +209,13 @@ function checkCapacity(slides, F) {
       case "stat-grid": {
         const n = len(c.stats);
         if (n > 4 || n < 2) F.error(idx, "CAPACITY", `stat-grid has ${n} stats (must be 2-4)`);
+        break;
+      }
+      case "flow": {
+        const n = len(c.steps);
+        const [min, max] = CAPS.flow;
+        if (n > max) F.error(idx, "CAPACITY", `flow has ${n} steps (max ${max}; split into two, or use a list)`);
+        else if (n < min) F.error(idx, "CAPACITY", `flow has ${n} steps (min ${min}; too few to diagram — use text / two-column)`);
         break;
       }
       case "table": {

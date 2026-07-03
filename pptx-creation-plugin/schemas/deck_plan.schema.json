@@ -47,7 +47,7 @@
         "pattern": {
           "type": "string",
           "description": "Pattern id. Must exist in the engine registry.",
-          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta"]
+          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow"]
         },
         "content": {
           "type": "object",
@@ -118,6 +118,19 @@
               "title": { "type": ["string", "array"], "items": { "type": "string" } },
               "left": { "$ref": "#/definitions/comparisonColumn" },
               "right": { "$ref": "#/definitions/comparisonColumn" },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "flow" } } },
+          "then": { "properties": { "content": {
+            "required": ["steps"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "steps": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 3, "maxItems": 6, "description": "3-6 step labels (native text); the engine draws the arrow-connected nodes." },
+              "direction": { "type": "string", "enum": ["horizontal", "vertical"] },
               "notes": { "type": "string" }
             }
           } } }
