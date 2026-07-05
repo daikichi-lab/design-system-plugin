@@ -26,32 +26,9 @@
 **読み込み確認：** `/plugin` を実行すると `pptx-creation` が有効化されて表示され、
 スキルが名前空間付きで呼べます（例：`/pptx-creation:deck-brief`、`/pptx-creation:create-deck`）。
 
-### 前提ツール（エンジン＋QAレンダ）
+### アップデート方法（インストール済みプラグインの最新化）
 
-スキルは小さな Node エンジンを呼び出し、QAループでレンダするので、Claude Code を
-動かすマシンに次が必要です。
-
-| 必要なもの | 用途 | 導入 |
-|---|---|---|
-| **Node.js** ＋ プラグインの依存 | `bin/generate.js`（pptxgenjs） | プラグインのディレクトリで `npm install` を**一度**（場所は下記） |
-| **LibreOffice**（`soffice`）＋ **poppler**（`pdftoppm`）を PATH に | QAレンダ（PPTX→PDF→JPG） | OS のパッケージマネージャ・**Java 不要** |
-| *(任意)* Playwright Chromium ＋ **游ゴシック** フォント | 日本語組版の精度（`bake` / `typo-lint`） | `bin/layout-html/setup.sh`。無くてもビルドは**自動フォールバック** |
-
-> **`npm install` の場所：** Claude Code はプラグインの npm 依存を自動では入れません。
-> マーケットプレイス経由で入れたプラグインは
-> `~/.claude/plugins/cache/daikichi-plugins/pptx-creation/<version>/` に置かれます。
-> そこへ `cd` して一度 `npm install` してください。（ローカル開発なら
-> `pptx-creation-plugin/` で実行）。飛ばした場合の症状：スキルが
-> *「Cannot find module 'pptxgenjs'」* で失敗します。
-
-詳細とワンコマンドのパイプラインは、プラグイン README の
-[*How to load it*](pptx-creation-plugin/README.md#how-to-load-it) を参照してください。
-
----
-
-## アップデート方法（インストール済みプラグインの最新化）
-
-このリポジトリに新機能（パターン・図解・組版修正）が入っても、**利用側リポジトリの
+このリポジトリに新機能（パターン・図解・組版修正）が入っても、**利用側の
 プラグインは自動では更新されません**。古いキャッシュのまま生成を続けると、修正済みの
 組版バグや未対応レイアウトを踏み続けます。次の2ステップで最新化してください。
 
@@ -77,6 +54,27 @@ claude plugin update pptx-creation@daikichi-plugins
    （ZIP の手編集は禁止）。各プロジェクトの `deck_plan.json` から
    `bash bin/build.sh --plan ... --out ...` で再生成すると、組版修正・新パターンが
    反映されます。
+
+### 前提ツール（エンジン＋QAレンダ）
+
+スキルは小さな Node エンジンを呼び出し、QAループでレンダするので、Claude Code を
+動かすマシンに次が必要です。
+
+| 必要なもの | 用途 | 導入 |
+|---|---|---|
+| **Node.js** ＋ プラグインの依存 | `bin/generate.js`（pptxgenjs） | プラグインのディレクトリで `npm install` を**一度**（場所は下記） |
+| **LibreOffice**（`soffice`）＋ **poppler**（`pdftoppm`）を PATH に | QAレンダ（PPTX→PDF→JPG） | OS のパッケージマネージャ・**Java 不要** |
+| *(任意)* Playwright Chromium ＋ **游ゴシック** フォント | 日本語組版の精度（`bake` / `typo-lint`） | `bin/layout-html/setup.sh`。無くてもビルドは**自動フォールバック** |
+
+> **`npm install` の場所：** Claude Code はプラグインの npm 依存を自動では入れません。
+> マーケットプレイス経由で入れたプラグインは
+> `~/.claude/plugins/cache/daikichi-plugins/pptx-creation/<version>/` に置かれます。
+> そこへ `cd` して一度 `npm install` してください。（ローカル開発なら
+> `pptx-creation-plugin/` で実行）。飛ばした場合の症状：スキルが
+> *「Cannot find module 'pptxgenjs'」* で失敗します。
+
+詳細とワンコマンドのパイプラインは、プラグイン README の
+[*How to load it*](pptx-creation-plugin/README.md#how-to-load-it) を参照してください。
 
 ---
 
