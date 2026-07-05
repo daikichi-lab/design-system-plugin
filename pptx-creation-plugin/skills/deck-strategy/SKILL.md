@@ -75,6 +75,7 @@ For every beat, pick the pattern whose *job* matches it
 | A vs B, before/after, old vs new | `comparison` |
 | A trend or magnitude + one takeaway | `chart` |
 | 2–4 KPIs / headline numbers | `stat-grid` |
+| 4–6 terms each with one short explanation | `card-grid` |
 | Precise figures in rows & columns | `table` |
 | An ordered process / steps | `flow` (diagram) |
 | A repeating loop (PDCA, a lifecycle) | `cycle` (diagram) |
@@ -97,6 +98,7 @@ that doesn't is worse than text.
 - `comparison` points: 4 ideal, 5 max per card.
 - `chart`: 4–7 bars read cleanly; >8 crowds.
 - `stat-grid`: 3 ideal, 4 max, 2 min cards.
+- `card-grid`: 4–6 cards; heads are one-line terms, bodies ≤ 3 short lines.
 - `table`: ≤ 6 rows incl. header, ≤ 5 columns; always add a units/basis `note`.
 - `flow` / `cycle`: 3–6 nodes (each node label short — the height gate fails an
   overflowing node); `matrix`: exactly 4 quadrants (fixed 2×2).

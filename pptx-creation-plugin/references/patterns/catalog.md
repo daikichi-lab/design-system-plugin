@@ -289,6 +289,33 @@ capacity: "<= 6 rows incl. header read cleanly; <= 5 columns. More rows -> split
 
 ---
 
+## Pattern: `card-grid`
+
+4–6 head+body cards in a two-row grid (2×2 / 3+2 / 2×3) — the TEXT sibling of
+`stat-grid`. Six BS 勘定科目 cards, five 警戒シグナル, four 事業特性: each cell is
+a **term plus one short explanation**, not a headline number.
+
+```yaml
+id: card-grid
+content:
+  kicker: { type: string, required: false }
+  title:  { type: string|string[], required: false }
+  cards:  { type: array, required: true, note: "4-6 of {head, body?}; head is a short
+            TERM (one line — a wrapping head is a hard OVERFLOW), body <= 3 lines" }
+  emphasizeIndex: { type: int, required: false, note: "tint one card (row-major)" }
+layout:
+  grid:  "cols = ceil(n/2); two rows from y 2.45, cardH 1.825, gaps 0.4/0.3"
+  card:  "surface fill (+ shadow per theme.layout.card); emphasis = surfaceAccent
+          tint + accentDeep head — never a stripe"
+floor: "head band and body box are height-gated per card; labels baked (kinsoku)"
+capacity: "4-6 cards. <4 -> two-column / stat-grid; >6 -> split into two slides.
+           Numbers-first content belongs in stat-grid, not here."
+```
+
+**Verified (2026-07-05):** n=6 (2×3, emphasized card) / n=5 (3+2) / n=4 (2×2)
+render clean; n=3 / n=7 → CAPACITY; a 2-line head → OVERFLOW 168%; a 4-line body
+→ OVERFLOW 104%; run-gate PASS across all 6 themes.
+
 ## Choosing & sequencing (for `deck-strategy`)
 
 1. Always `cover` first, `cta` last (sandwich).

@@ -440,6 +440,44 @@ function slideStatGrid(pres, d, T, ctx) {
   return s;
 }
 
+/* card-grid: 4-6 head+body cards in a 2-row grid (2x2 / 2+3 / 2x3). The TEXT
+ * sibling of stat-grid — six BS 勘定科目 cards, six risk cards — where each cell
+ * is a term plus one short explanation, not a headline number. Heads are one
+ * line (the height gate rejects a wrapping head); bodies are height-gated per
+ * card. emphasizeIndex tints one card (house emphasis: tint, never a stripe). */
+const CARD_GRID = { top: 2.45, rowGap: 0.3, colGap: 0.4, cardH: 1.825, pad: 0.3, headH: 0.44, bodyTop: 0.66 };
+
+function cardGridCell(T, n, i) {
+  const g = CARD_GRID;
+  const cols = Math.ceil(n / 2);
+  const w = (T.W - 2 * T.m - (cols - 1) * g.colGap) / cols;
+  const row = Math.floor(i / cols), col = i % cols;
+  return { x: T.m + col * (w + g.colGap), y: g.top + row * (g.cardH + g.rowGap), w, h: g.cardH };
+}
+
+function slideCardGrid(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  title(s, T, d.title, 1.15);
+  const cards = d.cards || [];
+  const g = CARD_GRID;
+  cards.forEach((cd, i) => {
+    const cell = cardGridCell(T, cards.length, i);
+    const emph = d.emphasizeIndex === i;
+    card(s, T, cell.x, cell.y, cell.w, cell.h, { fill: emph ? T.c.surfaceA : T.c.surface });
+    if (cd.head) s.addText(richText(cd.head), { x: cell.x + g.pad, y: cell.y + 0.16, w: cell.w - 2 * g.pad, h: g.headH,
+      margin: 0, fontFace: T.font.heading, fontSize: T.s.head, bold: true,
+      color: emph ? T.c.accentDp : T.c.ink, align: "left", valign: "top", lineSpacingMultiple: T.lead.tight });
+    if (cd.body) s.addText(richText(cd.body), { x: cell.x + g.pad, y: cell.y + g.bodyTop, w: cell.w - 2 * g.pad,
+      h: cell.h - g.bodyTop - 0.16, margin: 0, fontFace: T.font.body, fontSize: T.s.small, color: T.c.muted,
+      align: "left", valign: "top", lineSpacingMultiple: T.lead.tight });
+  });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 function slideTable(pres, d, T, ctx) {
   const s = pres.addSlide();
   s.background = { color: T.c.bg };
@@ -768,6 +806,7 @@ const PATTERNS = {
   "cta": slideCTA,
   "section": slideSection,
   "stat-grid": slideStatGrid,
+  "card-grid": slideCardGrid,
   "table": slideTable,
   "flow": slideFlow,
   "cycle": slideCycle,

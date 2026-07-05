@@ -99,6 +99,7 @@ function heightBoxes(slide, T) {
     "steps":      { topY: 1.15, bottomY: 3.4, sizePt: s.title },
     "branch":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "formula":    { topY: 1.15, bottomY: 3.65, sizePt: s.title },
+    "card-grid":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
   };
   const tb = TITLE_BOX[slide.pattern];
   if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
@@ -217,6 +218,23 @@ function heightBoxes(slide, T) {
       });
       break;
     }
+    case "card-grid": {
+      // DUPLICATES generate.js CARD_GRID (top 2.45, rowGap 0.3, cardH 1.825,
+      // head y+0.16 h 0.44, body y+0.66 .. cardBottom-0.16). Head band is short
+      // on purpose: a 2-line head is a hard OVERFLOW (heads are terms).
+      const cards = c.cards || [];
+      const cols = Math.ceil(Math.max(cards.length, 1) / 2);
+      cards.forEach((cd, i) => {
+        if (!cd) return;
+        const row = Math.floor(i / cols);
+        const cy = 2.45 + row * (1.825 + 0.3);
+        if (cd.head) out.push({ id: `card-grid head ${i + 1}`, path: `cards[${i}].head`,
+          topY: cy + 0.16, bottomY: cy + 0.16 + 0.44, sizePt: s.head, leading: lead.tight });
+        if (cd.body) out.push({ id: `card-grid body ${i + 1}`, path: `cards[${i}].body`,
+          topY: cy + 0.66, bottomY: cy + 1.825 - 0.16, sizePt: s.small, leading: lead.tight });
+      });
+      break;
+    }
     default:
       break;
   }
@@ -253,7 +271,7 @@ function wrappingFields(slide, T) {
   // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
   const sectionTitleSize = s.sectionTitle || s.title;
   const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
-    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m, "branch": W - 2 * m, "formula": W - 2 * m };
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m, "branch": W - 2 * m, "formula": W - 2 * m, "card-grid": W - 2 * m };
   if (TITLE_W[slide.pattern] != null) {
     const size = slide.pattern === "section" ? sectionTitleSize : s.title;
     push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
@@ -371,6 +389,18 @@ function wrappingFields(slide, T) {
       const cardW = ((W - 2 * m) - (n - 1) * 0.4) / n;
       stats.forEach((st, i) =>
         push(`stats[${i}].sub`, st.sub, cardW - 0.8, s.small, "body", lead.tight));
+      break;
+    }
+    case "card-grid": {
+      // width mirrors generate.js cardGridCell: cols = ceil(n/2), pad 0.3/side.
+      const cards = c.cards || [], n = Math.max(cards.length, 1);
+      const cols = Math.ceil(n / 2);
+      const cardW = ((W - 2 * m) - (cols - 1) * 0.4) / cols;
+      cards.forEach((cd, i) => {
+        if (!cd) return;
+        push(`cards[${i}].head`, cd.head, cardW - 0.6, s.head, "heading", lead.tight);
+        push(`cards[${i}].body`, cd.body, cardW - 0.6, s.small, "body", lead.tight);
+      });
       break;
     }
     case "cover":

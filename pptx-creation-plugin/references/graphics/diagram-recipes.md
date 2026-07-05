@@ -233,5 +233,6 @@ implemented and verified, and the **conservative classification step**
 (deck-strategy deciding *whether* to diagram and *which* skeleton) is in place.
 Next candidates, distilled from the enpreth 図解テンプレ survey (structures, not
 looks — the look layer stays in themes): chart-type extensions (pie / horizontal
-bar / line) and a 2×3 card grid. Each is added only through the sanctioned path
+bar / line). The 2×3 card grid landed as the `card-grid` slide pattern (see
+`references/patterns/catalog.md`). Each is added only through the sanctioned path
 (skeleton → builder → floor wiring → catalog → QA → gate).

@@ -211,6 +211,12 @@ function checkCapacity(slides, F) {
         if (n > 4 || n < 2) F.error(idx, "CAPACITY", `stat-grid has ${n} stats (must be 2-4)`);
         break;
       }
+      case "card-grid": {
+        const n = len(c.cards);
+        if (n > 6) F.error(idx, "CAPACITY", `card-grid has ${n} cards (max 6; split into two slides)`);
+        else if (n < 4) F.error(idx, "CAPACITY", `card-grid has ${n} cards (min 4; fewer cards read better as two-column / stat-grid)`);
+        break;
+      }
       case "flow": {
         const n = len(c.steps);
         const [min, max] = CAPS.flow;

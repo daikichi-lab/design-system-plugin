@@ -47,7 +47,7 @@
         "pattern": {
           "type": "string",
           "description": "Pattern id. Must exist in the engine registry.",
-          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch", "formula"]
+          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch", "formula", "card-grid"]
         },
         "content": {
           "type": "object",
@@ -158,6 +158,19 @@
               "axisY": { "type": "array", "items": { "type": ["string", "array"] }, "maxItems": 2, "description": "Y-axis end labels [top, bottom], shown left." },
               "emphasizeIndex": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Tint one quadrant (0=TL,1=TR,2=BL,3=BR)." },
               "quadrants": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "object", "properties": { "head": { "type": "string" }, "body": { "type": ["string", "array"] } } }, "description": "Exactly 4 quadrants (TL, TR, BL, BR), each {head?, body?}." },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "card-grid" } } },
+          "then": { "properties": { "content": {
+            "required": ["cards"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "cards": { "type": "array", "minItems": 4, "maxItems": 6, "items": { "type": "object", "required": ["head"], "properties": { "head": { "type": ["string", "array"], "description": "Short term (one line — a wrapping head is a hard overflow)." }, "body": { "type": ["string", "array"], "description": "One short explanation (<=3 lines)." } } }, "description": "4-6 head+body cards laid out in two rows." },
+              "emphasizeIndex": { "type": "integer", "minimum": 0, "maximum": 5, "description": "Tint one card (row-major index)." },
               "notes": { "type": "string" }
             }
           } } }
