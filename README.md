@@ -49,6 +49,37 @@
 
 ---
 
+## アップデート方法（インストール済みプラグインの最新化）
+
+このリポジトリに新機能（パターン・図解・組版修正）が入っても、**利用側リポジトリの
+プラグインは自動では更新されません**。古いキャッシュのまま生成を続けると、修正済みの
+組版バグや未対応レイアウトを踏み続けます。次の2ステップで最新化してください。
+
+```text
+# 1. マーケットプレイスのカタログを更新
+/plugin marketplace update daikichi-plugins
+
+# 2. プラグイン本体を更新（ターミナルから。/plugin メニューの更新操作でも可）
+claude plugin update pptx-creation@daikichi-plugins
+```
+
+ローカルパスで追加している場合（`/plugin marketplace add .`）は、先にリポジトリを
+`git pull` してから上記2ステップを実行します。
+
+**更新後に必ずやること：**
+
+1. **`npm install` のやり直し。** キャッシュは
+   `~/.claude/plugins/cache/daikichi-plugins/pptx-creation/<version>/` と
+   **バージョンごとに別ディレクトリ**になるため、旧版の `node_modules` は
+   引き継がれません。新しいバージョンのディレクトリで一度 `npm install` を
+   実行してください（日本語組版レイヤーも使うなら `bash bin/layout-html/setup.sh`）。
+2. **旧版で作ったデッキの再生成。** 生成済み `.pptx` は直接修正できません
+   （ZIP の手編集は禁止）。各プロジェクトの `deck_plan.json` から
+   `bash bin/build.sh --plan ... --out ...` で再生成すると、組版修正・新パターンが
+   反映されます。
+
+---
+
 ## 導入したら、まず何をするか
 
 1. **デッキを作る — ここから始める。** **`/pptx-creation:deck-brief`** を実行し、
@@ -65,13 +96,18 @@
    [`pptx-creation-plugin/examples/seminar-kanrikaikei/`](pptx-creation-plugin/examples/seminar-kanrikaikei)
    を開いてください。「これ以上崩れてはいけない」基準となる参照レンダです。
 
-3. **プロジェクトを用意（任意・何本も作るなら推奨）。** リポジトリをデッキ対応にするには
+3. **プロジェクトを用意し、`DESIGN.md` を必ず作る。** デッキを作るリポジトリでは、
+   最初に次の3スキルを順に実施してください：
    **`/pptx-creation:project-scaffold`** → **`/pptx-creation:design-doc`** →
-   **`/pptx-creation:theme-init`**。`design-doc` はそのリポジトリの **`DESIGN.md`**
-   （常設の設計システム：ブランド・デザイン言語・オーディエンス別プリセット・正直さの
-   house rules・制約・検証バー）を作ります。以後 `deck-brief` がそれを読み、**毎回は
-   差分だけ**聞くので、全デッキが一貫して on-brand になります。案件ごとの中身とテーマは
-   *あなたの*リポジトリに置き、プラグインは汎用のまま保ちます。
+   **`/pptx-creation:theme-init`**。
+
+   > **`design-doc` の実施は省略しないでください。** このスキルがそのリポジトリの
+   > **`DESIGN.md`**（常設の設計システム：ブランド・デザイン言語・オーディエンス別
+   > プリセット・正直さの house rules・制約・検証バー・図解の慣例）を作ります。
+   > 以後 `deck-brief` がそれを読み、**毎回は差分だけ**聞くので、全デッキが一貫して
+   > on-brand になります。`DESIGN.md` が無いままデッキを量産すると、ブランド・トーン・
+   > 表記ルールを毎回口頭で再指定することになり、デッキ間のブレの主要因になります。
+   > 案件ごとの中身とテーマは *あなたの*リポジトリに置き、プラグインは汎用のまま保ちます。
 
 全体の流れ：
 
