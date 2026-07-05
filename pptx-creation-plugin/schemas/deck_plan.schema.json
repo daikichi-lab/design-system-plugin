@@ -47,7 +47,7 @@
         "pattern": {
           "type": "string",
           "description": "Pattern id. Must exist in the engine registry.",
-          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch", "formula", "card-grid"]
+          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch", "formula", "card-grid", "waterfall"]
         },
         "content": {
           "type": "object",
@@ -163,6 +163,19 @@
           } } }
         },
         {
+          "if": { "properties": { "pattern": { "const": "waterfall" } } },
+          "then": { "properties": { "content": {
+            "required": ["items"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "items": { "type": "array", "minItems": 3, "maxItems": 8, "items": { "type": "object", "required": ["label", "value"], "properties": { "label": { "type": ["string", "array"], "description": "Category label under the bar (short; the band is height-gated)." }, "value": { "type": "number", "description": "total:true -> the absolute LEVEL; otherwise the signed delta (negatives render as ▲)." }, "total": { "type": "boolean", "description": "Anchor bar drawn from zero (start / subtotal / end)." } } }, "description": "3-8 bridge items: levels (total:true) and signed drivers between them." },
+              "unit": { "type": "string", "description": "Shown once bottom-left (単位：…)." },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
           "if": { "properties": { "pattern": { "const": "card-grid" } } },
           "then": { "properties": { "content": {
             "required": ["cards"],
@@ -235,18 +248,38 @@
               "kicker": { "type": "string" },
               "title": { "type": ["string", "array"], "items": { "type": "string" } },
               "series": {
-                "type": "object",
-                "required": ["name", "labels", "values"],
-                "additionalProperties": false,
-                "properties": {
-                  "name": { "type": "string" },
-                  "labels": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
-                  "values": { "type": "array", "items": { "type": "number" }, "minItems": 2 }
-                }
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": ["name", "labels", "values"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": { "type": "string" },
+                      "labels": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+                      "values": { "type": "array", "items": { "type": "number" }, "minItems": 2 }
+                    }
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "description": "band (帯グラフ) only: 2-4 segments; first segment's labels are the 1-5 category rows.",
+                    "items": {
+                      "type": "object",
+                      "required": ["name", "values"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": { "type": "string" },
+                        "labels": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 },
+                        "values": { "type": "array", "items": { "type": "number" }, "minItems": 1 }
+                      }
+                    }
+                  }
+                ]
               },
               "takeawayHead": { "type": "string" },
               "takeaway": { "type": "string" },
-              "chartType": { "type": "string", "enum": ["column", "bar", "line", "pie", "doughnut"], "description": "column (default) = categories/few periods; bar = ranking with long labels; line = continuous trend; pie/doughnut = parts of ONE whole, max 5 slices." },
+              "chartType": { "type": "string", "enum": ["column", "bar", "line", "pie", "doughnut", "band"], "description": "column (default) = categories/few periods; bar = ranking with long labels; line = continuous trend; pie/doughnut = parts of ONE whole, max 5 slices; band = 100% stacked composition (series becomes an ARRAY of 2-4 segments)." },
               "unit": { "type": "string", "description": "Shown once top-left (単位：…), never on every bar." },
               "valueFormat": { "type": "string", "description": "Explicit data-label format code (overrides auto #,##0 / #,##0.0)." },
               "emphasizeIndex": { "type": "integer", "minimum": 0, "description": "Colour ONE bar/slice accentDeep and mute the rest." },

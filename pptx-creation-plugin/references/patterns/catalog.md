@@ -173,7 +173,7 @@ content:
   takeawayHead: { type: string, required: true, note: "short arrow phrase, e.g. 早期把握 → 早期対応" }
   takeaway:     { type: string, required: true, note: "1-3 sentences: what to conclude / do" }
   emphasizeIndex:{ type: int, required: false, note: "colour ONE bar (accentDeep), mute the rest (accentSoft) — steer the eye to the point; labels stay on every bar" }
-  chartType:    { type: string, required: false, note: "'column' (default) | 'bar' (horizontal ranking — pass values ASCENDING so the largest lands on top) | 'line' (continuous trend) | 'pie' / 'doughnut' (parts of ONE whole, max 5 slices). Pick by the reader's question — chart-design.md §2." }
+  chartType:    { type: string, required: false, note: "'column' (default) | 'bar' (horizontal ranking — pass values ASCENDING so the largest lands on top) | 'line' (continuous trend) | 'pie' / 'doughnut' (parts of ONE whole, max 5 slices) | 'band' (帯グラフ, 100% stacked composition — series becomes an ARRAY of 2-4 segments over 1-5 rows). Pick by the reader's question — chart-design.md §2." }
   targetLine:   { type: object, required: false, note: "{value:number, label?:string} — a dashed reference line (前年/目標); state its meaning in the takeaway (column only)" }
   unit:         { type: string, required: false, note: "e.g. 億円 / % — shown ONCE bottom-left (footnote slot), never repeated on every bar" }
   notes:        { type: string, required: false }
@@ -186,7 +186,9 @@ params:
   footer:      brand + page number
 chart_default: column (bar). Emphasis / type / target-line / unit are OPTIONAL — omit them all and the chart is byte-for-byte unchanged. See references/principles/chart-design.md.
 pie_look: "no rainbow — a monochromatic accent ramp (accentDeep -> line), darkest = emphasized/first slice; percent labels OUTSIDE the wedges in ink; legend bottom; doughnut holeSize 55. Percent labels round to integers — exact figures belong in the takeaway."
-capacity: "column/bar: 4-7 read cleanly; >8 crowds (warn). pie/doughnut: 2-5 slices (hard error past 5 — use a ranked bar). line: many points welcome; <4 is thin. takeaway <= ~4 lines at the card width."
+band_look: "percentStacked horizontal bars; segments coloured with the DARK ramp (accentDeep/accent/muted/ink) so the white in-segment value labels stay readable; legend bottom. Geometry carries the percentages, labels carry the true values."
+value_format: "data labels default to '#,##0;▲#,##0' (decimal variant when needed) — negatives always render ▲, never a minus (house 表記 rule)."
+capacity: "column/bar: 4-7 read cleanly; >8 crowds (warn). pie/doughnut: 2-5 slices (hard error past 5 — use a ranked bar). band: 2-4 segments x 1-5 rows (hard errors). line: many points welcome; <4 is thin. takeaway <= ~4 lines at the card width."
 ```
 
 ## Pattern: `cta`

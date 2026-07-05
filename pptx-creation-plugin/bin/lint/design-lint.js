@@ -201,8 +201,18 @@ function checkCapacity(slides, F) {
         break;
       }
       case "chart": {
-        const n = len(c.series && c.series.values);
         const ct = c.chartType || "column";
+        if (ct === "band") {
+          // 帯グラフ: series must be an ARRAY of 2-4 segments over 1-5 rows
+          const segs = Array.isArray(c.series) ? c.series.length : 0;
+          const rows = Array.isArray(c.series) && c.series[0] ? len(c.series[0].labels) : 0;
+          if (!Array.isArray(c.series)) F.error(idx, "CAPACITY", "band needs series as an ARRAY of segments [{name, labels, values}, ...]");
+          else if (segs > 4 || segs < 2) F.error(idx, "CAPACITY", `band has ${segs} segments (must be 2-4; more stops being comparable)`);
+          if (rows > 5) F.error(idx, "CAPACITY", `band has ${rows} rows (max 5; split periods or use a table)`);
+          break;
+        }
+        if (Array.isArray(c.series)) { F.error(idx, "CAPACITY", `${ct} chart takes a single series object (array is band-only)`); break; }
+        const n = len(c.series && c.series.values);
         if (ct === "pie" || ct === "doughnut") {
           // parts-of-a-whole stops being readable past 5 slices (chart-design §2)
           if (n > 5) F.error(idx, "CAPACITY", `${ct} has ${n} slices (max 5; beyond that use a ranked bar chart)`);
@@ -271,6 +281,13 @@ function checkCapacity(slides, F) {
         const [min, max] = CAPS.formula;
         if (n > max) F.error(idx, "CAPACITY", `formula has ${n} operands (max ${max}; group factors, or use a table)`);
         else if (n < min) F.error(idx, "CAPACITY", `formula has ${n} operands (min ${min}; a single operand is not a formula — use message)`);
+        break;
+      }
+      case "waterfall": {
+        const n = len(c.items);
+        const [min, max] = CAPS.waterfall;
+        if (n > max) F.error(idx, "CAPACITY", `waterfall has ${n} items (max ${max}; group small drivers into その他)`);
+        else if (n < min) F.error(idx, "CAPACITY", `waterfall has ${n} items (min ${min}; a start and an end with no drivers is a comparison, not a bridge)`);
         break;
       }
       case "table": {

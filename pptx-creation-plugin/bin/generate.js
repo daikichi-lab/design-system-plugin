@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -220,8 +220,9 @@ function slideCover(pres, d, T) {
   }
   kicker(s, T, d.kicker, 1.55, { onDark: true });
   title(s, T, d.titleLines, 2.2, { onDark: true, size: T.s.cover, w: 10 });
-  if (d.subtitle) s.addText(d.subtitle, { x: T.m, y: 4.7, w: 9.5, h: 0.5, margin: 0,
-    fontFace: T.font.body, fontSize: T.s.coverSub, color: T.c.onDarkMut, align: "left", valign: "top" });
+  if (d.subtitle) s.addText(richText(d.subtitle), { x: T.m, y: 4.7, w: 9.5, h: 0.9, margin: 0,
+    fontFace: T.font.body, fontSize: T.s.coverSub, color: T.c.onDarkMut, align: "left", valign: "top",
+    lineSpacingMultiple: T.lead.caption });
   if (d.footer) s.addText(d.footer, { x: T.m, y: T.H - 0.85, w: 9, h: 0.35, margin: 0,
     fontFace: T.font.caption, fontSize: T.s.footer, color: T.c.onDarkMut, align: "left", valign: "middle" });
   return s;
@@ -311,9 +312,11 @@ function slideChart(pres, d, T, ctx) {
   // Data-label precision must not misrepresent the values: if any value has a
   // fractional part, keep one decimal (so 21.8 and 23.1 don't both read "23").
   // An explicit d.valueFormat overrides the auto-detection.
-  const vals = d.series.values || [];
+  // (band: series is an ARRAY of segments — gather every value for the check.)
+  const vals = Array.isArray(d.series) ? d.series.flatMap((sg) => sg.values || []) : (d.series.values || []);
   const hasDecimal = vals.some((v) => typeof v === "number" && !Number.isInteger(v));
-  const valueFormat = d.valueFormat || (hasDecimal ? "#,##0.0" : "#,##0");
+  // negatives always render ▲ (never a minus sign) — the house 表記 rule
+  const valueFormat = d.valueFormat || (hasDecimal ? "#,##0.0;▲#,##0.0" : "#,##0;▲#,##0");
   // Emphasis: colour ONE bar (accentDeep) and mute the rest (accentSoft) to steer
   // the eye to the point the takeaway makes. No emphasizeIndex => all-accent
   // (unchanged). Data labels stay on every bar — colour directs, it never hides data.
@@ -331,8 +334,24 @@ function slideChart(pres, d, T, ctx) {
     showValue: true, dataLabelPosition: "outEnd",
     dataLabelColor: T.c.ink, dataLabelFontFace: T.font.body, dataLabelFontSize: 12, dataLabelFormatCode: valueFormat,
   };
-  const series = [{ name: d.series.name, labels: d.series.labels, values: vals }];
-  if (d.chartType === "line") {
+  const series = Array.isArray(d.series) ? d.series
+    : [{ name: d.series.name, labels: d.series.labels, values: vals }];
+  if (d.chartType === "band") {
+    // 帯グラフ: 100% stacked horizontal bars — composition across 1-5 rows
+    // (売上100円の行き先, 5期のコスト構成). 2-4 segments, coloured with a DARK
+    // monochromatic ramp so the white in-segment value labels stay readable;
+    // the geometry carries the percentages, the labels carry the true values.
+    // pptxgenjs requires labels on EVERY series — share the first segment's rows.
+    const cats = (series[0] && series[0].labels) || [];
+    const segs = series.map((sg) => ({ name: sg.name, labels: sg.labels || cats, values: sg.values }));
+    s.addChart(pres.charts.BAR, segs, {
+      ...axisOpts, barDir: "bar", barGrouping: "percentStacked", barGapWidthPct: 55,
+      chartColors: [T.c.accentDp, T.c.accent, T.c.muted, T.c.ink].slice(0, Math.max(series.length, 1)),
+      showLegend: true, legendPos: "b", legendColor: T.c.muted, legendFontFace: T.font.body, legendFontSize: 12,
+      showValue: true, dataLabelPosition: "ctr", dataLabelColor: T.c.bg,
+      dataLabelFontFace: T.font.body, dataLabelFontSize: 12, dataLabelFormatCode: valueFormat,
+    });
+  } else if (d.chartType === "line") {
     // a trend reads better as a line than as bars (native line chart)
     s.addChart(pres.charts.LINE, series, { ...axisOpts, ...labelOpts, dataLabelPosition: "t",
       chartColors: [T.c.accent], lineSize: 3, lineSmooth: false });
@@ -819,6 +838,52 @@ function slideFormula(pres, d, T, ctx) {
   return s;
 }
 
+/* ---------------- DIAGRAM: waterfall (cumulative bridge, 増減要因分解) ----------------
+ * 営業利益ブリッジ / 売上100円の行き先. Native rects + native text (editable, no
+ * chart hack): totals accentDeep from zero, increases accent, decreases muted;
+ * a light zero line; dashed connectors carry the running level to the next bar.
+ * Value labels are ENGINE-formatted — negatives always ▲ (never − or △),
+ * totals plain, deltas signed (+/▲). 3-8 items (CAPS.waterfall). */
+function slideWaterfall(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const items = d.items || [];
+  const L = waterfallLayout(T, items);
+  const anyDecimal = items.some((it) => typeof it.value === "number" && !Number.isInteger(it.value));
+  const fmt = (v) => {
+    const a = Math.abs(v);
+    const [int, dec] = (anyDecimal ? a.toFixed(1) : String(Math.round(a))).split(".");
+    return int.replace(/\B(?=(\d{3})+$)/g, ",") + (dec ? `.${dec}` : "");
+  };
+  // zero line behind everything, then connectors, then bars
+  s.addShape("line", { x: L.area.x, y: L.zeroY, w: L.area.w, h: 0, line: { color: T.c.line, width: 1 } });
+  L.connectors.forEach((cn) => {
+    s.addShape("line", { x: cn.x1, y: cn.y, w: cn.x2 - cn.x1, h: 0,
+      line: { color: T.c.muted, width: 1, dashType: "dash" } });
+  });
+  items.forEach((it, i) => {
+    const bar = L.bars[i]; if (!bar) return;
+    const fill = bar.kind === "total" ? T.c.accentDp : bar.kind === "up" ? T.c.accent : T.c.muted;
+    s.addShape("rect", { x: bar.x, y: bar.y, w: bar.w, h: bar.h, fill: { color: fill }, line: { type: "none" } });
+    const vb = L.valueBoxes[i];
+    const label = bar.kind === "total" ? fmt(it.value) : (it.value >= 0 ? `+${fmt(it.value)}` : `▲${fmt(it.value)}`);
+    s.addText(label, { x: vb.x, y: vb.y, w: vb.w, h: vb.h, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.small, bold: true,
+      color: bar.kind === "total" ? T.c.accentDp : T.c.ink, align: "center", valign: "bottom" });
+    const cb = L.catBoxes[i];
+    if (it.label) s.addText(richText(it.label), { x: cb.x, y: cb.y, w: cb.w, h: cb.h, margin: 0,
+      fontFace: T.font.body, fontSize: T.s.small, color: T.c.muted, align: "center", valign: "top",
+      lineSpacingMultiple: T.lead.tight });
+  });
+  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
+    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 const PATTERNS = {
   "cover": slideCover,
   "message": slideMessage,
@@ -837,6 +902,7 @@ const PATTERNS = {
   "steps": slideSteps,
   "branch": slideBranch,
   "formula": slideFormula,
+  "waterfall": slideWaterfall,
 };
 
 /* ---------------- deck plan ---------------- */

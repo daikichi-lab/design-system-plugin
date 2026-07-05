@@ -216,6 +216,39 @@ look:     "result surfaceAccent + accentDeep (house emphasis); operands surface 
 render clean; n=1 / n=5 → CAPACITY; an over-long operand → OVERFLOW at 219%;
 run-gate PASS across all 6 themes.
 
+## `waterfall` — cumulative bridge (増減要因分解)
+
+The finance staple: a level, the signed drivers that move it, the next level
+(営業利益ブリッジ, 売上100円の行き先). Built from **native rects + native text** —
+pptxgenjs has no waterfall chart type, and shapes give exact control over what
+matters in a 会計 deck: per-block colour and **▲-formatted labels** (the house
+表記 rule — never a minus sign).
+
+```yaml
+id: waterfall
+content:
+  kicker: { type: string, required: false }
+  title:  { type: string|string[], required: false }
+  items:  { type: array, required: true, note: "3-8 of {label, value, total?}.
+            total:true = an absolute LEVEL drawn from zero (start / subtotal /
+            end); others are signed deltas from the running cumulative." }
+  unit:   { type: string, required: false, note: "shown once bottom-left (単位：…)" }
+capacity: "3-8 items (CAPS.waterfall). 2 items is a comparison, not a bridge;
+           >8 -> group small drivers into その他."
+geometry: "value scale derives from the cumulative walk (handles a dip below
+           zero — the zero line shifts up); bars 62% of slot; value labels in a
+           reserved band above; category labels in a fixed band below"
+labels:   "ENGINE-formatted: totals plain, deltas signed +N / ▲N; decimals kept
+           when any value is fractional. Only category labels are author text."
+floor:    "category labels baked (kinsoku) + height-gated against the band"
+look:     "totals accentDeep / increases accent / decreases muted; light zero
+           line; dashed muted connectors carry the running level"
+```
+
+**Verified (2026-07-05)** — 6-item 営業利益ブリッジ (242 → +80 +40 ▲45 ▲17 → 300)
+renders clean with ▲ labels and step connectors; n=2 / n=9 → CAPACITY; a 2-line
+category label → OVERFLOW at 101%; run-gate PASS across all 6 themes.
+
 ## Honest residuals
 
 - **Meaning is a visual axis, not a lint.** The floor guarantees no overflow /
@@ -232,10 +265,10 @@ run-gate PASS across all 6 themes.
 implemented and verified, and the **conservative classification step**
 (deck-strategy deciding *whether* to diagram and *which* skeleton) is in place.
 The **enpreth 図解テンプレ adoption sweep (2026-07-05) is complete**: the
-`timeline` / `steps` / `branch` / `formula` skeletons here, the `card-grid`
-slide pattern and the chart types (`bar` / `line` / `pie` / `doughnut`) in
-`references/patterns/catalog.md` + `../principles/chart-design.md` §3.
-Deliberately **not** adopted, with reasons:
+`timeline` / `steps` / `branch` / `formula` / `waterfall` skeletons here, the
+`card-grid` slide pattern and the chart types (`bar` / `line` / `pie` /
+`doughnut` / `band`) in `references/patterns/catalog.md` +
+`../principles/chart-design.md` §3. Deliberately **not** adopted, with reasons:
 
 - **hub / radial (放射・逆放射)** — ≤4 spokes is already `branch` (converge /
   diverge); a true 5-6 spoke hub waits until a real deck needs one (add via the

@@ -84,6 +84,7 @@ For every beat, pick the pattern whose *job* matches it
 | Ascending stages toward a goal (階段) | `steps` (diagram) |
 | One thing splits into N / N merge into one | `branch` (diagram) |
 | A quantity decomposed into factors (掛け算) | `formula` (diagram) |
+| A level, its drivers, the next level (ブリッジ) | `waterfall` (diagram) |
 | A chapter break in a longer deck (dark) | `section` |
 | The opening promise (dark) | `cover` |
 | The single next action (dark) | `cta` |
@@ -109,6 +110,8 @@ that doesn't is worse than text.
 - `steps`: 3–5 stage labels — the first (shortest) block binds the label length.
 - `branch`: 1 source + 2–4 branches (labels short; 4 branches leave one line each).
 - `formula`: 2–4 operands + optional result — labels are short TERMS, not sentences.
+- `waterfall`: 3–8 items ({label, value, total?}); group small drivers into その他.
+- `chart` band type: 2–4 segments × 1–5 rows; pie/doughnut: 2–5 slices.
 - `section`: title ≤ 1 line; index 1–2 chars; only in decks of 8+ slides.
 - `cover` / `cta` / `message`: title ≤ 2 lines.
 
@@ -148,6 +151,10 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   (売上 = 客数 × 客単価 × 店舗数, ROE デュポン分解, コスト = 固定費 ＋ 変動費).
   2–4 operands, short terms. If the relation isn't a real equation, it's a
   `branch` / list — don't fake math.
+- **`waterfall`** — a level, the signed drivers that move it, the next level
+  (営業利益ブリッジ, 前期→当期の増減分解). 3–8 items; mark levels `total: true`.
+  The deltas must genuinely SUM from one level to the next — if they don't
+  reconcile, fix the numbers, not the diagram. Negatives render ▲ automatically.
 
 **When in doubt, do NOT diagram.** Keep the beat as text / `message` / `two-column`
 / `stat-grid` / `comparison`. Reach for a skeleton only when you can name the

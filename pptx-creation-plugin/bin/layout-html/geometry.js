@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 // Diagram skeletons compute their node geometry here too, so the floor
 // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
 // engine draws labels into.
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
@@ -100,6 +100,7 @@ function heightBoxes(slide, T) {
     "branch":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "formula":    { topY: 1.15, bottomY: 3.65, sizePt: s.title },
     "card-grid":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "waterfall":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
   };
   const tb = TITLE_BOX[slide.pattern];
   if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
@@ -170,6 +171,19 @@ function heightBoxes(slide, T) {
         const ntb = nodeTextBox(node);
         out.push({ id: `formula box ${i + 1}`, path: paths[i], topY: ntb.y, bottomY: ntb.y + ntb.h,
           sizePt: s.head, leading: lead.tight });
+      });
+      break;
+    }
+    case "waterfall": {
+      // category labels live in a fixed band under the plot; a label that wraps
+      // past the band is a hard overflow (value labels are engine-formatted).
+      const items = c.items || [];
+      const L = waterfallLayout(T, items);
+      items.forEach((it, i) => {
+        if (!it || !it.label || !L.catBoxes[i]) return;
+        const cb = L.catBoxes[i];
+        out.push({ id: `waterfall label ${i + 1}`, path: `items[${i}].label`,
+          topY: cb.y, bottomY: cb.y + cb.h, sizePt: s.small, leading: lead.tight });
       });
       break;
     }
@@ -271,7 +285,7 @@ function wrappingFields(slide, T) {
   // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
   const sectionTitleSize = s.sectionTitle || s.title;
   const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
-    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m, "branch": W - 2 * m, "formula": W - 2 * m, "card-grid": W - 2 * m };
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m, "branch": W - 2 * m, "formula": W - 2 * m, "card-grid": W - 2 * m, "waterfall": W - 2 * m };
   if (TITLE_W[slide.pattern] != null) {
     const size = slide.pattern === "section" ? sectionTitleSize : s.title;
     push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
@@ -328,6 +342,15 @@ function wrappingFields(slide, T) {
       const vals = c.result ? [c.result, ...operands] : operands;
       L.nodes.forEach((node, i) => {
         push(paths[i], vals[i], nodeTextBox(node).w, s.head, "heading", lead.tight);
+      });
+      break;
+    }
+    case "waterfall": {
+      const items = c.items || [];
+      const L = waterfallLayout(T, items);
+      items.forEach((it, i) => {
+        if (!it || !L.catBoxes[i]) return;
+        push(`items[${i}].label`, it.label, L.catBoxes[i].w, s.small, "caption", lead.tight);
       });
       break;
     }

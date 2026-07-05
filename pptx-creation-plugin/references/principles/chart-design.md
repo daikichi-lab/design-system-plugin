@@ -94,8 +94,18 @@ engine can't draw through a named pattern.
     percent labels sit OUTSIDE the wedges in ink; legend at the bottom;
     `emphasizeIndex` turns one slice accentDeep and mutes the rest. Percent
     labels round to integers — exact figures belong in the takeaway.
+  - `band` (帯グラフ) — 100% stacked horizontal bars for **composition across
+    1-5 rows** (売上100円の行き先, 期ごとのコスト構成). `series` becomes an
+    ARRAY of 2-4 segments; colours are the DARK ramp (accentDeep / accent /
+    muted / ink) so the white in-segment value labels stay readable. The
+    geometry carries the percentages; the labels carry the true values.
   - The `unit` caption renders once at the **bottom-left footnote slot** (the
     old top-left slot collided with a legal 2-line title — caught by render QA).
+  - Data labels default to `#,##0;▲#,##0` — **negatives always render ▲**,
+    never a minus sign (the house 表記 rule).
+  - **Waterfall (増減要因分解) is the `waterfall` diagram skeleton**, not a
+    chart type — see `../graphics/diagram-recipes.md`. Shapes give exact
+    per-block colour and ▲ labels that a stacked-chart hack cannot.
 
 ## 4. Data integrity (especially financial / external decks)
 

@@ -18,7 +18,7 @@
  * ============================================================ */
 
 const NODE_PAD = 0.16;               // inner padding of a node text box (in)
-const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4] }; // [min, max] element count; matrix is fixed 4
+const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4], waterfall: [3, 8] }; // [min, max] element count; matrix is fixed 4
 
 // The drawing area a diagram gets, below the kicker/title. Shared by every
 // skeleton so they sit consistently on the slide.
@@ -211,6 +211,47 @@ function formulaLayout(T, n, hasResult) {
   return { area, nodes, ops };
 }
 
+/* ---------------- waterfall: cumulative bridge (増減要因分解) ---------------- */
+// The finance staple: a level, the signed deltas that move it, the next level
+// (営業利益ブリッジ, 売上100円の行き先). Built from NATIVE rects + native text —
+// pptxgenjs has no waterfall chart type, and shapes give exact control over the
+// one thing that matters in a 会計 deck: per-block colour and ▲-formatted labels.
+// items: [{label, value, total?}] — total:true anchors an absolute LEVEL (start /
+// subtotal / end, drawn from zero); others are signed deltas from the running
+// cumulative. Handles a cumulative that dips below zero (the zero line shifts up).
+const WF_BAR_RATIO = 0.62, WF_VAL_BAND = 0.32, WF_CAT_BAND = 0.6, WF_GAP = 0.06;
+
+function waterfallLayout(T, items) {
+  const area = diagramArea(T);
+  const n = Math.max(items.length, 1);
+  const slot = area.w / n;
+  const plotTop = area.y + WF_VAL_BAND;
+  const plotBot = area.y + area.h - WF_CAT_BAND;
+  // cumulative walk -> each bar's [lo, hi] level
+  let cum = 0;
+  const levels = items.map((it) => {
+    const v = Number(it.value) || 0;
+    if (it.total) { cum = v; return { lo: Math.min(0, v), hi: Math.max(0, v), after: cum, kind: "total" }; }
+    const before = cum; cum += v;
+    return { lo: Math.min(before, cum), hi: Math.max(before, cum), after: cum, kind: v >= 0 ? "up" : "down" };
+  });
+  const maxL = Math.max(0, ...levels.map((l) => l.hi));
+  const minL = Math.min(0, ...levels.map((l) => l.lo));
+  const scale = (plotBot - plotTop) / ((maxL - minL) || 1);
+  const y = (v) => plotTop + (maxL - v) * scale;
+  const barW = slot * WF_BAR_RATIO;
+  const bars = [], valueBoxes = [], catBoxes = [], connectors = [];
+  levels.forEach((l, i) => {
+    const x = area.x + i * slot + (slot - barW) / 2;
+    const by = y(l.hi), bh = Math.max((l.hi - l.lo) * scale, 0.03);
+    bars.push({ x, y: by, w: barW, h: bh, kind: l.kind });
+    valueBoxes.push({ x: area.x + i * slot, y: by - 0.3, w: slot, h: 0.26 });
+    catBoxes.push({ x: area.x + i * slot + 0.04, y: plotBot + WF_GAP, w: slot - 0.08, h: WF_CAT_BAND - WF_GAP - 0.02 });
+    if (i < levels.length - 1) connectors.push({ x1: x + barW, x2: area.x + (i + 1) * slot + (slot - barW) / 2, y: y(l.after) });
+  });
+  return { area, bars, valueBoxes, catBoxes, connectors, zeroY: y(0), plotTop, plotBot };
+}
+
 // Inner text box of a node (labels + the floor both use this).
 function nodeTextBox(node) {
   return { x: node.x + NODE_PAD, y: node.y + NODE_PAD, w: node.w - 2 * NODE_PAD, h: node.h - 2 * NODE_PAD };
@@ -253,6 +294,6 @@ function quadBodyBox(q, hasHead) {
 }
 
 module.exports = {
-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout,
+  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout,
   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
 };
