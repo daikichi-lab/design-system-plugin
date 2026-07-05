@@ -71,7 +71,7 @@ its own sake.
 Be honest about what ships today. Do not promise a planner a chart type the
 engine can't draw through a named pattern.
 
-- The **`chart` pattern is a native *column* chart** and nothing else. From
+- The **`chart` pattern defaults to a native *column* chart**. From
   `slideChart` in [`../../bin/generate.js`](../../bin/generate.js): it calls
   `addChart(pres.charts.BAR, ...)` with `barDir: "col"`, a **single accent
   color** (`chartColors: [accent]`), the **value axis hidden**
@@ -81,16 +81,21 @@ engine can't draw through a named pattern.
   card all come from the theme tokens and the coordinates documented in the
   `chart` recipe — see [`../patterns/catalog.md`](../patterns/catalog.md);
   never copy the numbers, link to them.
-- **Bar (ranked), line, and pie/doughnut are not yet a named pattern.** They
-  are either **roadmap** or built **directly** for a one-off slide with
-  pptxgenjs (`addChart(pres.charts.BAR, ..., { barDir: "bar" })`,
-  `pres.charts.LINE`, `pres.charts.PIE` / `DOUGHNUT`). If you hand-build one,
-  match the `chart` pattern's restraint — single accent, hidden value axis,
-  no gridlines, labeled data — and the QA loop in
-  [`house-quality-bar.md`](house-quality-bar.md) §5 still applies. When a type
-  earns a reusable pattern, add it to the engine **and** the catalog together
-  (per the catalog's Roadmap note); until then, don't document it as a
-  pattern.
+- **Bar (ranked), line, and pie/doughnut are named types of the same pattern**
+  (2026-07-05): pass `chartType: "bar" | "line" | "pie" | "doughnut"`. Every
+  type keeps the restraint above (hidden value axis, no gridlines, labeled
+  data, one takeaway). Type-specific rules the engine bakes in:
+  - `bar` — same accent/emphasis colours as column. pptxgenjs draws the FIRST
+    category at the bottom, so **pass values ascending** and the largest lands
+    on top (a ranking reads top-down).
+  - `line` — one accent line, labels above the points; for a genuine trend.
+  - `pie` / `doughnut` — **max 5 slices, design-lint hard error past that**;
+    colours are a monochromatic accent ramp (never a rainbow — house bar §2);
+    percent labels sit OUTSIDE the wedges in ink; legend at the bottom;
+    `emphasizeIndex` turns one slice accentDeep and mutes the rest. Percent
+    labels round to integers — exact figures belong in the takeaway.
+  - The `unit` caption renders once at the **bottom-left footnote slot** (the
+    old top-left slot collided with a legal 2-line title — caught by render QA).
 
 ## 4. Data integrity (especially financial / external decks)
 

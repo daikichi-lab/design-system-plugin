@@ -202,8 +202,17 @@ function checkCapacity(slides, F) {
       }
       case "chart": {
         const n = len(c.series && c.series.values);
-        if (n > 8) F.warn(idx, "CAPACITY", `chart has ${n} bars (>8 crowds; 4-7 read cleanly)`);
-        else if (n < 4) F.info(idx, "CAPACITY", `chart has ${n} bars (<4 is sparse, still fine)`);
+        const ct = c.chartType || "column";
+        if (ct === "pie" || ct === "doughnut") {
+          // parts-of-a-whole stops being readable past 5 slices (chart-design §2)
+          if (n > 5) F.error(idx, "CAPACITY", `${ct} has ${n} slices (max 5; beyond that use a ranked bar chart)`);
+          else if (n < 2) F.error(idx, "CAPACITY", `${ct} has ${n} slice (a single slice is not a split — use message)`);
+        } else if (ct === "line") {
+          if (n < 4) F.info(idx, "CAPACITY", `line has ${n} points (<4 — a trend needs points; consider columns)`);
+        } else {
+          if (n > 8) F.warn(idx, "CAPACITY", `chart has ${n} bars (>8 crowds; 4-7 read cleanly)`);
+          else if (n < 4) F.info(idx, "CAPACITY", `chart has ${n} bars (<4 is sparse, still fine)`);
+        }
         break;
       }
       case "stat-grid": {

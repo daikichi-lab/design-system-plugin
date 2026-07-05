@@ -336,6 +336,26 @@ function slideChart(pres, d, T, ctx) {
     // a trend reads better as a line than as bars (native line chart)
     s.addChart(pres.charts.LINE, series, { ...axisOpts, ...labelOpts, dataLabelPosition: "t",
       chartColors: [T.c.accent], lineSize: 3, lineSmooth: false });
+  } else if (d.chartType === "bar") {
+    // horizontal bars: RANKING with long category labels (品目名, 部門名) — the
+    // labels stay horizontal and readable where a column chart would truncate
+    s.addChart(pres.charts.BAR, series, { ...axisOpts, barDir: "bar", chartColors: barColors,
+      barGapWidthPct: 55, ...labelOpts });
+  } else if (d.chartType === "pie" || d.chartType === "doughnut") {
+    // parts of ONE whole (<=5 slices; design-lint enforces). No rainbow: a
+    // monochromatic accent ramp, darkest = the emphasized / first slice; percent
+    // labels OUTSIDE the wedges in ink so they read on any slice colour.
+    const ramp = [T.c.accentDp, T.c.accent, T.c.accentSft, T.c.muted, T.c.line];
+    const pieColors = emph >= 0
+      ? vals.map((_, i) => (i === emph ? T.c.accentDp : [T.c.accent, T.c.accentSft, T.c.muted, T.c.line, T.c.faint][i > emph ? i - 1 : i] || T.c.faint))
+      : ramp.slice(0, Math.max(vals.length, 1));
+    s.addChart(d.chartType === "doughnut" ? pres.charts.DOUGHNUT : pres.charts.PIE, series, {
+      ...axisOpts, chartColors: pieColors,
+      showLegend: true, legendPos: "b", legendColor: T.c.muted, legendFontFace: T.font.body, legendFontSize: 12,
+      showPercent: true, dataLabelPosition: "outEnd",
+      dataLabelColor: T.c.ink, dataLabelFontFace: T.font.body, dataLabelFontSize: 12,
+      ...(d.chartType === "doughnut" ? { holeSize: 55 } : {}),
+    });
   } else if (d.targetLine && typeof d.targetLine.value === "number") {
     // bars + a dashed reference line (前年 / 目標 …); its meaning goes in the takeaway
     const tvals = (d.series.labels || []).map(() => d.targetLine.value);
@@ -348,8 +368,10 @@ function slideChart(pres, d, T, ctx) {
     // native column chart (editable in PowerPoint) — the default
     s.addChart(pres.charts.BAR, series, { ...axisOpts, barDir: "col", chartColors: barColors, barGapWidthPct: 55, ...labelOpts });
   }
-  // unit shown ONCE (top-left), never repeated on every bar (data-viz hygiene)
-  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 2.16, w: 2.6, h: 0.28, margin: 0,
+  // unit shown ONCE (bottom-left, footnote position — same slot as the table
+  // note), never repeated on every bar. Bottom, not top: a legal 2-line title
+  // reaches the old top-left slot and collides (caught by render QA).
+  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
     fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
   // takeaway card on the right
   const cx = 8.55, cw = T.W - T.m - cx;

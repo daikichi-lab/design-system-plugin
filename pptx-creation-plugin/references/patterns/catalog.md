@@ -173,9 +173,9 @@ content:
   takeawayHead: { type: string, required: true, note: "short arrow phrase, e.g. 早期把握 → 早期対応" }
   takeaway:     { type: string, required: true, note: "1-3 sentences: what to conclude / do" }
   emphasizeIndex:{ type: int, required: false, note: "colour ONE bar (accentDeep), mute the rest (accentSoft) — steer the eye to the point; labels stay on every bar" }
-  chartType:    { type: string, required: false, note: "'line' for a continuous trend; default column (bar)" }
-  targetLine:   { type: object, required: false, note: "{value:number, label?:string} — a dashed reference line (前年/目標); state its meaning in the takeaway" }
-  unit:         { type: string, required: false, note: "e.g. 億円 / % — shown ONCE top-left, never repeated on every bar" }
+  chartType:    { type: string, required: false, note: "'column' (default) | 'bar' (horizontal ranking — pass values ASCENDING so the largest lands on top) | 'line' (continuous trend) | 'pie' / 'doughnut' (parts of ONE whole, max 5 slices). Pick by the reader's question — chart-design.md §2." }
+  targetLine:   { type: object, required: false, note: "{value:number, label?:string} — a dashed reference line (前年/目標); state its meaning in the takeaway (column only)" }
+  unit:         { type: string, required: false, note: "e.g. 億円 / % — shown ONCE bottom-left (footnote slot), never repeated on every bar" }
   notes:        { type: string, required: false }
 params:
   background:  colors.bg
@@ -184,8 +184,9 @@ params:
   target_line: "combo bar + dashed LINE at targetLine.value, markers hidden; shares the value axis so 'above/below target' reads at a glance"
   takeaway_card:"x 8.55, w (W-m-8.55), y 2.4, h 3.85; fill surfaceAccent; head(sizes.takeawayHead 19 accentDeep) + body(sizes.body)"
   footer:      brand + page number
-chart_default: column (bar). Emphasis / line / target-line / unit are OPTIONAL — omit them all and the chart is byte-for-byte unchanged. See references/principles/chart-design.md.
-capacity: "labels/values: 4-7 bars read cleanly (sample uses 6); >8 crowds. takeaway <= ~4 lines at the card width."
+chart_default: column (bar). Emphasis / type / target-line / unit are OPTIONAL — omit them all and the chart is byte-for-byte unchanged. See references/principles/chart-design.md.
+pie_look: "no rainbow — a monochromatic accent ramp (accentDeep -> line), darkest = emphasized/first slice; percent labels OUTSIDE the wedges in ink; legend bottom; doughnut holeSize 55. Percent labels round to integers — exact figures belong in the takeaway."
+capacity: "column/bar: 4-7 read cleanly; >8 crowds (warn). pie/doughnut: 2-5 slices (hard error past 5 — use a ranked bar). line: many points welcome; <4 is thin. takeaway <= ~4 lines at the card width."
 ```
 
 ## Pattern: `cta`

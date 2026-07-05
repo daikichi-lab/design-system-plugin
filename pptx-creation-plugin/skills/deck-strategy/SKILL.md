@@ -96,7 +96,9 @@ that doesn't is worse than text.
 
 - `two-column` items: 3 ideal, 4 max.
 - `comparison` points: 4 ideal, 5 max per card.
-- `chart`: 4–7 bars read cleanly; >8 crowds.
+- `chart`: 4–7 bars read cleanly; >8 crowds. Types: `column` (default) /
+  `bar` (ranking, values ascending) / `line` (trend) / `pie`・`doughnut`
+  (parts of one whole, **max 5 slices**).
 - `stat-grid`: 3 ideal, 4 max, 2 min cards.
 - `card-grid`: 4–6 cards; heads are one-line terms, bodies ≤ 3 short lines.
 - `table`: ≤ 6 rows incl. header, ≤ 5 columns; always add a units/basis `note`.
