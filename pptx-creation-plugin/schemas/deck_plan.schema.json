@@ -47,7 +47,7 @@
         "pattern": {
           "type": "string",
           "description": "Pattern id. Must exist in the engine registry.",
-          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix"]
+          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline"]
         },
         "content": {
           "type": "object",
@@ -158,6 +158,18 @@
               "axisY": { "type": "array", "items": { "type": ["string", "array"] }, "maxItems": 2, "description": "Y-axis end labels [top, bottom], shown left." },
               "emphasizeIndex": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Tint one quadrant (0=TL,1=TR,2=BL,3=BR)." },
               "quadrants": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "object", "properties": { "head": { "type": "string" }, "body": { "type": ["string", "array"] } } }, "description": "Exactly 4 quadrants (TL, TR, BL, BR), each {head?, body?}." },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "timeline" } } },
+          "then": { "properties": { "content": {
+            "required": ["milestones"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "milestones": { "type": "array", "minItems": 3, "maxItems": 7, "items": { "type": "object", "required": ["date", "label"], "properties": { "date": { "type": ["string", "array"], "description": "Short date/year (e.g. 2014.10) — one line; the height gate rejects a wrapping date." }, "label": { "type": ["string", "array"], "description": "What happened — short; baked (kinsoku) and height-gated per milestone." } } }, "description": "3-7 dated milestones drawn on the horizontal spine, alternating above/below." },
               "notes": { "type": "string" }
             }
           } } }

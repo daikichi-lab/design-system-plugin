@@ -18,7 +18,7 @@
  * ============================================================ */
 
 const NODE_PAD = 0.16;               // inner padding of a node text box (in)
-const CAPS = { flow: [3, 6], cycle: [3, 6] }; // [min, max] element count; matrix is fixed 4
+const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7] }; // [min, max] element count; matrix is fixed 4
 
 // The drawing area a diagram gets, below the kicker/title. Shared by every
 // skeleton so they sit consistently on the slide.
@@ -85,6 +85,43 @@ function cycleLayout(T, n) {
   return { nodes, arrows, area };
 }
 
+/* ---------------- timeline: N dated milestones on a horizontal spine ---------------- */
+// 沿革 / history: one horizontal arrow line (time flows left -> right), a dot per
+// milestone, and the date + label alternating ABOVE / BELOW the line (even index
+// up, odd down) so adjacent texts never collide even when wider than one slot.
+// Robust for any n in CAPS.timeline: slot width derives from n; the text width is
+// clamped so the first/last boxes never cross the 0.5" edge-margin rule
+// (slot + 2*(margin - 0.5) overhang) and same-side neighbours (2 slots apart)
+// always keep clear air.
+const TL_DATE_H = 0.34, TL_LABEL_H = 1.02, TL_GAP_LINE = 0.16, TL_GAP_DATE = 0.04, TL_DOT = 0.18;
+
+function timelineLayout(T, n) {
+  const area = diagramArea(T);
+  const cy = area.y + area.h / 2;
+  const slot = area.w / n;
+  const overhang = Math.max(0, (T.m - 0.5)) * 2;         // keep >= 0.5in from slide edge
+  const textW = Math.min(2.6, slot * 1.7, slot + overhang);
+  const line = { x1: area.x, y1: cy, x2: area.x + area.w, y2: cy };
+  const milestones = [];
+  for (let i = 0; i < n; i++) {
+    const cx = area.x + slot * (i + 0.5);
+    const above = i % 2 === 0;                            // even up, odd down
+    const bx = cx - textW / 2;
+    const dateBox = above
+      ? { x: bx, y: cy - TL_GAP_LINE - TL_DATE_H, w: textW, h: TL_DATE_H }
+      : { x: bx, y: cy + TL_GAP_LINE, w: textW, h: TL_DATE_H };
+    const labelBox = above
+      ? { x: bx, y: dateBox.y - TL_GAP_DATE - TL_LABEL_H, w: textW, h: TL_LABEL_H }
+      : { x: bx, y: dateBox.y + TL_DATE_H + TL_GAP_DATE, w: textW, h: TL_LABEL_H };
+    milestones.push({
+      above,
+      dot: { x: cx - TL_DOT / 2, y: cy - TL_DOT / 2, d: TL_DOT },
+      dateBox, labelBox,
+    });
+  }
+  return { area, line, milestones };
+}
+
 // Inner text box of a node (labels + the floor both use this).
 function nodeTextBox(node) {
   return { x: node.x + NODE_PAD, y: node.y + NODE_PAD, w: node.w - 2 * NODE_PAD, h: node.h - 2 * NODE_PAD };
@@ -127,6 +164,6 @@ function quadBodyBox(q, hasHead) {
 }
 
 module.exports = {
-  diagramArea, flowLayout, cycleLayout, matrixLayout,
+  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout,
   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
 };

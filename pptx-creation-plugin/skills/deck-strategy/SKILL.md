@@ -76,15 +76,16 @@ For every beat, pick the pattern whose *job* matches it
 | A trend or magnitude + one takeaway | `chart` |
 | 2–4 KPIs / headline numbers | `stat-grid` |
 | Precise figures in rows & columns | `table` |
-| An ordered process / steps / timeline | `flow` (diagram) |
+| An ordered process / steps | `flow` (diagram) |
 | A repeating loop (PDCA, a lifecycle) | `cycle` (diagram) |
 | A 2-axis positioning / four quadrants | `matrix` (diagram) |
+| Dated milestones / 沿革 / history | `timeline` (diagram) |
 | A chapter break in a longer deck (dark) | `section` |
 | The opening promise (dark) | `cover` |
 | The single next action (dark) | `cta` |
 
-The last three are **diagram skeletons** — read the conservative gate in **Step 3b**
-before choosing one. A diagram that fits the logic is worth a thousand words; one
+The rows marked *(diagram)* are **diagram skeletons** — read the conservative gate
+in **Step 3b** before choosing one. A diagram that fits the logic is worth a thousand words; one
 that doesn't is worse than text.
 
 **Respect each pattern's `capacity`.** It is a hard limit, not a suggestion:
@@ -96,6 +97,8 @@ that doesn't is worse than text.
 - `table`: ≤ 6 rows incl. header, ≤ 5 columns; always add a units/basis `note`.
 - `flow` / `cycle`: 3–6 nodes (each node label short — the height gate fails an
   overflowing node); `matrix`: exactly 4 quadrants (fixed 2×2).
+- `timeline`: 3–7 milestones, each `{date, label}` — dates one line (2014.10),
+  labels short (the alternating boxes are narrow); more eras → split or a table.
 - `section`: title ≤ 1 line; index 1–2 chars; only in decks of 8+ slides.
 - `cover` / `cta` / `message`: title ≤ 2 lines.
 
@@ -118,6 +121,10 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
 - **`matrix`** — items positioned on *two independent axes* → four quadrants
   (効果×工数, BCG, SWOT). Exactly 4. NOT comparing two things (that's `comparison`),
   NOT one axis (that's a `flow` / a list).
+- **`timeline`** — *dated* milestones where the axis is time itself (沿革, 制度の
+  変遷, プロジェクトの節目). 3–7 `{date, label}` pairs. If the beats are steps you
+  *take* rather than events that *happened on dates*, it's a `flow`; if each era
+  needs a paragraph, it's a `table` / `two-column`, not a diagram.
 
 **When in doubt, do NOT diagram.** Keep the beat as text / `message` / `two-column`
 / `stat-grid` / `comparison`. Reach for a skeleton only when you can name the

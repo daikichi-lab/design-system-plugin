@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 // Diagram skeletons compute their node geometry here too, so the floor
 // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
 // engine draws labels into.
-const { flowLayout, cycleLayout, matrixLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
@@ -95,6 +95,7 @@ function heightBoxes(slide, T) {
     "flow":       { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "cycle":      { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "matrix":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "timeline":   { topY: 1.15, bottomY: 2.85, sizePt: s.title },
   };
   const tb = TITLE_BOX[slide.pattern];
   if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
@@ -142,6 +143,21 @@ function heightBoxes(slide, T) {
         if (!t) return; const b = L.xLabelBoxes[i];
         out.push({ id: `matrix X-axis label ${i + 1}`, path: `axisX[${i}]`, topY: b.y, bottomY: b.y + b.h,
           sizePt: s.small, leading: lead.tight });
+      });
+      break;
+    }
+    case "timeline": {
+      // each milestone: the label box is bounded (like a card) and the DATE band
+      // is a fixed short strip — a date that wraps to 2 lines is a hard overflow,
+      // not a silent collision with the spine.
+      const ms = c.milestones || [];
+      const L = timelineLayout(T, ms.length);
+      ms.forEach((m, i) => {
+        const g = L.milestones[i]; if (!g || !m) return;
+        if (m.label) out.push({ id: `timeline label ${i + 1}`, path: `milestones[${i}].label`,
+          topY: g.labelBox.y, bottomY: g.labelBox.y + g.labelBox.h, sizePt: s.small, leading: lead.tight });
+        if (m.date) out.push({ id: `timeline date ${i + 1}`, path: `milestones[${i}].date`,
+          topY: g.dateBox.y, bottomY: g.dateBox.y + g.dateBox.h, sizePt: s.head, leading: lead.title });
       });
       break;
     }
@@ -194,7 +210,7 @@ function wrappingFields(slide, T) {
   // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
   const sectionTitleSize = s.sectionTitle || s.title;
   const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
-    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m };
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m };
   if (TITLE_W[slide.pattern] != null) {
     const size = slide.pattern === "section" ? sectionTitleSize : s.title;
     push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
@@ -234,6 +250,19 @@ function wrappingFields(slide, T) {
       });
       (c.axisX || []).slice(0, 2).forEach((t, i) => {
         if (t) push(`axisX[${i}]`, t, L.xLabelBoxes[i].w, s.small, "caption", lead.tight);
+      });
+      break;
+    }
+    case "timeline": {
+      // labels + dates measured at their real (alternating) boxes — kinsoku/orphan
+      // per milestone; multi-line results bake to arrays so the height gate can
+      // count them statically.
+      const ms = c.milestones || [];
+      const L = timelineLayout(T, ms.length);
+      ms.forEach((m, i) => {
+        const g = L.milestones[i]; if (!g || !m) return;
+        push(`milestones[${i}].label`, m.label, g.labelBox.w, s.small, "body", lead.tight);
+        push(`milestones[${i}].date`, m.date, g.dateBox.w, s.head, "heading", lead.title);
       });
       break;
     }

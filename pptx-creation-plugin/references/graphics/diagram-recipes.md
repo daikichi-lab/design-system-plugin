@@ -99,6 +99,41 @@ look:     "frame/cross in the line token, emphasis tint = surfaceAccent, radius 
 97%; a 45-char axis label → OVERFLOW at 119% of the top band; 3 quadrants → CAPACITY;
 a quadrant orphan was auto-fixed by bake). Existing patterns byte-identical.
 
+## `timeline` — N dated milestones on a horizontal spine
+
+沿革 / company history / product milestones — **dated** events where the horizontal
+axis is time. One native arrow line (left → right), an accent dot per milestone,
+date + label alternating above / below the line (even index up, odd down) so
+adjacent texts keep clear air even when wider than one slot.
+
+```yaml
+id: timeline
+content:
+  kicker:     { type: string, required: false }
+  title:      { type: string|string[], required: false }
+  milestones: { type: array, required: true, note: "3-7 of {date, label}; date is a
+                short year/date (2014.10), label is what happened — both native text" }
+capacity: "3-7 milestones (CAPS.timeline). <3 -> text/message; >7 -> split eras into
+           two slides, or use a table. Keep labels SHORT (the boxes are ~2.2-2.6in
+           wide — a compound word longer than one line forces an ugly split; put
+           brand/proper nouns in the project --lexicon)."
+geometry: "slot width derives from n; text width = min(2.6, slot*1.7, slot+edge
+           allowance) so first/last boxes never cross the 0.5in edge-margin rule and
+           same-side neighbours (2 slots apart) never touch"
+floor:    "each label box is baked (kinsoku) + height-gated like a card; the DATE
+           band is a fixed short strip, so a date that wraps to 2 lines is a hard
+           OVERFLOW error instead of a silent collision with the spine"
+look:     "spine + dots in accent, dates accentDeep heading-weight, labels ink body —
+           the same token set as flow/cycle (no new look layer)"
+```
+
+**Verified (2026-07-05)** — n=3 / 5 / 7 render clean (alternating layout, no
+overlap, breaks on bunsetsu boundaries); lexicon protection works on milestone
+labels (連結最終赤字 kept intact via `--lexicon`); n=2 / n=8 → CAPACITY errors;
+a 7-line label → OVERFLOW at 180%; a wrapping date → OVERFLOW at 251%; run-gate
+PASS across all 6 themes (examples regenerate + lint clean = no regression).
+Real-world content check: すかいらーくHD 7-milestone 沿革 renders clean at the cap.
+
 ## Honest residuals
 
 - **Meaning is a visual axis, not a lint.** The floor guarantees no overflow /
@@ -111,8 +146,11 @@ a quadrant orphan was auto-fixed by bake). Existing patterns byte-identical.
 
 ## Roadmap
 
-`flow`, `cycle`, and `matrix` — the three base structures in this scope — are all
-implemented and verified. The **conservative classification step** (deck-strategy
-deciding *whether* to diagram and *which* skeleton) is the next stage. Hierarchy /
-venn / list / timeline variants are a later scope, added only when a real deck
-needs them.
+`flow`, `cycle`, `matrix`, and `timeline` are implemented and verified, and the
+**conservative classification step** (deck-strategy deciding *whether* to diagram
+and *which* skeleton) is in place. Next candidates, distilled from the enpreth
+図解テンプレ survey (structures, not looks — the look layer stays in themes):
+`steps` (階段状 step-up), `branch` (1→N diverge / N→1 converge), `formula`
+(A × B × C multiplication), chart-type extensions (pie / horizontal bar / line),
+and a 2×3 card grid. Each is added only through the sanctioned path (skeleton →
+builder → floor wiring → catalog → QA → gate).

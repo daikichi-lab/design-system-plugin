@@ -304,10 +304,12 @@ capacity: "<= 6 rows incl. header read cleanly; <= 5 columns. More rows -> split
 
 ## Roadmap (not yet implemented — add to engine + this file together)
 
-`process` (numbered horizontal steps) · `timeline` · `quote` (pull-quote /
-testimonial). When adding one: implement the builder in `bin/generate.js`,
-register it, add a recipe block here, render an example, and pass the QA loop
-before documenting it as available.
+`process` (numbered horizontal steps) · `quote` (pull-quote / testimonial).
+When adding one: implement the builder in `bin/generate.js`, register it, add a
+recipe block here, render an example, and pass the QA loop before documenting it
+as available.
 
 (`section`, `stat-grid`, and `table` were on this roadmap and are now
-implemented — see their blocks above and `examples/financial-analysis/`.)
+implemented — see their blocks above and `examples/financial-analysis/`.
+`timeline` is implemented as a **diagram skeleton** — see
+`references/graphics/diagram-recipes.md`, alongside `flow` / `cycle` / `matrix`.)

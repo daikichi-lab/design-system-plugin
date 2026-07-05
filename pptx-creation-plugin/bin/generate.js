@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, matrixLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -610,6 +610,41 @@ function slideMatrix(pres, d, T, ctx) {
   return s;
 }
 
+/* ---------------- DIAGRAM: timeline (N dated milestones on a horizontal spine) ----------------
+ * 沿革 / company history / product milestones. One native arrow line (time flows
+ * left -> right), an accent dot per milestone, date + label alternating above /
+ * below the line (even up, odd down) so adjacent texts keep clear air. Robust for
+ * 3-7 milestones (design-lint caps it via CAPS.timeline); the floor gates each
+ * label box like a card (kinsoku bake + height gate), and the fixed-height date
+ * band turns a 2-line date into an OVERFLOW error instead of a silent collision. */
+function slideTimeline(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const ms = d.milestones || [];
+  const L = timelineLayout(T, ms.length);
+  // the spine (behind the dots), arrowhead showing time direction
+  s.addShape("line", {
+    x: L.line.x1, y: L.line.y1, w: L.line.x2 - L.line.x1, h: 0,
+    line: { color: T.c.accent, width: 2, endArrowType: "triangle" },
+  });
+  ms.forEach((m, i) => {
+    const g = L.milestones[i]; if (!g) return;
+    s.addShape("ellipse", { x: g.dot.x, y: g.dot.y, w: g.dot.d, h: g.dot.d,
+      fill: { color: T.c.accent }, line: { color: T.c.bg, width: 1.5 } });
+    if (m.date) s.addText(richText(m.date), { x: g.dateBox.x, y: g.dateBox.y, w: g.dateBox.w, h: g.dateBox.h,
+      margin: 0, fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.accentDp,
+      align: "center", valign: g.above ? "bottom" : "top" });
+    if (m.label) s.addText(richText(m.label), { x: g.labelBox.x, y: g.labelBox.y, w: g.labelBox.w, h: g.labelBox.h,
+      margin: 0, fontFace: T.font.body, fontSize: T.s.small, color: T.c.ink,
+      align: "center", valign: g.above ? "bottom" : "top", lineSpacingMultiple: T.lead.tight });
+  });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 const PATTERNS = {
   "cover": slideCover,
   "message": slideMessage,
@@ -623,6 +658,7 @@ const PATTERNS = {
   "flow": slideFlow,
   "cycle": slideCycle,
   "matrix": slideMatrix,
+  "timeline": slideTimeline,
 };
 
 /* ---------------- deck plan ---------------- */

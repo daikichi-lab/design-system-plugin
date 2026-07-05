@@ -230,6 +230,13 @@ function checkCapacity(slides, F) {
         if (n !== 4) F.error(idx, "CAPACITY", `matrix has ${n} quadrants (must be exactly 4 — it is a fixed 2x2)`);
         break;
       }
+      case "timeline": {
+        const n = len(c.milestones);
+        const [min, max] = CAPS.timeline;
+        if (n > max) F.error(idx, "CAPACITY", `timeline has ${n} milestones (max ${max}; split eras into two slides, or use a table)`);
+        else if (n < min) F.error(idx, "CAPACITY", `timeline has ${n} milestones (min ${min}; too few to diagram — use text / message)`);
+        break;
+      }
       case "table": {
         const bodyRows = len(c.rows);
         if (bodyRows > 5) F.error(idx, "CAPACITY", `table has ${bodyRows} body rows (max 5 => <=6 incl. header)`);
