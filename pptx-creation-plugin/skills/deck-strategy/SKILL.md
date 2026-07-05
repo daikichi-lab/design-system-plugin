@@ -80,6 +80,7 @@ For every beat, pick the pattern whose *job* matches it
 | A repeating loop (PDCA, a lifecycle) | `cycle` (diagram) |
 | A 2-axis positioning / four quadrants | `matrix` (diagram) |
 | Dated milestones / 沿革 / history | `timeline` (diagram) |
+| Ascending stages toward a goal (階段) | `steps` (diagram) |
 | A chapter break in a longer deck (dark) | `section` |
 | The opening promise (dark) | `cover` |
 | The single next action (dark) | `cta` |
@@ -99,6 +100,7 @@ that doesn't is worse than text.
   overflowing node); `matrix`: exactly 4 quadrants (fixed 2×2).
 - `timeline`: 3–7 milestones, each `{date, label}` — dates one line (2014.10),
   labels short (the alternating boxes are narrow); more eras → split or a table.
+- `steps`: 3–5 stage labels — the first (shortest) block binds the label length.
 - `section`: title ≤ 1 line; index 1–2 chars; only in decks of 8+ slides.
 - `cover` / `cta` / `message`: title ≤ 2 lines.
 
@@ -125,6 +127,10 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   変遷, プロジェクトの節目). 3–7 `{date, label}` pairs. If the beats are steps you
   *take* rather than events that *happened on dates*, it's a `flow`; if each era
   needs a paragraph, it's a `table` / `two-column`, not a diagram.
+- **`steps`** — stages that *accumulate* toward a goal, where LEVEL rises
+  (成長ステップ, 導入フェーズ, スキルの階段). 3–5 labels, last = the goal. If the
+  beats are a mere sequence with no sense of climbing, that's a `flow`; if they're
+  dated, that's a `timeline`.
 
 **When in doubt, do NOT diagram.** Keep the beat as text / `message` / `two-column`
 / `stat-grid` / `comparison`. Reach for a skeleton only when you can name the

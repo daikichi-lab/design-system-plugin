@@ -134,6 +134,32 @@ a 7-line label → OVERFLOW at 180%; a wrapping date → OVERFLOW at 251%; run-g
 PASS across all 6 themes (examples regenerate + lint clean = no regression).
 Real-world content check: すかいらーくHD 7-milestone 沿革 renders clean at the cap.
 
+## `steps` — N ascending stages (階段状ステップアップ)
+
+A staircase read left-bottom → right-top: stages that **build toward a goal**
+(成長ステップ, 導入フェーズ, 学習ロードマップ). Blocks share one bottom baseline
+and rise linearly; the last (goal) block is tinted — the same emphasis convention
+as the comparison/stat-grid cards (a tint, never a stripe).
+
+```yaml
+id: steps
+content:
+  kicker: { type: string, required: false }
+  title:  { type: string|string[], required: false }
+  steps:  { type: string[], required: true, note: "3-5 ascending stage labels; native text, one per block; the LAST is the goal" }
+capacity: "3-5 stages (CAPS.steps). <3 -> text/comparison; >5 -> split, or a flow/list.
+           Labels short — the FIRST (shortest) block is the binding height constraint."
+geometry: "block width derives from n; heights rise linearly STEPS_MIN_H -> STEPS_MAX_H
+           on a shared bottom baseline"
+floor:    "each stage label is baked (kinsoku) + height-gated against ITS OWN block"
+look:     "surface fill + accent border; goal block surfaceAccent + accentDeep (tint,
+           never a stripe); radius from theme.layout.card"
+```
+
+**Verified (2026-07-05)** — n=3 / 4 / 5 render clean (ascending staircase, goal tint,
+bunsetsu breaks via bake); n=2 / n=6 → CAPACITY errors; a 5-line first-stage label →
+OVERFLOW at 188%; run-gate PASS across all 6 themes.
+
 ## Honest residuals
 
 - **Meaning is a visual axis, not a lint.** The floor guarantees no overflow /
@@ -146,11 +172,11 @@ Real-world content check: すかいらーくHD 7-milestone 沿革 renders clean 
 
 ## Roadmap
 
-`flow`, `cycle`, `matrix`, and `timeline` are implemented and verified, and the
-**conservative classification step** (deck-strategy deciding *whether* to diagram
-and *which* skeleton) is in place. Next candidates, distilled from the enpreth
-図解テンプレ survey (structures, not looks — the look layer stays in themes):
-`steps` (階段状 step-up), `branch` (1→N diverge / N→1 converge), `formula`
-(A × B × C multiplication), chart-type extensions (pie / horizontal bar / line),
-and a 2×3 card grid. Each is added only through the sanctioned path (skeleton →
-builder → floor wiring → catalog → QA → gate).
+`flow`, `cycle`, `matrix`, `timeline`, and `steps` are implemented and verified,
+and the **conservative classification step** (deck-strategy deciding *whether* to
+diagram and *which* skeleton) is in place. Next candidates, distilled from the
+enpreth 図解テンプレ survey (structures, not looks — the look layer stays in
+themes): `branch` (1→N diverge / N→1 converge), `formula` (A × B × C
+multiplication), chart-type extensions (pie / horizontal bar / line), and a 2×3
+card grid. Each is added only through the sanctioned path (skeleton → builder →
+floor wiring → catalog → QA → gate).

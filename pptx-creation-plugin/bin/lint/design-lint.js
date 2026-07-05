@@ -237,6 +237,13 @@ function checkCapacity(slides, F) {
         else if (n < min) F.error(idx, "CAPACITY", `timeline has ${n} milestones (min ${min}; too few to diagram — use text / message)`);
         break;
       }
+      case "steps": {
+        const n = len(c.steps);
+        const [min, max] = CAPS.steps;
+        if (n > max) F.error(idx, "CAPACITY", `steps has ${n} stages (max ${max}; split, or use flow / a list)`);
+        else if (n < min) F.error(idx, "CAPACITY", `steps has ${n} stages (min ${min}; too few to diagram — use text / comparison)`);
+        break;
+      }
       case "table": {
         const bodyRows = len(c.rows);
         if (bodyRows > 5) F.error(idx, "CAPACITY", `table has ${bodyRows} body rows (max 5 => <=6 incl. header)`);

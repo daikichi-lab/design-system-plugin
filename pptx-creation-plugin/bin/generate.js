@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -645,6 +645,38 @@ function slideTimeline(pres, d, T, ctx) {
   return s;
 }
 
+/* ---------------- DIAGRAM: steps (N ascending stages, 階段状) ----------------
+ * A staircase read left-bottom -> right-top: stages that BUILD toward a goal
+ * (成長ステップ, 導入フェーズ). Blocks share one bottom baseline and rise
+ * linearly; the last (goal) block is tinted surfaceAccent — the same emphasis
+ * convention as the comparison/stat-grid cards (a tint, never a stripe). Robust
+ * for 3-5 stages (CAPS.steps); the floor gates each label against its own block,
+ * so the shortest FIRST block is the binding constraint, not the tall goal. */
+function slideSteps(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const steps = d.steps || [];
+  const { nodes } = stepsLayout(T, steps.length);
+  const rad = T.layout.card.radius;
+  steps.forEach((st, i) => {
+    const node = nodes[i]; if (!node) return;
+    const goal = i === steps.length - 1;
+    s.addShape("roundRect", { x: node.x, y: node.y, w: node.w, h: node.h, rectRadius: rad,
+      fill: { color: goal ? T.c.surfaceA : T.c.surface },
+      line: { color: goal ? T.c.accentDp : T.c.accent, width: 1.25 } });
+    const tb = nodeTextBox(node);
+    s.addText(richText(st), { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.head, bold: true,
+      color: goal ? T.c.accentDp : T.c.ink,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 const PATTERNS = {
   "cover": slideCover,
   "message": slideMessage,
@@ -659,6 +691,7 @@ const PATTERNS = {
   "cycle": slideCycle,
   "matrix": slideMatrix,
   "timeline": slideTimeline,
+  "steps": slideSteps,
 };
 
 /* ---------------- deck plan ---------------- */

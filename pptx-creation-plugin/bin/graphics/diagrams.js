@@ -18,7 +18,7 @@
  * ============================================================ */
 
 const NODE_PAD = 0.16;               // inner padding of a node text box (in)
-const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7] }; // [min, max] element count; matrix is fixed 4
+const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5] }; // [min, max] element count; matrix is fixed 4
 
 // The drawing area a diagram gets, below the kicker/title. Shared by every
 // skeleton so they sit consistently on the slide.
@@ -122,6 +122,27 @@ function timelineLayout(T, n) {
   return { area, line, milestones };
 }
 
+/* ---------------- steps: N ascending stages (階段状ステップアップ) ---------------- */
+// A staircase read left-bottom -> right-top: goal orientation, stages that build
+// on each other (成長ステップ, 導入フェーズ, 学習ロードマップ). Blocks share one
+// BOTTOM baseline and rise linearly; the LAST (goal) block is the tallest. Robust
+// for any n in CAPS.steps — width and height increments derive from n. The label
+// box is the block's inner box; the first (shortest) block is the binding height
+// constraint, so the floor gates every label against ITS OWN block.
+const STEPS_MIN_H = 1.3, STEPS_MAX_H = 3.0, STEPS_GAP = 0.4;
+
+function stepsLayout(T, n) {
+  const area = diagramArea(T);
+  const bottom = area.y + area.h;
+  const w = (area.w - (n - 1) * STEPS_GAP) / n;
+  const nodes = [];
+  for (let i = 0; i < n; i++) {
+    const h = n === 1 ? STEPS_MAX_H : STEPS_MIN_H + (i * (STEPS_MAX_H - STEPS_MIN_H)) / (n - 1);
+    nodes.push({ x: area.x + i * (w + STEPS_GAP), y: bottom - h, w, h });
+  }
+  return { area, nodes };
+}
+
 // Inner text box of a node (labels + the floor both use this).
 function nodeTextBox(node) {
   return { x: node.x + NODE_PAD, y: node.y + NODE_PAD, w: node.w - 2 * NODE_PAD, h: node.h - 2 * NODE_PAD };
@@ -164,6 +185,6 @@ function quadBodyBox(q, hasHead) {
 }
 
 module.exports = {
-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout,
+  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout,
   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
 };
