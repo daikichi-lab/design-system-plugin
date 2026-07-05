@@ -231,8 +231,20 @@ run-gate PASS across all 6 themes.
 `flow`, `cycle`, `matrix`, `timeline`, `steps`, `branch`, and `formula` are
 implemented and verified, and the **conservative classification step**
 (deck-strategy deciding *whether* to diagram and *which* skeleton) is in place.
-Next candidates, distilled from the enpreth 図解テンプレ survey (structures, not
-looks — the look layer stays in themes): chart-type extensions (pie / horizontal
-bar / line). The 2×3 card grid landed as the `card-grid` slide pattern (see
-`references/patterns/catalog.md`). Each is added only through the sanctioned path
+The **enpreth 図解テンプレ adoption sweep (2026-07-05) is complete**: the
+`timeline` / `steps` / `branch` / `formula` skeletons here, the `card-grid`
+slide pattern and the chart types (`bar` / `line` / `pie` / `doughnut`) in
+`references/patterns/catalog.md` + `../principles/chart-design.md` §3.
+Deliberately **not** adopted, with reasons:
+
+- **hub / radial (放射・逆放射)** — ≤4 spokes is already `branch` (converge /
+  diverge); a true 5-6 spoke hub waits until a real deck needs one (add via the
+  sanctioned path then).
+- **photo / gradient / drop-shadow / wave-background variants** — look-layer
+  concerns that belong to themes, and several collide with the AI-tell
+  blocklist (house bar §2). Structures were taken; decoration was not.
+- **chat / quote** — catalog roadmap candidates (`quote` is already listed);
+  add when a deck needs them.
+
+Any future structure is added only through the sanctioned path
 (skeleton → builder → floor wiring → catalog → QA → gate).
