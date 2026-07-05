@@ -1,6 +1,6 @@
 ---
 name: design-doc
-description: Use ONCE per project (a repo that uses pptx-creation) to author its DESIGN.md — the persistent deck design system: brand + chosen design language, per-audience presets, standing content-integrity (honesty) rules, constraints, the default verification bar, and visual/diagram conventions (chart units + emphasis, when to diagram, icons/motifs). deck-brief then reads it and asks only per-deck deltas, so every deck the project ships is on-brand and consistent. This is the project's standing design memory; deck-brief is one deck's intent.
+description: Use ONCE per project (a repo that uses pptx-creation) to author its DESIGN.md — the persistent deck design system at FULL TEMPLATE LEVEL (see references/design-doc-examples/, ~500 lines; token frontmatter + per-token usage rules + component specs + Do's/Don'ts + Known Gaps): brand + chosen design language, per-audience presets, standing content-integrity (honesty) rules, constraints, the default verification bar, and visual/diagram conventions. deck-brief then reads it and asks only per-deck deltas, so every deck the project ships is on-brand and consistent. This is the project's standing design memory; deck-brief is one deck's intent. A short bullet sketch does NOT satisfy this skill.
 ---
 
 # design-doc
@@ -10,11 +10,21 @@ time. Most of those answers don't change between decks — the brand, the design
 language, the tone for the board vs a seminar, the honesty rules a company always
 applies, the slide caps, the target band. **DESIGN.md is where those live once.**
 
-You author the consuming project's `DESIGN.md`: a short, human-readable **design
-system + deck conventions** for *this* project. With it in place, `deck-brief`
-reads it and only asks what's genuinely new per deck (this deck's message and
-data) — so decks come out consistent and sharp without re-specifying the brand
-each time. Author it once, update it when the brand or rules change.
+You author the consuming project's `DESIGN.md`: a **full design-system document
++ deck conventions** for *this* project. With it in place, `deck-brief` reads it
+and only asks what's genuinely new per deck (this deck's message and data) — so
+decks come out consistent and sharp without re-specifying the brand each time.
+Author it once, update it when the brand or rules change.
+
+> **The bar is the examples — not a sketch.** Five reference DESIGN.md files at
+> template level live in
+> [`../../references/design-doc-examples/`](../../references/design-doc-examples/)
+> (Apple / BMW M / Claude / Nike / Slack). **Producing a DESIGN.md at that level
+> is REQUIRED**: machine-readable token frontmatter + prose sections where every
+> colour token carries a hex AND a usage rule, the full type hierarchy is
+> specified, components get per-component specs, Do's/Don'ts carry rationale,
+> and unknowns are honestly recorded in Known Gaps. A ~40-line bullet sketch is
+> not a deliverable of this skill.
 
 > Scope: this is the DESIGN.md for a **project that uses** pptx-creation, not the
 > plugin's own internals. It holds **convention + rationale**, and **points to**
@@ -23,6 +33,44 @@ each time. Author it once, update it when the brand or rules change.
 > order or per-deck content here (that's `deck_plan` / `deck-strategy`).
 
 ## The artifact — `DESIGN.md` (write it at the project repo root)
+
+**Required structure (template level).** Match the examples' shape and depth,
+adapted to the deck surface:
+
+1. **YAML frontmatter** — `name`, a 3-5 sentence `description` capturing the
+   brand's voltage (what makes it THIS brand and not a generic deck), then the
+   token dump: `colors` (every token, bare hex), `typography` (every role with
+   family / size / weight / lineHeight / letterSpacing), `spacing`, `radius`.
+   These document the same values `theme.json` encodes for the engine — with
+   names and comments a human can review.
+2. **Overview** — one tight paragraph: canvas, type voice, where the brand
+   voltage comes from, the signature move.
+3. **Colors** — every token from the frontmatter, grouped (Brand & Accent /
+   Surface / Text / Semantic), each with **hex + WHERE it is used and where it
+   is not** (e.g. "アクセントは1面に主役1箇所。カード強調はtint、ストライプ禁止").
+4. **Typography** — the hierarchy role by role, the principles (weight-led,
+   negative tracking on display sizes, JP leading), and honest **font
+   substitutes** (実機にない場合に何へ落ちるか).
+5. **Layout** — spacing scale, margins, the whitespace philosophy in words.
+6. **Elevation & Depth / Shapes** — shadow policy, radius scale, the motif
+   rules (どの隅に何を置いてよいか).
+7. **Components** — the DECK surface, per-component: cover, section divider,
+   title+kicker, cards (surface/emphasis), charts (unit・強調・▲), tables,
+   diagram nodes, footer. What each looks like and when to use it.
+8. **§1-7 deck conventions** (below) — audience/voice, design language +
+   theme.json pointer, per-audience presets, honesty house rules,
+   constraints, verification bar, visual/diagram conventions.
+9. **Do's and Don'ts** — 7+ each, every line carrying its *why*
+   ("クリームが差別化。純白は他社のAIツールに見える" — not "白を使わない").
+10. **出力面の挙動** (the deck equivalent of Responsive Behavior) — 16:9
+    投影 / PDF配布 / モノクロ印刷 / 低輝度プロジェクタでどう劣化し、何を守るか.
+11. **Iteration Guide** — how to change a token safely: DESIGN.md と
+    `theme.json` を同時に更新 → 1枚プレビュー再生成 → run-gate.
+12. **Known Gaps** — what you could NOT confirm (licensed fonts, unextracted
+    states, out-of-scope surfaces). **Never pad gaps with invented brand
+    facts** — an honest gap here beats a fabricated token.
+
+The §1-7 deck-convention sections:
 
 ```markdown
 # DESIGN.md — <project/company> deck design system
@@ -69,22 +117,42 @@ each time. Author it once, update it when the brand or rules change.
 
 ## Procedure
 
-1. **Look for an existing `DESIGN.md`** at the repo root. If present, you are
+1. **Read ONE example end-to-end first** from
+   [`../../references/design-doc-examples/`](../../references/design-doc-examples/)
+   — pick the voice nearest the project (端正=Apple, 剛=BMW M, 温=Claude,
+   競技的=Nike, 実務的=Slack). Your output must match that structure and depth;
+   do not start writing before you have the shape in your head.
+2. **Look for an existing `DESIGN.md`** at the repo root. If present, you are
    *updating* it — read it, confirm what changed, edit in place (don't clobber).
-2. **Gather the standing facts**, asking only what you can't infer (use the
+   If it exists but is below template level, upgrading it to the required
+   structure IS the job.
+3. **Gather the standing facts**, asking only what you can't infer (use the
    question tool, batched ≤4): the brand (who/voice), the recurring audiences,
    and the design leaning (formal vs friendly). Infer sensible defaults for the
-   rest and state them.
-3. **Pick the design language** via [`design-language`](../design-language/SKILL.md)
+   rest and state them. What cannot be confirmed goes to **Known Gaps**, never
+   into invented tokens.
+4. **Pick the design language** via [`design-language`](../design-language/SKILL.md)
    (audience × usecase → one bookshelf language, or an ad-hoc spec). Record the
    choice + brand tokens in §2.
-4. **Seed the theme** — hand §2's brand tokens to [`theme-init`](../theme-init/SKILL.md)
+5. **Seed the theme** — hand the frontmatter tokens to [`theme-init`](../theme-init/SKILL.md)
    so `themes/<name>/theme.json` matches DESIGN.md. DESIGN.md is the *why*;
-   theme.json is the *tokens*.
-5. **Write the standing rules that make decks safe & sharp** — §3 presets, §4
-   honesty rules, §5 constraints, §6 bar. These are the high-value part (below).
-6. **Write `DESIGN.md`** at the repo root and tell the user it is now the source
+   theme.json is the *machine tokens the engine reads* — same values, two roles.
+6. **Write the standing rules that make decks safe & sharp** — §3 presets, §4
+   honesty rules, §5 constraints, §6 bar. These are the highest-value part (below).
+7. **Write `DESIGN.md`** at the repo root — full template level (all 12 parts
+   of the required structure) — and tell the user it is now the source
    `deck-brief` will read on every deck.
+
+**Completeness check before you call it done** (all must hold):
+
+- [ ] Frontmatter carries EVERY colour/type/spacing/radius token with real values.
+- [ ] Every colour token also appears in prose with a usage rule (where / where not).
+- [ ] Components covers the whole deck surface (cover〜footer, charts incl. 単位・▲).
+- [ ] Do's ≥7 and Don'ts ≥7, each with its why.
+- [ ] 出力面の挙動・Iteration Guide・Known Gaps are present and honest.
+- [ ] `theme.json` regenerated/confirmed in sync; 1-slide preview rendered and looked at.
+- [ ] Rough size sanity: the examples run ~500 lines — if yours is under ~300,
+      something above is missing, not "efficiently short".
 
 ## What moves the needle most
 
@@ -117,5 +185,8 @@ system + this deck's specific intent → a deck that is both on-brand and on-poi
   `references/` for design norms (M-5) — it does not restate or fork them.
 - It carries **no slide order and no per-deck content** — those are `deck-strategy`
   / `deck_plan`. If you're writing "slide 3 says…", that belongs in a deck, not here.
-- Author once, keep it short, update on brand/rule changes. A DESIGN.md nobody
-  maintains drifts from the theme; keep §2 and `theme.json` in sync.
+- Author once at **full template level**, update on brand/rule changes. Depth is
+  required; padding is not — every line must be a real convention or a real
+  token, and honest unknowns live in Known Gaps. A DESIGN.md nobody maintains
+  drifts from the theme; the Iteration Guide + frontmatter/`theme.json` sync is
+  what keeps it alive.

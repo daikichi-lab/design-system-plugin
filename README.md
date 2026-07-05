@@ -104,6 +104,11 @@ claude plugin update pptx-creation@daikichi-plugins
    > **`design-doc` の実施は省略しないでください。** このスキルがそのリポジトリの
    > **`DESIGN.md`**（常設の設計システム：ブランド・デザイン言語・オーディエンス別
    > プリセット・正直さの house rules・制約・検証バー・図解の慣例）を作ります。
+   > 作成物は **テンプレートレベルが必須**です — 見本は
+   > [`docs/design-file-template/`](docs/design-file-template/)（Apple / BMW M /
+   > Claude / Nike / Slack の5本、各約500行）。全トークンの実値＋トークンごとの
+   > 用途規則＋コンポーネント仕様＋理由つき Do/Don'ts＋Known Gaps まで書き切ります。
+   > 箇条書きのスケッチでは `design-doc` の成果物になりません。
    > 以後 `deck-brief` がそれを読み、**毎回は差分だけ**聞くので、全デッキが一貫して
    > on-brand になります。`DESIGN.md` が無いままデッキを量産すると、ブランド・トーン・
    > 表記ルールを毎回口頭で再指定することになり、デッキ間のブレの主要因になります。
