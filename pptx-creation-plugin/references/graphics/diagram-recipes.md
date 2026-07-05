@@ -160,6 +160,34 @@ look:     "surface fill + accent border; goal block surfaceAccent + accentDeep (
 bunsetsu breaks via bake); n=2 / n=6 → CAPACITY errors; a 5-line first-stage label →
 OVERFLOW at 188%; run-gate PASS across all 6 themes.
 
+## `branch` — 1 → N diverge / N → 1 converge
+
+One anchor and N stacked nodes, arrows fanning between them. `diverge` (default):
+the single **source** (left, tinted) feeds the branches (一つの決算書 → 三表).
+`converge`: the branches merge into the single **result** (right, tinted) —
+現場の声+数字+動向 → 経営判断. Reading stays left → right in both.
+
+```yaml
+id: branch
+content:
+  kicker:    { type: string, required: false }
+  title:     { type: string|string[], required: false }
+  source:    { type: string|string[], required: true, note: "the single anchor node (tinted)" }
+  branches:  { type: string[], required: true, note: "2-4 branch labels, stacked" }
+  direction: { type: string, required: false, note: "'diverge' (default) | 'converge'" }
+capacity: "2-4 branches (CAPS.branch). 1 branch is a flow; >4 -> group or two-column."
+geometry: "single node vertically centered on its side; branches stacked with even
+           gaps; arrows fan from/to the single node's edge at spread offsets so the
+           heads never pile on one point"
+floor:    "source + every branch label baked (kinsoku) + height-gated per node"
+look:     "single anchor surfaceAccent + accentDeep (the house emphasis tint);
+           branches surface + accent border; arrows accent"
+```
+
+**Verified (2026-07-05)** — diverge n=2/3/4 and converge n=3 render clean (fan
+arrows land on node edges, no label collision); n=1 / n=5 → CAPACITY; an over-long
+branch label → OVERFLOW at 141%; run-gate PASS across all 6 themes.
+
 ## Honest residuals
 
 - **Meaning is a visual axis, not a lint.** The floor guarantees no overflow /
@@ -172,11 +200,10 @@ OVERFLOW at 188%; run-gate PASS across all 6 themes.
 
 ## Roadmap
 
-`flow`, `cycle`, `matrix`, `timeline`, and `steps` are implemented and verified,
-and the **conservative classification step** (deck-strategy deciding *whether* to
-diagram and *which* skeleton) is in place. Next candidates, distilled from the
-enpreth 図解テンプレ survey (structures, not looks — the look layer stays in
-themes): `branch` (1→N diverge / N→1 converge), `formula` (A × B × C
-multiplication), chart-type extensions (pie / horizontal bar / line), and a 2×3
-card grid. Each is added only through the sanctioned path (skeleton → builder →
-floor wiring → catalog → QA → gate).
+`flow`, `cycle`, `matrix`, `timeline`, `steps`, and `branch` are implemented and
+verified, and the **conservative classification step** (deck-strategy deciding
+*whether* to diagram and *which* skeleton) is in place. Next candidates, distilled
+from the enpreth 図解テンプレ survey (structures, not looks — the look layer stays
+in themes): `formula` (A × B × C multiplication), chart-type extensions
+(pie / horizontal bar / line), and a 2×3 card grid. Each is added only through the
+sanctioned path (skeleton → builder → floor wiring → catalog → QA → gate).

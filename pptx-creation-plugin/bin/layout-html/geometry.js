@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 // Diagram skeletons compute their node geometry here too, so the floor
 // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
 // engine draws labels into.
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
@@ -97,6 +97,7 @@ function heightBoxes(slide, T) {
     "matrix":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "timeline":   { topY: 1.15, bottomY: 2.85, sizePt: s.title },
     "steps":      { topY: 1.15, bottomY: 3.4, sizePt: s.title },
+    "branch":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
   };
   const tb = TITLE_BOX[slide.pattern];
   if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
@@ -138,6 +139,22 @@ function heightBoxes(slide, T) {
         if (!nodes[i]) return;
         const ntb = nodeTextBox(nodes[i]);
         out.push({ id: `steps stage ${i + 1}`, path: `steps[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h,
+          sizePt: s.head, leading: lead.tight });
+      });
+      break;
+    }
+    case "branch": {
+      const branches = c.branches || [];
+      const L = branchLayout(T, branches.length, c.direction);
+      if (c.source) {
+        const stb = nodeTextBox(L.single);
+        out.push({ id: "branch source", path: "source", topY: stb.y, bottomY: stb.y + stb.h,
+          sizePt: s.head, leading: lead.tight });
+      }
+      branches.forEach((b, i) => {
+        if (!L.many[i]) return;
+        const ntb = nodeTextBox(L.many[i]);
+        out.push({ id: `branch node ${i + 1}`, path: `branches[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h,
           sizePt: s.head, leading: lead.tight });
       });
       break;
@@ -223,7 +240,7 @@ function wrappingFields(slide, T) {
   // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
   const sectionTitleSize = s.sectionTitle || s.title;
   const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
-    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m };
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m, "branch": W - 2 * m };
   if (TITLE_W[slide.pattern] != null) {
     const size = slide.pattern === "section" ? sectionTitleSize : s.title;
     push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
@@ -259,6 +276,16 @@ function wrappingFields(slide, T) {
       steps.forEach((st, i) => {
         if (!nodes[i]) return;
         push(`steps[${i}]`, st, nodeTextBox(nodes[i]).w, s.head, "heading", lead.tight);
+      });
+      break;
+    }
+    case "branch": {
+      const branches = c.branches || [];
+      const L = branchLayout(T, branches.length, c.direction);
+      push("source", c.source, nodeTextBox(L.single).w, s.head, "heading", lead.tight);
+      branches.forEach((b, i) => {
+        if (!L.many[i]) return;
+        push(`branches[${i}]`, b, nodeTextBox(L.many[i]).w, s.head, "heading", lead.tight);
       });
       break;
     }

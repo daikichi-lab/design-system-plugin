@@ -47,7 +47,7 @@
         "pattern": {
           "type": "string",
           "description": "Pattern id. Must exist in the engine registry.",
-          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps"]
+          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch"]
         },
         "content": {
           "type": "object",
@@ -158,6 +158,20 @@
               "axisY": { "type": "array", "items": { "type": ["string", "array"] }, "maxItems": 2, "description": "Y-axis end labels [top, bottom], shown left." },
               "emphasizeIndex": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Tint one quadrant (0=TL,1=TR,2=BL,3=BR)." },
               "quadrants": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "object", "properties": { "head": { "type": "string" }, "body": { "type": ["string", "array"] } } }, "description": "Exactly 4 quadrants (TL, TR, BL, BR), each {head?, body?}." },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "branch" } } },
+          "then": { "properties": { "content": {
+            "required": ["source", "branches"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "source": { "type": ["string", "array"], "description": "The single anchor node (tinted): the source in diverge, the result in converge." },
+              "branches": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 2, "maxItems": 4, "description": "2-4 branch labels; the engine stacks them and fans the arrows." },
+              "direction": { "type": "string", "enum": ["diverge", "converge"], "description": "diverge (default): 1 source -> N branches. converge: N branches -> 1 result." },
               "notes": { "type": "string" }
             }
           } } }

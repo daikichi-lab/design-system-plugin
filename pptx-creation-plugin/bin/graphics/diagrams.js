@@ -18,7 +18,7 @@
  * ============================================================ */
 
 const NODE_PAD = 0.16;               // inner padding of a node text box (in)
-const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5] }; // [min, max] element count; matrix is fixed 4
+const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4] }; // [min, max] element count; matrix is fixed 4
 
 // The drawing area a diagram gets, below the kicker/title. Shared by every
 // skeleton so they sit consistently on the slide.
@@ -143,6 +143,41 @@ function stepsLayout(T, n) {
   return { area, nodes };
 }
 
+/* ---------------- branch: 1 -> N diverge / N -> 1 converge ---------------- */
+// One node on one side, N stacked nodes on the other, arrows fanning between
+// them. direction "diverge" (default): the single SOURCE sits left and feeds the
+// branches (1つの決算書 -> 三表). "converge": the branches sit left and merge
+// into the single RESULT on the right (現場の声+数字+動向 -> 経営判断). Reading
+// stays left -> right in both. Arrows fan from/to the single node's edge at
+// spread offsets so the heads never pile on one point. Robust for 2-4 branches.
+const BR_SINGLE_W = 4.0, BR_MANY_W = 5.2, BR_SINGLE_H = 1.5, BR_VGAP = 0.26, BR_CLEAR = 0.08;
+
+function branchLayout(T, n, direction) {
+  const area = diagramArea(T);
+  const converge = direction === "converge";
+  const singleX = converge ? area.x + area.w - BR_SINGLE_W : area.x;
+  const manyX = converge ? area.x : area.x + area.w - BR_MANY_W;
+  const single = { x: singleX, y: area.y + (area.h - BR_SINGLE_H) / 2, w: BR_SINGLE_W, h: BR_SINGLE_H };
+  const mh = Math.min(1.15, (area.h - (n - 1) * BR_VGAP) / n);
+  const total = n * mh + (n - 1) * BR_VGAP;
+  const y0 = area.y + (area.h - total) / 2;
+  const many = [], arrows = [];
+  for (let i = 0; i < n; i++) {
+    const node = { x: manyX, y: y0 + i * (mh + BR_VGAP), w: BR_MANY_W, h: mh };
+    many.push(node);
+    // fan offset on the single node's edge, clamped inside its height
+    const spread = (i - (n - 1) / 2) * Math.min(0.35, (BR_SINGLE_H - 0.4) / Math.max(n - 1, 1));
+    const sy = single.y + single.h / 2 + spread;
+    const my = node.y + node.h / 2;
+    if (converge) {
+      arrows.push({ x1: node.x + node.w + BR_CLEAR, y1: my, x2: single.x - BR_CLEAR, y2: sy });
+    } else {
+      arrows.push({ x1: single.x + single.w + BR_CLEAR, y1: sy, x2: node.x - BR_CLEAR, y2: my });
+    }
+  }
+  return { area, single, many, arrows, converge };
+}
+
 // Inner text box of a node (labels + the floor both use this).
 function nodeTextBox(node) {
   return { x: node.x + NODE_PAD, y: node.y + NODE_PAD, w: node.w - 2 * NODE_PAD, h: node.h - 2 * NODE_PAD };
@@ -185,6 +220,6 @@ function quadBodyBox(q, hasHead) {
 }
 
 module.exports = {
-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout,
+  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout,
   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
 };

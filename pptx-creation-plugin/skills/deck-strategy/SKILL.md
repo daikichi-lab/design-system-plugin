@@ -81,6 +81,7 @@ For every beat, pick the pattern whose *job* matches it
 | A 2-axis positioning / four quadrants | `matrix` (diagram) |
 | Dated milestones / 沿革 / history | `timeline` (diagram) |
 | Ascending stages toward a goal (階段) | `steps` (diagram) |
+| One thing splits into N / N merge into one | `branch` (diagram) |
 | A chapter break in a longer deck (dark) | `section` |
 | The opening promise (dark) | `cover` |
 | The single next action (dark) | `cta` |
@@ -101,6 +102,7 @@ that doesn't is worse than text.
 - `timeline`: 3–7 milestones, each `{date, label}` — dates one line (2014.10),
   labels short (the alternating boxes are narrow); more eras → split or a table.
 - `steps`: 3–5 stage labels — the first (shortest) block binds the label length.
+- `branch`: 1 source + 2–4 branches (labels short; 4 branches leave one line each).
 - `section`: title ≤ 1 line; index 1–2 chars; only in decks of 8+ slides.
 - `cover` / `cta` / `message`: title ≤ 2 lines.
 
@@ -131,6 +133,11 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   (成長ステップ, 導入フェーズ, スキルの階段). 3–5 labels, last = the goal. If the
   beats are a mere sequence with no sense of climbing, that's a `flow`; if they're
   dated, that's a `timeline`.
+- **`branch`** — ONE thing genuinely *splitting into* N parts (決算書 → 三表,
+  戦略 → 打ち手) or N inputs *merging into* one result (`direction: converge`).
+  2–4 branches. If the N items don't share a real source/result, it's a
+  `two-column` list, not a branch; comparing the branches against each other is a
+  `comparison`.
 
 **When in doubt, do NOT diagram.** Keep the beat as text / `message` / `two-column`
 / `stat-grid` / `comparison`. Reach for a skeleton only when you can name the
