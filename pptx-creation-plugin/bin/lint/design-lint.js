@@ -251,6 +251,13 @@ function checkCapacity(slides, F) {
         else if (n < min) F.error(idx, "CAPACITY", `branch has ${n} branches (min ${min}; 1-to-1 is a flow, not a branch)`);
         break;
       }
+      case "formula": {
+        const n = len(c.operands);
+        const [min, max] = CAPS.formula;
+        if (n > max) F.error(idx, "CAPACITY", `formula has ${n} operands (max ${max}; group factors, or use a table)`);
+        else if (n < min) F.error(idx, "CAPACITY", `formula has ${n} operands (min ${min}; a single operand is not a formula — use message)`);
+        break;
+      }
       case "table": {
         const bodyRows = len(c.rows);
         if (bodyRows > 5) F.error(idx, "CAPACITY", `table has ${bodyRows} body rows (max 5 => <=6 incl. header)`);

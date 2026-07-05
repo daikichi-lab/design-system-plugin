@@ -47,7 +47,7 @@
         "pattern": {
           "type": "string",
           "description": "Pattern id. Must exist in the engine registry.",
-          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch"]
+          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch", "formula"]
         },
         "content": {
           "type": "object",
@@ -158,6 +158,20 @@
               "axisY": { "type": "array", "items": { "type": ["string", "array"] }, "maxItems": 2, "description": "Y-axis end labels [top, bottom], shown left." },
               "emphasizeIndex": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Tint one quadrant (0=TL,1=TR,2=BL,3=BR)." },
               "quadrants": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "object", "properties": { "head": { "type": "string" }, "body": { "type": ["string", "array"] } } }, "description": "Exactly 4 quadrants (TL, TR, BL, BR), each {head?, body?}." },
+              "notes": { "type": "string" }
+            }
+          } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "formula" } } },
+          "then": { "properties": { "content": {
+            "required": ["operands"],
+            "properties": {
+              "kicker": { "type": "string" },
+              "title": { "type": ["string", "array"], "items": { "type": "string" } },
+              "result": { "type": ["string", "array"], "description": "Optional result box (tinted), drawn first with an = between it and the operands." },
+              "operands": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 2, "maxItems": 4, "description": "2-4 factor/summand labels joined by the operator glyph." },
+              "operator": { "type": "string", "enum": ["×", "+"], "description": "Glyph drawn between operands (default ×)." },
               "notes": { "type": "string" }
             }
           } } }

@@ -18,7 +18,7 @@
  * ============================================================ */
 
 const NODE_PAD = 0.16;               // inner padding of a node text box (in)
-const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4] }; // [min, max] element count; matrix is fixed 4
+const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4] }; // [min, max] element count; matrix is fixed 4
 
 // The drawing area a diagram gets, below the kicker/title. Shared by every
 // skeleton so they sit consistently on the slide.
@@ -178,6 +178,39 @@ function branchLayout(T, n, direction) {
   return { area, single, many, arrows, converge };
 }
 
+/* ---------------- formula: [result =] A × B × C ---------------- */
+// A quantity DECOMPOSED into factors (売上 = 客数 × 客単価 × 店舗数, ROE デュポン
+// 分解) or summands (operator "+"). One horizontal row: an optional tinted RESULT
+// box, an "=" cell, then the operand boxes with the operator glyph between them.
+// All cells share one center line; operator glyphs live in fixed-width cells so
+// they can never collide with the boxes. Robust for 2-4 operands.
+const FORMULA_H = 1.5, FORMULA_OP_W = 0.6;
+
+function formulaLayout(T, n, hasResult) {
+  const area = diagramArea(T);
+  const y = area.y + (area.h - FORMULA_H) / 2;
+  const boxCount = n + (hasResult ? 1 : 0);
+  const opCount = (n - 1) + (hasResult ? 1 : 0);
+  const w = (area.w - opCount * FORMULA_OP_W) / boxCount;
+  const nodes = [], ops = [];
+  let x = area.x;
+  if (hasResult) {
+    nodes.push({ x, y, w, h: FORMULA_H, role: "result" });
+    x += w;
+    ops.push({ x, y, w: FORMULA_OP_W, h: FORMULA_H, glyph: "=" });
+    x += FORMULA_OP_W;
+  }
+  for (let i = 0; i < n; i++) {
+    nodes.push({ x, y, w, h: FORMULA_H, role: "operand" });
+    x += w;
+    if (i < n - 1) {
+      ops.push({ x, y, w: FORMULA_OP_W, h: FORMULA_H, glyph: null }); // glyph filled by the builder (× or +)
+      x += FORMULA_OP_W;
+    }
+  }
+  return { area, nodes, ops };
+}
+
 // Inner text box of a node (labels + the floor both use this).
 function nodeTextBox(node) {
   return { x: node.x + NODE_PAD, y: node.y + NODE_PAD, w: node.w - 2 * NODE_PAD, h: node.h - 2 * NODE_PAD };
@@ -220,6 +253,6 @@ function quadBodyBox(q, hasHead) {
 }
 
 module.exports = {
-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout,
+  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout,
   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
 };

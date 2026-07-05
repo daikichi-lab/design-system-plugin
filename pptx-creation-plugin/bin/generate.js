@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, nodeTextBox, quadHeadBox, quadBodyBox } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -722,6 +722,43 @@ function slideBranch(pres, d, T, ctx) {
   return s;
 }
 
+/* ---------------- DIAGRAM: formula ([result =] A × B × C) ----------------
+ * A quantity decomposed into factors (売上 = 客数 × 客単価 × 店舗数, ROE デュポン
+ * 分解) or summands (operator: "+"). The optional result box is tinted (house
+ * emphasis); operator glyphs are native text in fixed cells between the boxes.
+ * 2-4 operands (CAPS.formula); every label is baked + height-gated per box. */
+function slideFormula(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const operands = d.operands || [];
+  const hasResult = !!d.result;
+  const L = formulaLayout(T, operands.length, hasResult);
+  const rad = T.layout.card.radius;
+  const opGlyph = d.operator === "+" ? "＋" : "×";
+  const labels = hasResult ? [d.result, ...operands] : operands;
+  L.nodes.forEach((node, i) => {
+    const isResult = node.role === "result";
+    s.addShape("roundRect", { x: node.x, y: node.y, w: node.w, h: node.h, rectRadius: rad,
+      fill: { color: isResult ? T.c.surfaceA : T.c.surface },
+      line: { color: isResult ? T.c.accentDp : T.c.accent, width: 1.25 } });
+    const tb = nodeTextBox(node);
+    if (labels[i]) s.addText(richText(labels[i]), { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.head, bold: true,
+      color: isResult ? T.c.accentDp : T.c.ink,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  });
+  L.ops.forEach((op) => {
+    s.addText(op.glyph || opGlyph, { x: op.x, y: op.y, w: op.w, h: op.h, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.title, bold: true, color: T.c.accent,
+      align: "center", valign: "middle" });
+  });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 const PATTERNS = {
   "cover": slideCover,
   "message": slideMessage,
@@ -738,6 +775,7 @@ const PATTERNS = {
   "timeline": slideTimeline,
   "steps": slideSteps,
   "branch": slideBranch,
+  "formula": slideFormula,
 };
 
 /* ---------------- deck plan ---------------- */

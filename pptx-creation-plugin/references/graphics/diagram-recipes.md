@@ -188,6 +188,34 @@ look:     "single anchor surfaceAccent + accentDeep (the house emphasis tint);
 arrows land on node edges, no label collision); n=1 / n=5 → CAPACITY; an over-long
 branch label → OVERFLOW at 141%; run-gate PASS across all 6 themes.
 
+## `formula` — [result =] A × B × C
+
+A quantity **decomposed into factors** (売上 = 客数 × 客単価 × 店舗数, ROE デュポン
+分解) or summands (`operator: "+"`, e.g. コスト = 固定費 ＋ 変動費). One horizontal
+row: an optional tinted result box, an `=` cell, then the operands with the
+operator glyph between them.
+
+```yaml
+id: formula
+content:
+  kicker:   { type: string, required: false }
+  title:    { type: string|string[], required: false }
+  result:   { type: string|string[], required: false, note: "tinted result box + '=' when present" }
+  operands: { type: string[], required: true, note: "2-4 factor/summand labels" }
+  operator: { type: string, required: false, note: "'×' (default) | '+'" }
+capacity: "2-4 operands (CAPS.formula). 1 operand is a message; >4 -> group factors
+           or use a table. Labels are short TERMS, not sentences."
+geometry: "boxes share one center line; operator glyphs live in fixed-width cells
+           between the boxes, so they can never collide with labels"
+floor:    "result + every operand baked (kinsoku) + height-gated per box"
+look:     "result surfaceAccent + accentDeep (house emphasis); operands surface +
+           accent; operator glyphs accent at title size — native text, no shapes"
+```
+
+**Verified (2026-07-05)** — result+3 (売上分解 / ROEデュポン) and 2-operand `+`
+render clean; n=1 / n=5 → CAPACITY; an over-long operand → OVERFLOW at 219%;
+run-gate PASS across all 6 themes.
+
 ## Honest residuals
 
 - **Meaning is a visual axis, not a lint.** The floor guarantees no overflow /
@@ -200,10 +228,10 @@ branch label → OVERFLOW at 141%; run-gate PASS across all 6 themes.
 
 ## Roadmap
 
-`flow`, `cycle`, `matrix`, `timeline`, `steps`, and `branch` are implemented and
-verified, and the **conservative classification step** (deck-strategy deciding
-*whether* to diagram and *which* skeleton) is in place. Next candidates, distilled
-from the enpreth 図解テンプレ survey (structures, not looks — the look layer stays
-in themes): `formula` (A × B × C multiplication), chart-type extensions
-(pie / horizontal bar / line), and a 2×3 card grid. Each is added only through the
-sanctioned path (skeleton → builder → floor wiring → catalog → QA → gate).
+`flow`, `cycle`, `matrix`, `timeline`, `steps`, `branch`, and `formula` are
+implemented and verified, and the **conservative classification step**
+(deck-strategy deciding *whether* to diagram and *which* skeleton) is in place.
+Next candidates, distilled from the enpreth 図解テンプレ survey (structures, not
+looks — the look layer stays in themes): chart-type extensions (pie / horizontal
+bar / line) and a 2×3 card grid. Each is added only through the sanctioned path
+(skeleton → builder → floor wiring → catalog → QA → gate).

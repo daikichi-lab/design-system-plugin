@@ -82,6 +82,7 @@ For every beat, pick the pattern whose *job* matches it
 | Dated milestones / 沿革 / history | `timeline` (diagram) |
 | Ascending stages toward a goal (階段) | `steps` (diagram) |
 | One thing splits into N / N merge into one | `branch` (diagram) |
+| A quantity decomposed into factors (掛け算) | `formula` (diagram) |
 | A chapter break in a longer deck (dark) | `section` |
 | The opening promise (dark) | `cover` |
 | The single next action (dark) | `cta` |
@@ -103,6 +104,7 @@ that doesn't is worse than text.
   labels short (the alternating boxes are narrow); more eras → split or a table.
 - `steps`: 3–5 stage labels — the first (shortest) block binds the label length.
 - `branch`: 1 source + 2–4 branches (labels short; 4 branches leave one line each).
+- `formula`: 2–4 operands + optional result — labels are short TERMS, not sentences.
 - `section`: title ≤ 1 line; index 1–2 chars; only in decks of 8+ slides.
 - `cover` / `cta` / `message`: title ≤ 2 lines.
 
@@ -138,6 +140,10 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   2–4 branches. If the N items don't share a real source/result, it's a
   `two-column` list, not a branch; comparing the branches against each other is a
   `comparison`.
+- **`formula`** — a quantity that genuinely *decomposes* into factors or summands
+  (売上 = 客数 × 客単価 × 店舗数, ROE デュポン分解, コスト = 固定費 ＋ 変動費).
+  2–4 operands, short terms. If the relation isn't a real equation, it's a
+  `branch` / list — don't fake math.
 
 **When in doubt, do NOT diagram.** Keep the beat as text / `message` / `two-column`
 / `stat-grid` / `comparison`. Reach for a skeleton only when you can name the
