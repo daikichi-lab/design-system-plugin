@@ -46,12 +46,15 @@ deck content      -> deck_plan.json               (per-project content: ordered 
 
 ```
 deck-brief  ─►  deck-strategy  ─►  deck plan (ordered pattern list)
- (intent)                              │  (+ project theme.json)
+ (intent:                              │  (+ project theme.json)
+  register/様式含む)                    ▼
+                bin/build.sh — the gated pipeline:
+                  bake(kinsoku) → asset rasters → generate →
+                  geometry-lint → design-lint → typo-lint → image-lint
+                  → render → saliency-lint        ─►  output.pptx
+                                       │   (blocking gates exit non-zero)
                                        ▼
-                                 bin/generate.js  ─►  output.pptx
-                                       │
-                                       ▼
-                                 QA loop (render → look → fix)  ─►  deck-review (scored)
+                                 QA loop (render → LOOK → fix)  ─►  deck-review (scored)
 ```
 
 ## How to load it
@@ -59,16 +62,18 @@ deck-brief  ─►  deck-strategy  ─►  deck plan (ordered pattern list)
 Add the plugin to Claude Code (it lives under `pptx-creation-plugin/`). Its
 skills are then callable namespaced, e.g. `/pptx-creation:create-deck`.
 
-The engine is Node + a single runtime dependency:
+The engine is Node:
 
 ```bash
 cd pptx-creation-plugin
-npm install            # pptxgenjs (runtime); ajv is a dev-only extra for bin/validate.js
+npm install                    # pptxgenjs · budoux · playwright-core · pngjs (+ @dicebear/* for offline figure gen)
+bash bin/layout-html/setup.sh  # one-time: pins the headless Chromium (kinsoku bake · SVG rasters · pixel lints)
 ```
 
 For the QA loop you also need **LibreOffice** (`soffice`) and **poppler**
 (`pdftoppm`) on the PATH. (No Java is required — native charts rasterize fine
-headless.)
+headless.) Without the Chromium, `build.sh` degrades gracefully (no bake, no
+raster assets) — fine for a smoke test, not for a shipped deck.
 
 ## How to use it from a project repo
 
@@ -118,6 +123,9 @@ the honest material, the audience, and the bar.** Fill this brief (or just run
 【正直ラベル】どれが会社予想/概算/採用値/定義違い                    ← 財務系はこれが外部通過の鍵
 【構成】      おまかせ（deck-strategyに組ませる）／「SCQAで10枚以内」等
 【デザイン】  bookshelf名（neutral/swiss/editorial/…）／アドホック指定
+【ﾚｼﾞｽﾀｰ/人物】meta.intent（financial/board=抑制・人物なし ／ seminar/education/marketing=
+              persona・会話・証言OK）と meta.personStyle（silhouette=格式／illustration=親しみ、
+              1デッキ1様式）。人物素材があれば assets/generated/figures/ へ（LICENSE記録必須）
 【制約】      枚数・禁止（キャラIP不可/数字は与えた物のみ）・ブランド/フォント・出力先
 【検証】      QAループ＋各lint＋deck-reviewを回す。external(≥90)狙い。直せない崩れは止めて報告
 ```
@@ -164,8 +172,11 @@ dev-only memo):
 - [`references/principles/house-quality-bar.md`](references/principles/house-quality-bar.md) — hard rules, the AI-tell blocklist, the QA loop, the scoring rubric.
 - [`references/principles/slide-design-principles.md`](references/principles/slide-design-principles.md) — the method (audience-first, 1 slide 1 message, narrative frames).
 - [`references/principles/chart-design.md`](references/principles/chart-design.md) — native charts, chart choice, data integrity.
-- [`references/patterns/catalog.md`](references/patterns/catalog.md) — the machine-readable pattern recipes.
-- [`references/graphics/`](references/graphics) — code-drawn SVG recipes (backgrounds / icons / motifs / patterns) and the diagram skeletons (`flow` / `cycle` / `matrix`).
+- [`references/principles/visual-psychology.md`](references/principles/visual-psychology.md) — the gaze-design layer: one protagonist per slide (`emphasis`), one climax per deck (`peak`), the marker vocabulary, the CUD colour floor, and the honesty guard on what may be emphasized.
+- [`references/principles/education-register.md`](references/principles/education-register.md) — the register gate (`meta.intent`), the three education modes, and the person/figure policy (persona 床規則・人物素材の出所).
+- [`references/principles/hybrid-architecture.md`](references/principles/hybrid-architecture.md) — the drawing contract (M-7..M-10) and the asset pipeline (SVG master → transparent PNG@2x).
+- [`references/patterns/catalog.md`](references/patterns/catalog.md) — the machine-readable pattern recipes + the 幾何契約 (elevation / connector / alignment floors).
+- [`references/graphics/`](references/graphics) — code-drawn SVG recipes (backgrounds / icons / motifs) and the diagram skeleton recipes.
 - [`references/usecases/`](references/usecases) — per-type beat orders (seminar, financial, proposal).
 
 ## The contract (engine input)
@@ -178,42 +189,88 @@ with `meta`). A **theme** is colours/fonts/sizes. Both are schema-checked:
 - [`schemas/deck_review.schema.json`](schemas/deck_review.schema.json)
 
 ```bash
-# generate
+# THE build (gated pipeline — use this for real decks)
+bash bin/build.sh --plan <deck_plan.json> [--theme <theme.json>] --out <out.pptx>
+# engine only (debugging, no gates)
 node bin/generate.js --plan <deck_plan.json> [--theme <theme.json>] --out <out.pptx>
 # QA render (then OPEN each image and inspect)
 bash bin/qa.sh <out.pptx>
+# regression gate: all themes × examples + adversarial tortures
+bash tests/run-gate.sh
 # pre-flight schema validation (dev)
 node bin/validate.js
 ```
 
-## Pattern catalog (12 patterns)
+## Pattern catalog (24 patterns)
 
-Content patterns: `cover` · `message` · `two-column` · `comparison` · `chart` ·
-`stat-grid` · `table` · `section` · `cta`. Plus three **diagram skeletons** that
-turn text into a base structure — `flow` (ordered steps), `cycle` (a repeating
-loop), `matrix` (a 2×2 of two axes) — drawn as native shapes + native labels,
-robust for a variable element count, and gated per cell by the height floor. Each
-pattern has a documented job, content slots, and a hard **capacity** (split rather
-than cram); diagrams are chosen **conservatively** (default to text — see
-[`diagram-recipes.md`](references/graphics/diagram-recipes.md) and deck-strategy
-§3b). See [`catalog.md`](references/patterns/catalog.md). Roadmap: `timeline`,
-`quote`, and further diagram skeletons (hierarchy / venn) as real decks need them.
+**Content patterns** — `cover` · `message` · `two-column` · `comparison` ·
+`chart` · `stat-grid` · `card-grid` · `table` · `section` · `cta` ·
+`before-after` (誤解→訂正).
 
-The `chart` pattern also supports data-viz emphasis (one highlighted bar), a
-`line` type, a dashed `targetLine`, and a `unit` label; every design language can
-shift **composition** (card shape, kicker, cover motif, section index) via
-`theme.layout`, and any slide can carry a code-drawn `bgMotif` / `icon`
-([`svg-recipes.md`](references/graphics/svg-recipes.md)) — all optional and empty
-by default.
+**Diagram skeletons** (native shapes + native labels, gated per cell by the
+height floor) — `flow` · `cycle` · `matrix` · `timeline` · `steps` · `branch` ·
+`formula` · `waterfall` · `positioning` (options + VS) · `system` (actors +
+labeled flows) · `relation` (対応/分類 — the form follows the data: a partition
+renders as zone grouping, not a line web). Diagrams are chosen
+**conservatively** (default to text — deck-strategy §3b,
+[`diagram-recipes.md`](references/graphics/diagram-recipes.md)).
 
-## The mandatory QA loop
+**Register-gated devices** — `dialogue` (conversation / ○×の会話比較) and
+`testimonial` (お客様の声) — avatar + speech-bubble layouts allowed only in
+learner/marketing registers (`meta.intent`); a lint ERROR on financial/board.
 
-Generating a `.pptx` is **not** "done." `create-deck` always renders the deck to
-per-slide images (`bin/qa.sh`), **opens and inspects every one** (ideally with a
-fresh sub-agent — right after generating you see what you expect, not what's
-there), fixes any break, and re-renders. If a break can't be cleanly fixed, it
-**stops and reports with the screenshot** rather than ship a compromised slide.
-Full procedure: [house-quality-bar.md §5](references/principles/house-quality-bar.md).
+Each pattern has a documented job, content slots, and a hard **capacity**
+(split rather than cram). See [`catalog.md`](references/patterns/catalog.md).
+
+On top of the patterns sits the **visual-psychology layer**: ONE protagonist
+per slide (`emphasis` — e.g. a stat-grid card gets the AREA treatment, an
+emphasized column chart gets a wider bar + bold label), ONE `peak` per deck,
+and an optional factual `marker` (badge / arrow-note / underline) — all
+honesty-guarded (emphasize only what the data supports) and lint-enforced for
+scarcity. The `chart` pattern supports `column`/`bar`/`line`/`pie`/`doughnut`/
+`band`, a dashed `targetLine` and a `unit` label; every design language can
+shift **composition** via `theme.layout`, and any slide can carry a code-drawn
+`bgMotif` / `icon` ([`svg-recipes.md`](references/graphics/svg-recipes.md)) —
+all optional and empty by default (unused features render byte-identically).
+
+## Persons (人物図版) — register decides, one style per deck
+
+Persons are opt-in devices, never decoration: `persona` (a figure + seam-free
+speech bubble + native quote + ※例 marking on message/two-column slides) and
+the `dialogue`/`testimonial` speakers above. The rules that keep them honest:
+
+- **`meta.intent` gates the device** — financial/board decks never show a
+  persona or bubble (lint ERROR); seminar/education/marketing may.
+- **`meta.personStyle` fixes ONE style per deck** — `silhouette` (黒シルエット,
+  restraint) or `illustration` (カラーイラスト, 親しみ); the STYLE-UNIFORM lint
+  ERRORs on mixing.
+- **Assets are user-supplied** (the engine never AI-generates or scrapes a
+  person — M-7): they live in the project's `assets/generated/figures/` with a
+  real `LICENSE.md` record (the LICENSE lint WARNs until one exists) and a
+  `figures-index.md` inventory (the scene→figure catalog). Supplied SVGs ride
+  the asset pipeline (master → token recolour → transparent PNG@2x → embed);
+  in-engine neutral fallbacks (`style:"silhouette"|"pictogram"`, bust avatars)
+  exist for gaps. Fictional persons/voices always carry ※例 — 例示を事実主張と
+  混ぜない.
+
+## The mandatory QA loop + the machine gates
+
+Generating a `.pptx` is **not** "done." `bin/build.sh` runs the machine gates
+first — **geometry-lint** (parses the generated pptx XML: outline/drift/
+alignment/connector quality; text COLLISION blocks), **design-lint** (capacity,
+card overflow, emphasis/register/marker rules, AI-tell characters; blocking),
+**typo-lint** (泣き別れ/orphans), **image-lint** (2x-resolution floor,
+transparency, LICENSE records, avatar/style uniformity) and, after the render,
+**saliency-lint** (does the declared protagonist actually out-shine its
+bystanders in pixels?). Every lint is itself verified both ways (a torture
+fixture that fires it AND a clean fixture that passes — `tests/run-gate.sh`).
+
+Then the human half: `create-deck` renders to per-slide images (`bin/qa.sh`),
+**opens and inspects every one** (ideally with a fresh sub-agent — right after
+generating you see what you expect, not what's there), fixes any break, and
+re-renders. If a break can't be cleanly fixed, it **stops and reports with the
+screenshot** rather than ship a compromised slide. Full procedure:
+[house-quality-bar.md §5](references/principles/house-quality-bar.md).
 
 ## Examples
 
@@ -236,10 +293,10 @@ alongside it.
 
 ## Assumptions
 
-- **One engine first.** Only the verified **pptxgenjs** engine ships;
-  `requirements.txt` is a stub for a possible future python-pptx track (added
-  only if numeric needs demand it). The priority was "never breaks across decks"
-  on one engine before adding a second.
+- **One engine first.** Only the verified **pptxgenjs** engine ships. The other
+  runtime deps serve the floors, offline: budoux (kinsoku), the pinned headless
+  Chromium (bake / rasters / pixel lints), vendored DiceBear (deterministic CC0
+  figure generation — no HTTP API is ever called).
 - **Japanese business decks** are the primary target (default font `Meiryo`;
   `Yu Gothic` / `Noto Sans JP` also valid). The engine is content-agnostic, but
   examples, capacities, and cautions are tuned for JP.
@@ -259,16 +316,21 @@ pptx-creation-plugin/
 ├── .claude-plugin/plugin.json   # manifest (the ONLY thing in .claude-plugin/)
 ├── CLAUDE.md                    # dev memo (NOT the quality core)
 ├── README.md
-├── bin/                         # generate.js (engine) · build.sh (pipeline) · qa.sh (render) · validate.js
-│   ├── lint/                    #   design-lint · typo-lint · image-lint · ssim
-│   ├── layout-html/             #   bake · measure · geometry (Phase-B kinsoku engine)
-│   └── graphics/                #   svg-render · recipes (icons/motifs) · diagrams (flow/cycle/matrix)
+├── bin/                         # generate.js (engine) · build.sh (THE gated pipeline) · qa.sh (render) · svg-render.js · validate.js
+│   ├── lint/                    #   design-lint · geometry-lint · typo-lint · image-lint · saliency-lint · ssim
+│   ├── layout-html/             #   bake · measure · geometry (kinsoku engine + the height floor)
+│   └── graphics/                #   diagrams.js (ALL layout math — the single source) · recipes (SVG) · make-markers (asset rasters) · gen-figures (CC0 busts)
 ├── skills/                      # design-doc · deck-brief · design-language · deck-strategy · create-deck · theme-init · deck-review · project-scaffold
 ├── references/                  # principles/ · patterns/ · graphics/ · design-languages/ · usecases/  (the design brain)
 ├── schemas/                     # theme · deck_plan · deck_review
 ├── themes/                      # neutral (default) + swiss · editorial · minimal · data-driven · wa-modern
+├── tests/                       # run-gate.sh (regression gate) · adversarial/ (torture fixtures)
 └── examples/                    # seminar-kanrikaikei · financial-analysis · theme-swap-demo
 ```
+
+(`assets/generated/` — supplied figure assets + their LICENSE / figures-index
+records — is deliberately **git-ignored**: person assets belong to each project
+and are never redistributed with the plugin.)
 
 ## License
 
