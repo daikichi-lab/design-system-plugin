@@ -28,8 +28,9 @@ const path = require("path");
 const { loadPlan, loadTheme } = require("../generate.js");
 // Card geometry for the height-overflow check (shared with bake / typo-lint).
 const { heightBoxes, boxVerdict } = require("../layout-html/geometry.js");
-// Diagram element-count caps (single source of truth in diagrams.js).
-const { CAPS } = require("../graphics/diagrams.js");
+// Diagram element-count caps (single source of truth in diagrams.js) + the
+// stat-grid AREA-emphasis geometry for the protagonist-value width gate.
+const { CAPS, resolveStatGrid, splitValueUnit, estTextWidthIn, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO } = require("../graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -185,6 +186,25 @@ function checkCapacity(slides, F) {
     const len = (v) => (Array.isArray(v) ? v.length : 0);
 
     switch (sl.pattern) {
+      case "dialogue": {
+        if (Array.isArray(c.columns)) {
+          if (c.columns.length !== 2) F.error(idx, "CAPACITY", `dialogue compare form needs exactly 2 columns (got ${c.columns.length})`);
+          c.columns.forEach((col, ci) => {
+            const n = len(col && col.speakers);
+            if (n < 1 || n > 2) F.error(idx, "CAPACITY", `dialogue columns[${ci}] has ${n} speakers (1-2 per column)`);
+          });
+        } else {
+          const n = len(c.speakers);
+          if (n < CAPS.dialogue[0] || n > CAPS.dialogue[1]) F.error(idx, "CAPACITY", `dialogue has ${n} speakers (must be ${CAPS.dialogue[0]}-${CAPS.dialogue[1]})`);
+        }
+        break;
+      }
+      case "testimonial": {
+        const n = len(c.items);
+        const max = c.layout === "stack" ? 3 : CAPS.testimonial[1];
+        if (n < CAPS.testimonial[0] || n > max) F.error(idx, "CAPACITY", `testimonial (${c.layout || "grid"}) has ${n} items (must be ${CAPS.testimonial[0]}-${max})`);
+        break;
+      }
       case "two-column": {
         const n = len(c.items);
         if (n > 4) F.error(idx, "CAPACITY", `two-column has ${n} items (max 4)`);
@@ -283,6 +303,45 @@ function checkCapacity(slides, F) {
         else if (n < min) F.error(idx, "CAPACITY", `formula has ${n} operands (min ${min}; a single operand is not a formula — use message)`);
         break;
       }
+      case "positioning": {
+        const n = len(c.positions);
+        const [min, max] = CAPS.positioning;
+        if (n > max) F.error(idx, "CAPACITY", `positioning has ${n} positions (max ${max}; more is a table, not a VS)`);
+        else if (n < min) F.error(idx, "CAPACITY", `positioning has ${n} position (min ${min}; one position is a message, not a positioning)`);
+        break;
+      }
+      case "system": {
+        const n = len(c.nodes);
+        const [min, max] = CAPS.system;
+        if (n > max) F.error(idx, "CAPACITY", `system has ${n} nodes (max ${max}; group actors or split the map)`);
+        else if (n < min) F.error(idx, "CAPACITY", `system has ${n} node (min ${min})`);
+        const links = Array.isArray(c.links) ? c.links : [];
+        if (links.length > 6) F.error(idx, "CAPACITY", `system has ${links.length} links (max 6; a hairball teaches nothing)`);
+        links.forEach((lk, k) => {
+          if (!lk || !Number.isInteger(lk.from) || !Number.isInteger(lk.to) || lk.from >= n || lk.to >= n || lk.from === lk.to) {
+            F.error(idx, "CAPACITY", `system link ${k} is invalid (from/to must be distinct node indices < ${n})`);
+          }
+        });
+        break;
+      }
+      case "relation": {
+        const nL = len(c.left), nR = len(c.right);
+        const [min, max] = CAPS.relation;
+        for (const [side, n] of [["left", nL], ["right", nR]]) {
+          if (n > max) F.error(idx, "CAPACITY", `relation ${side} has ${n} items (max ${max})`);
+          else if (n < min) F.error(idx, "CAPACITY", `relation ${side} has ${n} item (min ${min})`);
+        }
+        (Array.isArray(c.links) ? c.links : []).forEach((pr, k) => {
+          if (!Array.isArray(pr) || pr.length !== 2 || pr[0] >= nL || pr[1] >= nR || pr[0] < 0 || pr[1] < 0) {
+            F.error(idx, "CAPACITY", `relation link ${k} is invalid ([leftIdx, rightIdx] within range)`);
+          }
+        });
+        break;
+      }
+      case "before-after": {
+        if (!c.before || !c.after) F.error(idx, "CAPACITY", "before-after needs BOTH panels (before + after — the reframe is the pair)");
+        break;
+      }
       case "waterfall": {
         const n = len(c.items);
         const [min, max] = CAPS.waterfall;
@@ -367,6 +426,316 @@ function checkOverflow(slides, T, F) {
     }
   });
 }
+
+/* ---------------- CHECK: EMPHASIS-COUNT (1スライド1強調・デッキ1山場) ----------------
+ * The visual-psychology layer's abuse guard, made mechanical: emphasis only
+ * works because it is SCARCE (von Restorff — emphasize everything and nothing
+ * is emphasized). One protagonist per slide, one peak per deck; violations are
+ * hard errors, not taste. See references/principles/visual-psychology.md. */
+
+// Patterns with an emphasis slot -> how many elements the index can point at.
+const EMPHASIS_SLOTS = {
+  "stat-grid": (c) => (Array.isArray(c.stats) ? c.stats.length : 0),
+  "flow": (c) => (Array.isArray(c.steps) ? c.steps.length : 0),
+  "cycle": (c) => (Array.isArray(c.steps) ? c.steps.length : 0),
+  "matrix": (c) => (Array.isArray(c.quadrants) ? c.quadrants.length : 0),
+  "card-grid": (c) => (Array.isArray(c.cards) ? c.cards.length : 0),
+  "two-column": (c) => (Array.isArray(c.items) ? c.items.length : 0),
+  "comparison": () => 2,
+};
+
+// Marker support matrix (§2): which marker types each pattern can carry.
+// badge is the DEFAULT device (shape+label+position — CUD-robust, on-register);
+// underline is the stronger intentional-geometry pop; circle (hand-drawn
+// wobble) additionally requires the theme's layout.marker.handDrawn opt-in —
+// it is OFF-REGISTER for business/financial decks (reviewer verdict) and every
+// shipped theme keeps the gate closed.
+const MARKER_SUPPORT = {
+  "stat-grid": ["circle", "badge", "arrow-note", "underline"],
+  "message": ["circle", "badge", "arrow-note", "underline"],
+  "chart": ["badge", "arrow-note"],
+  "flow": ["badge", "arrow-note"],
+  "cycle": ["badge", "arrow-note"],
+};
+
+// The card/element texts an arrow-note must NOT duplicate (a note earns its
+// place only by ADDING information the card doesn't already show).
+function markerContextTexts(sl) {
+  const c = sl.content || {};
+  const out = [];
+  const push = (v) => { if (typeof v === "string") out.push(v); else if (Array.isArray(v)) out.push(v.join("")); };
+  if (sl.pattern === "stat-grid" && Number.isInteger(c.emphasis) && Array.isArray(c.stats) && c.stats[c.emphasis]) {
+    const st = c.stats[c.emphasis]; push(String(st.value)); push(st.label); push(st.sub);
+  } else if (sl.pattern === "chart") { push(c.takeawayHead); push(c.takeaway); push(c.title); }
+  else if (sl.pattern === "message") { push(c.statBig); push(c.statCaption); (c.messageLines || []).forEach(push); }
+  else if ((sl.pattern === "flow" || sl.pattern === "cycle") && Number.isInteger(c.emphasis)) push((c.steps || [])[c.emphasis]);
+  return out;
+}
+// 誠実ガード: hype adjectives are banned in marker text — a badge is a FACT
+// label (過去最高・初・3期連続), not advertising copy (house-quality-bar §4).
+const HYPE_RE = /驚異|圧倒的|衝撃|奇跡|爆速|爆上|神(?:業|級)|規格外|異次元|桁違い/;
+const BADGE_MAX = 8, NOTE_MAX = 14;
+
+function checkEmphasis(slides, T, F) {
+  let peaks = [];
+  slides.forEach((sl, i) => {
+    const idx = i + 1;
+    const c = sl.content || {};
+    const hasNew = Number.isInteger(c.emphasis);
+    const hasLegacy = Number.isInteger(c.emphasizeIndex);
+    // TWO emphasis specs on one slide = two protagonists = none (乱用の芽).
+    if (hasNew && hasLegacy) {
+      F.error(idx, "EMPHASIS-COUNT",
+        "both `emphasis` and `emphasizeIndex` are set — ONE protagonist per slide; keep `emphasis`, drop the legacy alias");
+    }
+    if (hasNew) {
+      const slots = EMPHASIS_SLOTS[sl.pattern];
+      if (!slots) {
+        F.warn(idx, "EMPHASIS-COUNT",
+          `emphasis has no slot on pattern "${sl.pattern}" (ignored by the engine` +
+          (sl.pattern === "chart" ? "; a chart's bar protagonist is emphasizeIndex)" : ")"));
+      } else if (c.emphasis < 0 || c.emphasis >= slots(c)) {
+        F.error(idx, "EMPHASIS-COUNT",
+          `emphasis ${c.emphasis} is out of range (${sl.pattern} has ${slots(c)} elements) — the protagonist doesn't exist`);
+      }
+    }
+    // legacy alias out-of-range is the same plan bug (chart checks its own values)
+    if (hasLegacy && EMPHASIS_SLOTS[sl.pattern] && (c.emphasizeIndex < 0 || c.emphasizeIndex >= EMPHASIS_SLOTS[sl.pattern](c))) {
+      F.error(idx, "EMPHASIS-COUNT",
+        `emphasizeIndex ${c.emphasizeIndex} is out of range (${sl.pattern} has ${EMPHASIS_SLOTS[sl.pattern](c)} elements)`);
+    }
+    // stat-grid AREA emphasis + the ATOM rule: number+unit never break; the
+    // cards adapt (resolveStatGrid width branch). The gate fires only when
+    // even the width branch cannot host every atom at its readable floor
+    // (bystander 0.7x / protagonist 1.6x) — the CONTENT must change then.
+    if (hasNew && sl.pattern === "stat-grid" && Array.isArray(c.stats)) {
+      const grid = resolveStatGrid(T, c.stats, c.emphasis);
+      if (grid.floorViolated) {
+        F.error(idx, "EMPHASIS-COUNT",
+          `the value atoms cannot all fit at their readable floors even after the card-width branch (${grid.notes[0] || ""}) ` +
+          "— shorten the values (fewer digits / move detail to the sub); the atom is never broken and never shipped below floor");
+      } else if (grid.adjusted) {
+        F.info(idx, "EMPHASIS-COUNT",
+          "atom width branch: bystander cards re-widened so a long value never breaks (engine logs the numbers)");
+      }
+      // labels auto-shrink to ONE line (never a mid-word wrap); warn when the
+      // shrink is deep enough to look off-scale.
+      c.stats.forEach((st, j) => {
+        if (!st || !st.label || !grid.cells[j]) return;
+        const pt = fitLabelPt(st.label, grid.cells[j].w - 0.8, T.s.head);
+        if (pt < T.s.head * 0.72) {
+          F.warn(idx, "CAPACITY",
+            `stat label "${st.label}" auto-shrinks to ${pt}pt (base ${T.s.head}) to stay on one line — shorten the label (<=5 chars on the slimmed cards)`);
+        }
+      });
+    }
+    // marker (§2): ONE device, on the SAME element the emphasis names.
+    const mk = c.marker;
+    if (mk && typeof mk === "object") {
+      const support = MARKER_SUPPORT[sl.pattern];
+      if (!support) {
+        F.error(idx, "EMPHASIS-COUNT", `marker has no slot on pattern "${sl.pattern}" (supported: ${Object.keys(MARKER_SUPPORT).join(", ")})`);
+      } else if (!support.includes(mk.type)) {
+        F.error(idx, "EMPHASIS-COUNT", `marker type "${mk.type}" is not supported on "${sl.pattern}" (${support.join("/")})`);
+      }
+      // circle = hand-drawn wobble: OFF-REGISTER for business/financial decks;
+      // requires an explicit theme opt-in (layout.marker.handDrawn). No shipped
+      // theme opts in, so a circle is unselectable by default — use badge.
+      if (mk.type === "circle" && !(T.layout && T.layout.marker && T.layout.marker.handDrawn)) {
+        F.error(idx, "EMPHASIS-COUNT",
+          "circle marker requires theme layout.marker.handDrawn (hand-drawn wobble reads as 採点マーク — off-register for business/financial decks). Use badge (default) or underline.");
+      }
+      // the marker rides the protagonist: patterns whose protagonist is the
+      // emphasis element require emphasis; message's protagonist is statBig;
+      // chart's marker rides the takeaway card (no emphasis needed).
+      if ((sl.pattern === "stat-grid" || sl.pattern === "flow" || sl.pattern === "cycle") && !hasNew) {
+        F.error(idx, "EMPHASIS-COUNT", "marker without emphasis — the marker attaches to the protagonist; name it first (emphasis)");
+      }
+      if (sl.pattern === "message" && !c.statBig) {
+        F.error(idx, "EMPHASIS-COUNT", "marker on a message slide with no statBig — there is no number to mark");
+      }
+      if ((mk.type === "badge" || mk.type === "arrow-note")) {
+        const t = typeof mk.text === "string" ? mk.text.trim() : "";
+        if (!t) F.error(idx, "EMPHASIS-COUNT", `${mk.type} marker needs "text" (a short data-supported fact)`);
+        else {
+          const max = mk.type === "badge" ? BADGE_MAX : NOTE_MAX;
+          if ([...t].length > max) F.error(idx, "EMPHASIS-COUNT", `${mk.type} text "${t}" is ${[...t].length} chars (max ${max} — a marker is a label, not a sentence)`);
+          if (HYPE_RE.test(t)) F.error(idx, "EMPHASIS-COUNT", `${mk.type} text "${t}" contains a hype word — marker text must be a plain FACT the data supports (誠実ガード, house-quality-bar §4)`);
+          // an arrow-note earns its place only by ADDING information — a note
+          // that repeats the card's own text is decoration (reviewer fix).
+          if (mk.type === "arrow-note" && markerContextTexts(sl).some((s2) => s2 && s2.includes(t))) {
+            F.error(idx, "EMPHASIS-COUNT", `arrow-note "${t}" duplicates text already on the card — say something the card doesn't (or drop the note)`);
+          }
+        }
+      }
+      if (mk.type === "circle" && (T.layout && T.layout.marker && T.layout.marker.handDrawn) && !mk.image) {
+        F.warn(idx, "EMPHASIS-COUNT", "circle marker has no image yet — run bin/graphics/make-markers.js (build.sh does) or the engine will skip it");
+      }
+    }
+    // CUD floor (色覚の床規則): an emphasis whose ONLY channel is a hue/tint
+    // shift breaks for ~1 in 12 viewers. The legacy stat-grid emphasizeIndex
+    // is exactly that (equal cells, tint + value colour, zero size/area step)
+    // — the pale-tint treatment the pixel audit watched LOSE. Advisory: keep
+    // it working, tell the author to migrate.
+    if (hasLegacy && !hasNew && sl.pattern === "stat-grid") {
+      F.warn(idx, "SALIENCY",
+        "legacy emphasizeIndex = tint-only emphasis (no size/area channel) — 色相・ティント単独の強調は色覚特性(約8%)で崩れ、実測でも脇役に負けた形。`emphasis`（面積の序列）か badge へ移行を");
+    }
+    // peak: body climax only — cover/cta are already the dark bookends.
+    if (sl.peak === true) {
+      peaks.push(idx);
+      if (sl.pattern === "cover" || sl.pattern === "cta") {
+        F.error(idx, "EMPHASIS-COUNT", `peak on "${sl.pattern}" — the peak is a BODY climax; cover/cta are already dark bookends`);
+      }
+    }
+  });
+  if (peaks.length > 1) {
+    F.error(null, "EMPHASIS-COUNT",
+      `deck has ${peaks.length} peak slides (${peaks.join(", ")}) — max 1; a deck with two climaxes has none (ピーク・エンド)`);
+  }
+}
+
+/* ---------------- CHECK: RHYTHM (緩急 — advisory) ----------------
+ * Peak-end needs contrast: three or more DENSE slides in a row read as one
+ * grey wall and flatten the deck's rhythm. Density here is structural
+ * (pattern + element count), not a prose judgment — so this stays advisory
+ * (WARN): the human eye is the final judge of pacing. */
+function isDense(sl) {
+  const c = sl.content || {};
+  if (sl.pattern === "table" || sl.pattern === "comparison") return true;
+  if (sl.pattern === "card-grid") return Array.isArray(c.cards) && c.cards.length >= 5;
+  if (sl.pattern === "chart") {
+    if (c.chartType === "band") return true;
+    const vals = (!Array.isArray(c.series) && c.series && Array.isArray(c.series.values)) ? c.series.values : [];
+    return vals.length >= 6;
+  }
+  return false;
+}
+
+function checkRhythm(slides, F) {
+  let runStart = -1;
+  const flush = (end) => {
+    const len = end - runStart;
+    if (runStart >= 0 && len >= 3) {
+      F.warn(runStart + 1, "RHYTHM",
+        `slides ${runStart + 1}-${end} are ${len} dense slides in a row ` +
+        `(${slides.slice(runStart, end).map((s) => s.pattern).join(", ")}) — ` +
+        "insert a breathing beat (message / section) so the important slide can stand out (advisory)");
+    }
+    runStart = -1;
+  };
+  slides.forEach((sl, i) => {
+    if (isDense(sl)) { if (runStart < 0) runStart = i; }
+    else flush(i);
+  });
+  flush(slides.length);
+}
+
+/* ---------------- CHECK: REGISTER (intent gate — education-register.md) ----------------
+ * The register decides which devices are allowed:
+ *   - persona / speech bubble: education ONLY. financial/board => hard ERROR
+ *     (取締役会資料で人物の口に台詞は破滅). Undeclared intent => WARN to
+ *     declare it.
+ *   - persona-mark (捏造ガード): a fictional persona/example without its ※例
+ *     marking => WARN (the acceptance's 必須基準).
+ *   - over-diagram guard: in education, a diagram slide whose notes don't
+ *     record the one-word structure test (順序/ループ/2軸/ポジション/システム/
+ *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
+ *     意味の正しさ自体は人の承認領域。 */
+const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall"];
+const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|時系列|段階|sequence|loop|two-axis|positioning|system|relation/i;
+const PERSONA_PATTERNS = ["message", "two-column"];
+
+function checkRegister(slides, meta, F) {
+  const intent = meta && meta.intent;
+  const edu = intent === "education" || intent === "seminar";
+  slides.forEach((sl, i) => {
+    const idx = i + 1;
+    const c = sl.content || {};
+    const p = c.persona;
+    if (p && typeof p === "object") {
+      if (intent === "financial" || intent === "board") {
+        F.error(idx, "REGISTER-GATE",
+          `persona/speech bubble with meta.intent=${intent} — 人型デバイス・吹き出しは financial/board で常時OFF (education-register.md 反転表)`);
+      } else if (!intent) {
+        F.warn(idx, "REGISTER-GATE",
+          "persona used without meta.intent — declare the register (seminar/education) so the gates can protect the deck");
+      }
+      if (!PERSONA_PATTERNS.includes(sl.pattern)) {
+        F.error(idx, "REGISTER-GATE",
+          `persona has no slot on pattern "${sl.pattern}" (supported: ${PERSONA_PATTERNS.join(", ")})`);
+      }
+      if (!(typeof p.mark === "string" && p.mark.trim())) {
+        F.warn(idx, "PERSONA-MARK",
+          "fictional persona without its ※例 marking — add persona.mark (e.g. ※学習用の架空の例); 例示を事実主張と混ぜない (捏造ガード)");
+      }
+      if (p.figure && !(typeof p.mark === "string" && p.mark.trim())) {
+        F.warn(idx, "PERSONA-MARK",
+          "drop-in (licensed PNG) persona without marking — 忠実度が上がるほど ※例 マーキングを強める");
+      }
+      // 人物ポリシー: production figures are SUPPLIED licensed/open-license pro
+      // vectors; the in-engine figure is an abstract pictogram behind an
+      // EXPLICIT opt-in (the hand-drawn trial confirmed it does not reach pro
+      // human quality). Neither declared -> the voice renders without a person.
+      if (!p.figure && !p.figureImage && p.style !== "pictogram") {
+        F.warn(idx, "PERSONA-FIGURE",
+          'persona has no figure source — supply a licensed/open-license vector (persona.figure, assets/generated/figures/ + LICENSE.md) or explicitly opt into an in-engine figure (style:"silhouette" ビジネスシルエット / style:"pictogram" 抽象ピクト). 人物はAI生成もスクレイプもしない (M-7); 未指定は吹き出しのみ描画');
+      }
+    }
+    // dialogue / testimonial: avatar+bubble devices — same register floor as
+    // persona (financial/board = OFF), plus the speaker-specific mechanics:
+    // BUBBLE-TAIL (tail must face its own avatar), SYMBOL-DUP (素材内蔵マーク
+    // との二重装飾), PERSONA-MARK (架空の会話・声には ※例).
+    if (sl.pattern === "dialogue" || sl.pattern === "testimonial") {
+      if (intent === "financial" || intent === "board") {
+        F.error(idx, "REGISTER-GATE",
+          `${sl.pattern} with meta.intent=${intent} — アバター・吹き出しは financial/board で常時OFF`);
+      } else if (!intent) {
+        F.warn(idx, "REGISTER-GATE",
+          `${sl.pattern} without meta.intent — declare the register (seminar/education/marketing)`);
+      }
+      if (!(typeof c.mark === "string" && c.mark.trim())) {
+        F.warn(idx, "PERSONA-MARK",
+          `${sl.pattern} without its ※例 marking — fictional conversations/voices must say so (content.mark); 実在の声を使うならユーザー承認と出所管理が前提`);
+      }
+      const speakers = sl.pattern === "dialogue"
+        ? (Array.isArray(c.columns) ? c.columns.flatMap((col, ci) => (col.speakers || []).map((sp, k) => ({ sp, where: `columns[${ci}].speakers[${k}]`, k })))
+                                    : (c.speakers || []).map((sp, k) => ({ sp, where: `speakers[${k}]`, k })))
+        : (c.items || []).map((sp, k) => ({ sp, where: `items[${k}]`, k }));
+      speakers.forEach(({ sp, where, k }) => {
+        if (!sp || typeof sp !== "object") return;
+        const derivedSide = sp.side === "right" || (!sp.side && k % 2 === 1) ? "right" : "left";
+        if (sp.tailSide && sp.tailSide !== derivedSide) {
+          F.warn(idx, "BUBBLE-TAIL",
+            `${where}: bubble tail (${sp.tailSide}) does not face the speaker's avatar (${derivedSide} side) — 尻尾は自分の話者を指す`);
+        }
+        if (sp.symbol && typeof (sp.avatar || sp.figure) === "string" && /[\\/]socost[\\/]/.test(sp.avatar || sp.figure)) {
+          F.warn(idx, "SYMBOL-DUP",
+            `${where}: scene symbol "${sp.symbol}" on a socost asset — 多くのソコスト絵は感情マーク内蔵（二重装飾）。素材を確認し、内蔵マークがあるなら symbol を外す`);
+        }
+      });
+    }
+    if (c.persona && typeof c.persona === "object" && c.persona.symbol
+        && typeof c.persona.figure === "string" && /[\\/]socost[\\/]/.test(c.persona.figure)) {
+      F.warn(idx, "SYMBOL-DUP",
+        `persona: scene symbol "${c.persona.symbol}" on a socost asset — 内蔵の感情マークとの二重装飾を確認`);
+    }
+    if (edu && DIAGRAM_PATTERNS.includes(sl.pattern)) {
+      if (!(typeof c.notes === "string" && STRUCT_WORD_RE.test(c.notes))) {
+        F.warn(idx, "OVER-DIAGRAM",
+          `education diagram (${sl.pattern}) without the one-word structure test in notes — record WHY this skeleton fits (sequence/loop/two-axis/positioning/system/relation); 迷えばテキスト`);
+      }
+    }
+  });
+}
+
+/* SALIENCY note: the static token-based saliency proxy that used to live here
+ * PASSED a real failure (the first A/B's pale-tint stat-grid, where 8.4% lost
+ * to 48.2億円) — a detector that misses its motivating case is worse than
+ * none. It is replaced by bin/lint/saliency-lint.js, which scores the actual
+ * RENDERED pixels (soffice → image → per-element ink area x contrast x
+ * saturation) and is acceptance-tested against that exact failure. build.sh
+ * runs it after the render step. */
 
 /* ---------------- CHECK: CONTRAST (theme token pairs) ---------------- */
 // Pairs are [fg, bg] short-key token names. Primary = must be readable body/UI
@@ -485,12 +854,15 @@ function run(args) {
   // loadTheme / loadPlan throw clean Error messages on bad paths/JSON; main()
   // catches them and prints a one-liner (never a raw stack).
   const T = loadTheme(args.theme);
-  const { slides } = loadPlan(args.plan);
+  const { meta, slides } = loadPlan(args.plan);
 
   const F = makeFindings();
+  checkRegister(slides, meta, F);
   checkPlaceholders(slides, F);
   checkCapacity(slides, F);
   checkOverflow(slides, T, F);
+  checkEmphasis(slides, T, F);
+  checkRhythm(slides, F);
   checkContrast(T, F);
   checkMargin(T, F);
   checkAiTells(slides, F);
@@ -541,5 +913,6 @@ if (require.main === module) main();
 module.exports = {
   contrastRatio, relLuminance, walkStrings, getByPath,
   checkPlaceholders, checkCapacity, checkOverflow, checkContrast, checkMargin, checkAiTells,
+  checkEmphasis, checkRhythm, checkRegister, isDense,
   run,
 };

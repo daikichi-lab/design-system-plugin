@@ -38,11 +38,17 @@ content:
   title:     { type: string|string[], required: false }
   steps:     { type: string[], required: true, note: "3-6 step labels; native text, one per node" }
   direction: { type: string, required: false, note: "'horizontal' (default) | 'vertical'" }
+  emphasis:  { type: int, required: false, note: "protagonist step (0-based): accent-filled node, onDark label, one size step up (×1.15; ×1.3 on the peak slide). One per slide" }
+  marker:    { type: object, required: false, note: "badge | arrow-note on the protagonist node (badge rides the shoulder, note sits below; requires emphasis; no circle over a filled node)" }
 geometry: "nodes evenly spaced; width auto-computed from n; horizontal row, with a
            vertical-stack fallback when nodes would get too narrow"
-capacity: "3-6 steps (CAPS.flow). <3 -> use text/two-column; >6 -> split or a list."
-floor:    "each node label is baked (kinsoku) and height-gated; overflow = ERROR"
-look:     "node fill surface + accent border, corner radius from theme.layout.card"
+capacity: "3-6 steps (CAPS.flow). <3 -> use text/two-column; >6 -> split or a list.
+           An EMPHASIZED label loses ~13% of its char budget to the size step —
+           keep it short; the floor (bake + height gate) blocks an overflow."
+floor:    "each node label is baked (kinsoku) and height-gated AT ITS DRAWN SIZE
+           (the emphasized node measures at the stepped-up size); overflow = ERROR"
+look:     "node fill surface + accent border, corner radius from theme.layout.card;
+           emphasized node = accent fill + accentDeep border + onDark label"
 ```
 
 **Verified** (element counts 3/4/5/6 render clean; a long node label → OVERFLOW
@@ -60,6 +66,8 @@ content:
   kicker: { type: string, required: false }
   title:  { type: string|string[], required: false }
   steps:  { type: string[], required: true, note: "3-6 node labels; native text, one per node" }
+  emphasis: { type: int, required: false, note: "protagonist node (0-based; e.g. the PDCA stage the deck argues is being skipped): accent fill + onDark + one size step. Cycle nodes are SMALL (1.9x0.9) — an emphasized label wants <=4-5 JP chars" }
+  marker:   { type: object, required: false, note: "badge | arrow-note on the protagonist node (requires emphasis; no circle)" }
 capacity: "3-6 nodes (CAPS.cycle). <3 -> use text/flow; >6 -> split or a list."
 geometry: "nodes evenly placed on an elliptical ring (top, then clockwise); arrows
            stop at the box EDGE (ray->box) + a small gap, so the arrowhead always
@@ -84,7 +92,8 @@ content:
   title:  { type: string|string[], required: false }
   axisX:  { type: string[], required: false, note: "[left, right] X-axis ends, shown top" }
   axisY:  { type: string[], required: false, note: "[top, bottom] Y-axis ends, shown left" }
-  emphasizeIndex: { type: int, required: false, note: "tint one quadrant (0=TL,1=TR,2=BL,3=BR)" }
+  emphasis: { type: int, required: false, note: "protagonist quadrant (0=TL,1=TR,2=BL,3=BR): surfaceAccent tint + accentDeep head" }
+  emphasizeIndex: { type: int, required: false, note: "LEGACY alias of emphasis (identical); never set both (lint ERROR)" }
   quadrants: { type: array, required: true, note: "EXACTLY 4 (TL,TR,BL,BR), each {head?, body?}" }
 capacity: "exactly 4 quadrants (a fixed 2x2); anything else is an error"
 layout:   "axis labels live in reserved bands (top strip / left column), so they can
@@ -248,6 +257,46 @@ look:     "totals accentDeep / increases accent / decreases muted; light zero
 **Verified (2026-07-05)** — 6-item 営業利益ブリッジ (242 → +80 +40 ▲45 ▲17 → 300)
 renders clean with ▲ labels and step connectors; n=2 / n=9 → CAPACITY; a 2-line
 category label → OVERFLOW at 101%; run-gate PASS across all 6 themes.
+
+## `positioning` — 2-3 competitive positions + VS (education register)
+
+```yaml
+id: positioning
+content:
+  positions: { type: array, required: true, note: "2-3 of {head, body} — side-by-side positions with VS between (structure word: positioning)" }
+  emphasis:  { type: int, required: false, note: "protagonist position (usually 自社): tint + accentDeep head" }
+capacity: "2-3 positions (CAPS.positioning); bodies are height-gated per card"
+guard: "「無い構造を見せない」: only when the items really are alternative POSITIONS in one market — comparing two things head-to-head is comparison, not positioning"
+```
+
+## `system` — ecosystem boxes + labeled arrows (education register)
+
+```yaml
+id: system
+content:
+  nodes: { type: array, required: true, note: "2-5 actors on one row" }
+  links: { type: array, required: false, note: "<=6 of {from, to, label} — the LABEL (モノ/カネ/情報) is the point. Adjacent forward links run between the nodes (label above); return/long-range links run in the below lane (label under)" }
+capacity: "2-5 nodes, <=6 links (a hairball teaches nothing)"
+guard: "arrows are REAL flows (who passes what) — never causality that isn't there"
+```
+
+## `relation` — 対応マップ / 分類 (education register)
+
+```yaml
+id: relation
+content:
+  left:  { type: array, required: true, note: "2-4 categories / items" }
+  right: { type: array, required: true, note: "2-4 items" }
+  links: { type: array, required: true, note: "[leftIdx, rightIdx] pairs (<=8)" }
+form: "THE FORM FOLLOWS THE DATA (user-feedback fix — a crossing line-web is
+       unreadable): a PARTITION (each right item belongs to exactly ONE left
+       item — the common classification case) renders as ZONE GROUPING (each
+       category is an enclosing zone, members sit inside it: zero lines, zero
+       crossings, Gestalt enclosure). Only a true many-to-many keeps the line
+       map, with the right column BARYCENTER-REORDERED to minimize crossings.
+       Lines, never arrows — correspondence has no direction."
+capacity: "2-4 per side, <=8 links"
+```
 
 ## Honest residuals
 

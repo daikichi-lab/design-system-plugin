@@ -63,9 +63,17 @@ function budouxParser() {
   return _parser;
 }
 
+// Number+unit ATOM (層①の床規則・機械規則): a figure and its trailing unit are
+// ONE word — 518億円 / ▲32.8億円 / ＋約92% / 12.3兆円 never break internally
+// (not between number and unit, not inside the unit 億/円). Decorations
+// (約・＋・▲・△・±・桁区切りカンマ) belong to the same atom. This is the
+// prose mirror of the stat-grid fitter's guarantee — the same rule everywhere.
+const UNIT_ATOM_RE = /[約＋+▲△±-]{0,2}[0-9][0-9,.]*(?:百万円|億円|万円|兆円|ポイント|円|％|%|pt|倍|期|年|名|件|社)?/g;
+
 // Char indices where a line break is ALLOWED (budoux phrase boundaries), minus
-// any boundary strictly inside a protected lexicon word (brand/terms never split).
-// Index i means a break may fall between char i-1 and char i.
+// any boundary strictly inside a protected lexicon word (brand/terms never split)
+// or inside a number+unit atom. Index i means a break may fall between char i-1
+// and char i.
 function breakPoints(text, lexicon = []) {
   const chars = [...text];
   const allowed = new Set();
@@ -80,6 +88,12 @@ function breakPoints(text, lexicon = []) {
         for (let k = i + 1; k < i + w.length; k++) allowed.delete(k); // no break inside the word
       }
     }
+  }
+  // glue number+unit atoms (UTF-16 match offsets -> code-point indices)
+  for (const m of text.matchAll(UNIT_ATOM_RE)) {
+    const start = [...text.slice(0, m.index)].length;
+    const end = start + [...m[0]].length;
+    for (let k = start + 1; k < end; k++) allowed.delete(k);
   }
   return allowed;
 }

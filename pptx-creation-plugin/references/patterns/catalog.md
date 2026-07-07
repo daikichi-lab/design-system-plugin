@@ -42,6 +42,53 @@ Schema: `schemas/deck_plan.schema.json`.
 pattern (`cta`); keep the body light. Don't put two dark slides adjacent in
 the body.
 
+**Emphasis, peak & markers (visual-psychology layer — see
+`references/principles/visual-psychology.md`).** A slide's content may name ONE
+protagonist element via `emphasis` (an element index; per-pattern meaning is in
+each block below), and a deck may mark ONE body slide `"peak": true` at the
+slide level (next to `pattern`/`content`) — the climax that proves the main
+message. Treatments reuse existing tokens only: flow/cycle nodes get accent
+fill + onDark + ×1.15 (×1.3 on peak); **stat-grid uses the AREA order** —
+protagonist card ~1.45x wide, its NUMBER ×1.7 (×1.8 on peak) with the unit
+small, others share the remaining width (a pale tint alone demonstrably LOSES
+to a longer neighbour — the first A/B proved it); peak `message` gets a
+surfaceAccent ground + the stat one step up. The protagonist may additionally
+carry ONE `marker` — `circle` (hand-drawn SVG ellipse → transparent 2x PNG,
+never crossing the glyph cores), `badge` (native pill + native FACT label,
+≤8 chars), or `arrow-note` (native arrow + note, ≤14 chars). design-lint
+enforces scarcity and honesty mechanics (dual emphasis specs, out-of-range,
+2+ peaks, peak on cover/cta, marker without emphasis, hype words = ERRORs;
+RHYTHM = advisory WARN); **saliency-lint** measures the RENDERED pixels after
+qa.sh and warns when a bystander out-shines the declared protagonist. Emphasize
+only what the data supports (誠実ガード — badge wording factuality is
+deck-review's call, not the machine's). All default EMPTY: a plan without them
+renders byte-for-byte as before.
+
+**幾何契約 — shape family & connector quality (純幾何・色非依存の床).**
+Every shape belongs to ONE family, enforced by `bin/lint/geometry-lint.js` on
+the generated pptx XML:
+
+- **Elevation over outline（最重要）**: no shape defines itself with a border.
+  Cards and diagram nodes = fill + a refined soft shadow from the elevation
+  tokens `layout.elevation.base {blur 10, offset 4, opacity 0.10}` /
+  `raised {14, 6, 0.13}` (raised = the emphasized/tinted element, one z-step
+  up). Hard or heavy shadows are GEOM-DRIFT. Strokes, where used at all, are
+  the single hairline token (`layout.stroke.hairline` 0.75pt, same-family
+  light colour) — thick/dark borders are the wireframe tell (OUTLINE-ONLY).
+- **One radius**: every roundRect uses `layout.card.radius` (0.10in default);
+  pills (chips/badges) use height/2. Off-token radii are GEOM-DRIFT.
+- **Connector quality**: connectors are `layout.connector.width` (2.5pt,
+  2.25–2.75 band) with FILLED triangle arrowheads; routing is orthogonal
+  (bentConnector elbows — no diagonal straight runs; documented exemptions:
+  cycle's ring, relation's direction-free correspondence lines). Labels on
+  connectors are CHIPS (centered pill, background knockout) — never bare
+  glyphs over a stroke. Dashes only when they mean something (戻り・時間差).
+- **整列・密度**: row siblings share top edges and equal gutters
+  (ALIGN-DRIFT); node interiors keep an inner padding floor of ~0.06in and a
+  reasonable ink coverage (DENSITY) — text is COMPOSED into zones
+  (value/label/sub, head/body at fixed rhythms), not poured into boxes.
+  COLLISION (text-bearing shapes overlapping) is a blocking ERROR.
+
 **Optional decoration slots (all patterns; empty by default = no change).** Any
 slide may carry a code-drawn SVG/PNG (M-7 all code-drawn, M-8 figure-only —
 text/numbers/charts stay native), supplied per project like the cover `bg`
@@ -63,6 +110,39 @@ example slide XML is identical). Legibility is the priority — a motif never ea
 its place by crowding the words.
 
 ---
+
+## Pattern: `dialogue`
+
+```yaml
+id: dialogue
+kind: light
+slot: body (education / seminar / marketing register ONLY — financial/board = REGISTER-GATE ERROR)
+when_use:    [conversation hooks, ○×の会話比較 (良い例/悪い例), Q&A dramatization]
+when_avoid:  [financial/board decks, anything better said as a plain list]
+content:
+  title/kicker: as usual
+  speakers:  { type: speaker[], note: "2-4; PLAIN form — avatars alternate left/right, bubbles HUG their text, tails point at their own avatar" }
+  columns:   { type: array[2], note: "COMPARE form — {verdict: good|bad, label, speakers[1-2]}; the ○/× SYMBOL + label carry the meaning (colour is redundant, CUD floor)" }
+  mark:      { type: string, note: "※例 — fictional conversations must say so (PERSONA-MARK WARNs)" }
+speaker: { quote, role(話者ラベル), side?, avatar?(supplied bust), hair?(in-engine bust variant), symbol?(worry/idea/sweat/question/up/down), recolor? }
+principle: "the avatar is NEUTRAL and STATIC (誰が言うかだけ); meaning rides in words + symbols + verdict labels — never in a pose"
+capacity: "plain 2-4 speakers; compare 2 columns x 1-2 speakers"
+```
+
+## Pattern: `testimonial`
+
+```yaml
+id: testimonial
+kind: light
+slot: body (same register gate as dialogue)
+when_use:    [受講者/お客様の声, social proof after a how-to]
+when_avoid:  [financial/board decks; real testimonials without user approval + source management (捏造ガード)]
+content:
+  layout: { type: string, enum: [grid, stack], note: "grid = 2xN cards (default), stack = full-width rows" }
+  items:  { type: array, note: "2-6 (stack <=3): {name(話者ラベル), body, avatar?, hair?}" }
+  mark:   { type: string, note: "※例 required for samples" }
+capacity: "grid 2-6, stack 2-3"
+```
 
 ## Pattern: `cover`
 
@@ -101,6 +181,7 @@ content:
   messageLines:{ type: string[], required: true,  note: "1-2 lines, centered statement" }
   statBig:     { type: string,   required: false, note: "one big number/figure, e.g. 約60%" }
   statCaption: { type: string,   required: false, note: "what the number means + honesty caveat" }
+  marker:      { type: object,   required: false, note: "ONE device on the statBig (the message's protagonist): circle | badge | arrow-note" }
   notes:       { type: string,   required: false }
 params:
   background:   colors.bg
@@ -125,6 +206,7 @@ content:
   title:  { type: string|string[], required: true, note: "conclusion/question; left half, width 7.0" }
   lead:   { type: string, required: false, note: "left paragraph, the overview" }
   items:  { type: array,  required: true,  note: "numbered rows on the right; each {n:int, head:string, body:string}" }
+  emphasis: { type: int, required: false, note: "protagonist row (0-based): its number circle + head step up to accentDeep. One per slide; unset = all rows equal (unchanged)" }
   notes:  { type: string, required: false }
 params:
   background: colors.bg
@@ -148,6 +230,7 @@ content:
   title:  { type: string|string[], required: true }
   left:   { type: object, required: true, note: "{label, role, points:string[]} — neutral card" }
   right:  { type: object, required: true, note: "{label, role, points:string[]} — accent-emphasized card" }
+  emphasis: { type: int, required: false, note: "which side carries the accent tint (0=left, 1=right). Default 1 — keep the advocated side RIGHT; use 0 only when the narrative genuinely leads left" }
   notes:  { type: string, required: false }
 params:
   background: colors.bg
@@ -172,10 +255,11 @@ content:
   series:       { type: object, required: true, note: "{name:string, labels:string[], values:number[]}" }
   takeawayHead: { type: string, required: true, note: "short arrow phrase, e.g. 早期把握 → 早期対応" }
   takeaway:     { type: string, required: true, note: "1-3 sentences: what to conclude / do" }
-  emphasizeIndex:{ type: int, required: false, note: "colour ONE bar (accentDeep), mute the rest (accentSoft) — steer the eye to the point; labels stay on every bar" }
+  emphasizeIndex:{ type: int, required: false, note: "the protagonist bar. On column charts this switches to the NATIVE-RECT variant (still native shapes, editable — the pptx chart cannot do per-point styling): the emphasized bar is WIDER (x1.3), accentDeep, with a BOLD larger value label and a bold category label; bystanders accentSoft (CUD-redundant channels: width + weight + colour). Other types keep the recoloured native chart. Negative labels auto-lift when the below slot would hit the category band" }
   chartType:    { type: string, required: false, note: "'column' (default) | 'bar' (horizontal ranking — pass values ASCENDING so the largest lands on top) | 'line' (continuous trend) | 'pie' / 'doughnut' (parts of ONE whole, max 5 slices) | 'band' (帯グラフ, 100% stacked composition — series becomes an ARRAY of 2-4 segments over 1-5 rows). Pick by the reader's question — chart-design.md §2." }
   targetLine:   { type: object, required: false, note: "{value:number, label?:string} — a dashed reference line (前年/目標); state its meaning in the takeaway (column only)" }
   unit:         { type: string, required: false, note: "e.g. 億円 / % — shown ONCE bottom-left (footnote slot), never repeated on every bar" }
+  marker:       { type: object, required: false, note: "badge | arrow-note on the takeaway card (no circle); the wording must be a fact the chart supports (過去最高 only when it IS the record)" }
   notes:        { type: string, required: false }
 params:
   background:  colors.bg
@@ -252,7 +336,9 @@ content:
   kicker:         { type: string, required: false }
   title:          { type: string|string[], required: true }
   stats:          { type: array,  required: true, note: "2-4 of {value:string, label:string, sub?:string}" }
-  emphasizeIndex: { type: integer, required: false, note: "0-based index of the card to accent-tint (the headline KPI)" }
+  emphasis:       { type: integer, required: false, note: "protagonist KPI (0-based) — AREA emphasis: card ~1.45x wide (others share the rest), the NUMBER ×1.7 (×1.8 on peak) with the unit small beside it, accentDeep on tint. Every value is an UNBREAKABLE ATOM (number+unit one word — never 518/億円, never 億/円): overflow resolves by proportional shrink to the readable floor (bystander 0.7x base ≈ 41% of the protagonist glyphs; protagonist 1.6x), then by the CARD re-widening per-card (logged), never by breaking the atom; impossible floors = lint ERROR. Labels fit ONE line by auto-shrink (<=5 chars recommended on slimmed cards)" }
+  emphasizeIndex: { type: integer, required: false, note: "LEGACY: equal cells, tint + accentDeep, no jump. Prefer emphasis; never set both (lint ERROR)" }
+  marker:         { type: object, required: false, note: "ONE device on the protagonist: {type: circle|badge|arrow-note, text?, image?} — circle rings the number, badge rides the card shoulder, arrow-note sits under the card" }
   notes:          { type: string, required: false }
 params:
   background: colors.bg
@@ -305,7 +391,8 @@ content:
   title:  { type: string|string[], required: false }
   cards:  { type: array, required: true, note: "4-6 of {head, body?}; head is a short
             TERM (one line — a wrapping head is a hard OVERFLOW), body <= 3 lines" }
-  emphasizeIndex: { type: int, required: false, note: "tint one card (row-major)" }
+  emphasis: { type: int, required: false, note: "protagonist card (row-major): surfaceAccent tint + accentDeep head" }
+  emphasizeIndex: { type: int, required: false, note: "LEGACY alias of emphasis (identical); never set both (lint ERROR)" }
 layout:
   grid:  "cols = ceil(n/2); two rows from y 2.45, cardH 1.825, gaps 0.4/0.3"
   card:  "surface fill (+ shadow per theme.layout.card); emphasis = surfaceAccent
@@ -318,6 +405,26 @@ capacity: "4-6 cards. <4 -> two-column / stat-grid; >6 -> split into two slides.
 **Verified (2026-07-05):** n=6 (2×3, emphasized card) / n=5 (3+2) / n=4 (2×2)
 render clean; n=3 / n=7 → CAPACITY; a 2-line head → OVERFLOW 168%; a 4-line body
 → OVERFLOW 104%; run-gate PASS across all 6 themes.
+
+## Pattern: `before-after` (education register)
+
+```yaml
+id: before-after
+kind: light
+slot: body
+when_use:    [reframing a misunderstanding (誤解→正解), before/after a change of viewpoint]
+when_avoid:  [A-vs-B choices (use comparison), anything that is not the SAME thing seen twice]
+content:
+  kicker: { type: string, required: false }
+  title:  { type: string|string[], required: true }
+  before: { type: object, required: true, note: "{label, body} — the common misunderstanding (muted panel)" }
+  after:  { type: object, required: true, note: "{label, body} — the correction (tinted panel; fixed protagonist)" }
+guard: "the reframe must not distort — before/after describe the SAME thing; don't caricature the before (education-register.md §2-2)"
+```
+
+`positioning` / `system` / `relation` (the education logical-mode skeletons) are
+documented in `references/graphics/diagram-recipes.md`. The `persona` slot
+(message / two-column) is documented in the schema + education-register.md §3.
 
 ## Choosing & sequencing (for `deck-strategy`)
 

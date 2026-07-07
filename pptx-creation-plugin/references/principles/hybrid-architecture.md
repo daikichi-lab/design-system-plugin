@@ -29,7 +29,41 @@ sense §1 of the house bar is: a deck built any other way is off-contract.
   - **numbers / charts / text ⇒ NATIVE pptx** — accurate, editable, tokenized.
 
   A number is never baked into a PNG; a decorative shape is never faked with a
-  text box. Charts stay native by M-1's non-negotiable #8 in `house-quality-bar.md`
+  text box.
+
+  **The asset pipeline (M-8 formalized): SVG master → transparent PNG @2x.**
+  Every code-drawn graphic follows one path:
+
+  ```
+  master SVG (assets/generated/*.svg — viewBox-based, transparent, no external refs)
+    → token colouring (fills reference theme tokens — one master, every brand)
+    → rasterize: transparent PNG, pngPx = ceil(placeInches × 96 × scale)
+        scale ≥ 2 ALWAYS (a lint ERROR below); large placements (>5in) 3x, (>8in) 4x
+        renderer = the repo's pinned headless Chromium (same input → same output)
+    → the pptx embeds ONLY the PNG. The SVG is the editable original, never embedded.
+  ```
+
+  *Why PNG in the pptx:* PowerPoint 2016+ accepts SVG, but old Office, Google
+  Slides, Keynote and several mobile/export paths render it differently or not
+  at all — a rasterized transparent PNG draws identically everywhere. It also
+  keeps QA honest: soffice→PDF→PNG composites the same pixels PowerPoint will
+  show, whereas embedded SVG would let soffice's SVG renderer diverge from the
+  real machine and the backing check would stop representing it.
+  *Why keep the master:* token recolouring (one original → every brand),
+  loss-free re-rasterization at any placement size, and SVG-side editability.
+  `bin/graphics/make-markers.js` (`materialize()`) implements the path.
+
+  **Figures (人物) are the ONE externally-sourced asset class.** The hand-drawn
+  trial confirmed in-engine SVG humans do not reach professional quality, so
+  production figures are **user-supplied licensed / open-license pro vector
+  sets** dropped into the persona slot (`assets/generated/figures/` +
+  `LICENSE.md` recording 出所・帰属要否・商用可否 — no real-person likeness, no
+  IP, no logos). The engine never AI-generates or scrapes a person (M-7 holds).
+  The in-engine figure survives only as an abstract pictogram behind the
+  explicit `style:"pictogram"` opt-in. Everything AROUND the figure stays
+  in-engine: placement, the single-path bubble, scene-symbol overlays
+  (悩み雲/電球/汗/？/↑↓), ※例 marking, register gates — all asset-independent
+  (SVG-master and drop-in versions are coordinate-identical, machine-proven). Charts stay native by M-1's non-negotiable #8 in `house-quality-bar.md`
   — the hybrid split does not create an exception to it, it *is* that rule
   generalized.
 - **M-9 — No HTML-render mode.** HTML/CSS is used **only to COMPUTE** typesetting

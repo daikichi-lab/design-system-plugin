@@ -183,4 +183,242 @@ function pattern(T, { w = 1280, h = 720, variant = "dots", color } = {}) {
 }
 const PATTERN_NAMES = ["dots", "grid", "diagonal"];
 
-module.exports = { atmosphere, icon, motif, pattern, ICONS, ICON_STROKE, ICON_NAMES, MOTIF_NAMES, PATTERN_NAMES };
+/* (e) EMPHASIS MARKER — markerCircle: a hand-drawn-ish ellipse STROKE the
+ * engine overlays on the protagonist number (visual-psychology §2). Two passes
+ * of a cubic-arc ellipse whose anchors carry small FIXED jitters (deterministic
+ * — same input, same pixels; no Math.random) plus a slight tilt: enough
+ * looseness to not read machine-drawn, never scribble-rough. Accent colour
+ * token, ~2.5px stroke at placement scale (rasterized 2x, transparent PNG).
+ * The CENTRE stays empty by construction — the stroke must never cross the
+ * glyph cores (image-lint's MARKER check verifies the asset). */
+function markerCircle(T, { w = 300, h = 130, color } = {}) {
+  const stroke = hx(color || T.c.accent);
+  const cx = w / 2, cy = h / 2;
+  const sw = 2.5; // px at 1x (svg-render rasterizes 2x)
+  const pad = sw * 2 + 2;
+  const rx = w / 2 - pad, ry = h / 2 - pad;
+  const k = 0.5523;
+  // fixed per-anchor jitter (fractions of ry) — the "hand" in hand-drawn
+  const j = [0.06, -0.04, 0.05, -0.06, 0.03, -0.05, 0.045, -0.035].map((f) => f * ry);
+  const p = (dx, dy) => `${(cx + dx).toFixed(1)} ${(cy + dy).toFixed(1)}`;
+  const ellipsePath = (rx2, ry2, o) => [
+    `M ${p(-rx2, j[o % 8])}`,
+    `C ${p(-rx2, -ry2 * k + j[(o + 1) % 8])} ${p(-rx2 * k, -ry2 + j[(o + 2) % 8])} ${p(0, -ry2 + j[(o + 3) % 8] * 0.6)}`,
+    `C ${p(rx2 * k, -ry2 + j[(o + 4) % 8])} ${p(rx2, -ry2 * k + j[(o + 5) % 8])} ${p(rx2, j[(o + 6) % 8])}`,
+    `C ${p(rx2, ry2 * k + j[(o + 7) % 8])} ${p(rx2 * k, ry2 + j[o % 8])} ${p(0, ry2 + j[(o + 1) % 8] * 0.6)}`,
+    `C ${p(-rx2 * k, ry2 + j[(o + 2) % 8])} ${p(-rx2, ry2 * k + j[(o + 3) % 8])} ${p(-rx2, j[o % 8])}`,
+  ].join(" ");
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <g fill="none" stroke="${stroke}" stroke-linecap="round" transform="rotate(-2 ${cx} ${cy})">
+    <path d="${ellipsePath(rx, ry, 0)}" stroke-width="${sw}" opacity="0.95"/>
+    <path d="${ellipsePath(rx * 0.985, ry * 0.94, 3)}" stroke-width="${sw * 0.8}" opacity="0.4" transform="rotate(2.5 ${cx} ${cy})"/>
+  </g>
+</svg>`;
+}
+
+/* (f) PERSONA — figureSvg: the in-engine default human figure for the
+ * education register (education-register.md §3). Two-colour flat: teal line
+ * art + near-white face/shirt, waist-up, frontal. Deterministic (no random),
+ * theme-token colours, no AI imagery, no likeness of real people. Pose maps
+ * to the content's EMOTION (共感設計):
+ *   'concern' — worried hook/problem framing: ハの字 brows, flat mouth, arms
+ *               down (gesture-free = safe).
+ *   'present' — solution/summary: gentle brows, smile, one hand raised.
+ * Individual variation via {hair: short|side|long, jacket: accent|deep|muted,
+ * tie: bool}. AESTHETICS (proportions, hand) are a HUMAN-EYE area — the
+ * machine only guarantees clean rendering. viewBox 200x280 (w:h = 1:1.4). */
+function figureSvg(T, { w = 200, h = 280, pose = "concern", hair = "short", jacket = "accent", tie = true } = {}) {
+  const line = hx(T.c.accentDp);
+  const face = "#FAFCFC";
+  const jacketFill = hx(jacket === "deep" ? T.c.accentDp : jacket === "muted" ? T.c.muted : T.c.accent);
+  const sw = 3;
+  // hair variants (filled with the line colour — flat two-tone)
+  const HAIR = {
+    short: `<path d="M60 82 Q62 42 100 40 Q138 42 140 82 Q136 62 124 56 Q112 50 100 50 Q88 50 76 56 Q64 62 60 82 Z" fill="${line}"/>`,
+    side: `<path d="M60 86 Q58 42 102 40 Q142 44 140 76 Q124 52 94 54 Q72 58 66 92 Q62 88 60 86 Z" fill="${line}"/>`,
+    long: `<path d="M58 78 Q62 40 100 40 Q138 40 142 78 L144 126 Q138 134 131 126 L129 84 Q120 52 100 52 Q80 52 71 84 L69 126 Q62 134 56 126 Z" fill="${line}"/>`,
+  };
+  // face per pose (worried ハの字 vs gentle + smile)
+  const FACE = pose === "present"
+    ? `<path d="M80 74 Q86 69 92 72" fill="none" stroke="${line}" stroke-width="${sw}" stroke-linecap="round"/>
+       <path d="M108 72 Q114 69 120 74" fill="none" stroke="${line}" stroke-width="${sw}" stroke-linecap="round"/>
+       <circle cx="87" cy="86" r="3.4" fill="${line}"/><circle cx="113" cy="86" r="3.4" fill="${line}"/>
+       <path d="M88 102 Q100 112 112 102" fill="none" stroke="${line}" stroke-width="${sw}" stroke-linecap="round"/>`
+    : `<path d="M80 76 L92 70" fill="none" stroke="${line}" stroke-width="${sw}" stroke-linecap="round"/>
+       <path d="M120 76 L108 70" fill="none" stroke="${line}" stroke-width="${sw}" stroke-linecap="round"/>
+       <circle cx="87" cy="88" r="3.4" fill="${line}"/><circle cx="113" cy="88" r="3.4" fill="${line}"/>
+       <path d="M91 106 L109 106" fill="none" stroke="${line}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  // one raised arm (present only) — starts INSIDE the shoulder mass, bends up
+  const ARM = pose === "present"
+    ? `<path d="M146 202 Q174 176 172 142" fill="none" stroke="${line}" stroke-width="11" stroke-linecap="round"/>
+       <circle cx="172" cy="134" r="11" fill="${face}" stroke="${line}" stroke-width="${sw}"/>`
+    : "";
+  const TIE = tie
+    ? `<path d="M100 162 L108 172 L100 208 L92 172 Z" fill="${line}"/>`
+    : "";
+  // proportions: head bottom (cy88 + r42 = 130) meets the neck (130..156),
+  // which meets the collar/shoulders (156..) — no gap (the first render's
+  // floating-head defect, fixed and re-checked by eye).
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 200 280">
+  <!-- neck (behind the head/body) -->
+  <path d="M86 122 L114 122 L114 146 L86 146 Z" fill="${face}" stroke="${line}" stroke-width="${sw}"/>
+  <!-- body / jacket (waist-up) -->
+  <path d="M30 280 Q34 200 60 180 Q76 170 88 164 L100 177 L112 164 Q124 170 140 180 Q166 200 170 280 Z" fill="${jacketFill}"/>
+  <!-- shirt V -->
+  <path d="M88 164 L100 177 L112 164 L112 142 Q100 150 88 142 Z" fill="${face}"/>
+  ${TIE}
+  <!-- head -->
+  <circle cx="100" cy="88" r="42" fill="${face}" stroke="${line}" stroke-width="${sw}"/>
+  ${HAIR[hair] || HAIR.short}
+  ${FACE}
+  ${ARM}
+</svg>`;
+}
+
+/* (g) SPEECH BUBBLE — bubbleSvg: ONE seamless path (rounded rect + tail drawn
+ * as a single continuous path — no overlap seam), stroke in the accent token,
+ * white fill. The native quote text sits ON TOP of the raster (crisp,
+ * editable). tailSide 'bottom' | 'left'; tailAt = fraction along that side
+ * where the tail points at the figure. Sized in px at 1x (rasterized 2x). */
+function bubbleSvg(T, { w = 340, h = 120, tailSide = "bottom", tailAt = 0.72, tailLen = 26 } = {}) {
+  const stroke = hx(T.c.accent);
+  const r = 14, sw = 2.5;
+  const x0 = sw, y0 = sw, x1 = w - sw, y1 = (tailSide === "bottom" ? h - tailLen : h) - sw;
+  const xL = tailSide === "left" ? x0 + tailLen : x0;
+  let d;
+  if (tailSide === "bottom") {
+    const tx = x0 + (x1 - x0) * tailAt;
+    d = [
+      `M ${x0 + r} ${y0}`, `H ${x1 - r}`, `A ${r} ${r} 0 0 1 ${x1} ${y0 + r}`,
+      `V ${y1 - r}`, `A ${r} ${r} 0 0 1 ${x1 - r} ${y1}`,
+      `H ${Math.min(tx + 16, x1 - r)}`, `L ${tx + 4} ${y1 + tailLen}`, `L ${Math.max(tx - 14, x0 + r)} ${y1}`,
+      `H ${x0 + r}`, `A ${r} ${r} 0 0 1 ${x0} ${y1 - r}`,
+      `V ${y0 + r}`, `A ${r} ${r} 0 0 1 ${x0 + r} ${y0}`, "Z",
+    ].join(" ");
+  } else if (tailSide === "right") { // tail points right at the speaker
+    const xR = w - tailLen - sw;
+    const ty = y0 + (y1 - y0) * Math.min(Math.max(tailAt, 0.15), 0.85);
+    d = [
+      `M ${x0 + r} ${y0}`, `H ${xR - r}`, `A ${r} ${r} 0 0 1 ${xR} ${y0 + r}`,
+      `V ${Math.max(ty - 12, y0 + r)}`, `L ${xR + tailLen} ${ty + 3}`, `L ${xR} ${Math.min(ty + 15, y1 - r)}`,
+      `V ${y1 - r}`, `A ${r} ${r} 0 0 1 ${xR - r} ${y1}`,
+      `H ${x0 + r}`, `A ${r} ${r} 0 0 1 ${x0} ${y1 - r}`,
+      `V ${y0 + r}`, `A ${r} ${r} 0 0 1 ${x0 + r} ${y0}`, "Z",
+    ].join(" ");
+  } else { // left tail
+    const ty = y0 + (y1 - y0) * Math.min(Math.max(tailAt, 0.15), 0.85);
+    d = [
+      `M ${xL + r} ${y0}`, `H ${x1 - r}`, `A ${r} ${r} 0 0 1 ${x1} ${y0 + r}`,
+      `V ${y1 - r}`, `A ${r} ${r} 0 0 1 ${x1 - r} ${y1}`,
+      `H ${xL + r}`, `A ${r} ${r} 0 0 1 ${xL} ${y1 - r}`,
+      `V ${Math.min(ty + 15, y1 - r)}`, `L ${xL - tailLen} ${ty + 3}`, `L ${xL} ${Math.max(ty - 12, y0 + r)}`,
+      `V ${y0 + r}`, `A ${r} ${r} 0 0 1 ${xL + r} ${y0}`, "Z",
+    ].join(" ");
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <path d="${d}" fill="#FFFFFF" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>
+</svg>`;
+}
+
+/* Avatar bust (会話/証言レイアウトの話者アイコン): a NEUTRAL, STATIC
+ * head-and-shoulders silhouette inside a circle mask — no gesture, ever.
+ * Meaning is carried by the bubble text / scene symbols / ○× labels; the
+ * avatar only answers "who is speaking". Uniform BY CONSTRUCTION: same
+ * circle, same framing, one fill (#231815 series, token-recolourable).
+ * Hair contour is the only per-speaker variation (話者の区別のためだけ).
+ * A supplied bust (socost 単色バスト etc.) drops into the same slot
+ * asset-independently; this in-engine version keeps the layouts buildable
+ * until the supplied set arrives. */
+const AVATAR_HAIR = ["short", "long", "bun", "side"];
+function avatarBustSvg(T, { hair = "short", ink = "231815", ground = null } = {}) {
+  // default = NO ground circle: the bust stays a PURE single-ink silhouette
+  // (zero chroma, zero white) so the STYLE-UNIFORM colour proxy classifies
+  // it by construction; a light ground would read as "white" = illustration
+  const ik = ink.startsWith("#") ? ink : "#" + ink;
+  const HAIRS = {
+    short: "",
+    long: `<path d="M70 62 C60 84 62 106 56 126 L86 126 C78 106 78 86 82 66 Z" fill="${ik}"/>
+      <path d="M130 62 C140 84 138 106 144 126 L114 126 C122 106 122 86 118 66 Z" fill="${ik}"/>`,
+    bun: `<circle cx="100" cy="38" r="11" fill="${ik}"/>`,
+    side: `<path d="M66 62 Q74 40 100 38 Q130 40 136 66 Q126 50 96 52 Q76 54 66 62 Z" fill="${ik}"/>`,
+  };
+  if (!(hair in HAIRS)) throw new Error(`avatarBustSvg: unknown hair "${hair}" (${AVATAR_HAIR.join("|")})`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs><clipPath id="c"><circle cx="100" cy="100" r="96"/></clipPath></defs>
+  ${ground ? `<circle cx="100" cy="100" r="96" fill="${ground.startsWith("#") ? ground : "#" + ground}"/>` : ""}
+  <g clip-path="url(#c)">
+    <ellipse cx="100" cy="80" rx="30" ry="34" fill="${ik}"/>
+    <rect x="87" y="106" width="26" height="18" fill="${ik}"/>
+    <path d="M100 120 C70 120 44 132 35 154 C30 166 28 182 28 200 L172 200 C172 182 170 166 165 154 C156 132 130 120 100 120 Z" fill="${ik}"/>
+    ${HAIRS[hair]}
+  </g>
+</svg>`;
+}
+
+/* Business silhouette figure (サラリーマンシルエット) — the in-engine figure
+ * style the user picked over the flat pictogram (reference: a supplied
+ * full-body silhouette sheet; these paths are ORIGINAL — tracing an
+ * unlicensed screenshot would break the rights floor). Realistic ~7.4-head
+ * proportions in a 200x440 viewBox, solid single-colour union: limbs are
+ * round-cap strokes, torso a closed path — overlaps vanish, only the outer
+ * contour matters, which is also why the poses are contour-legible gestures:
+ * concern = hand to the back of the head (困った/頭をかく), present = arm
+ * extended up-out toward the content. No face — the silhouette idiom carries
+ * professionalism without the uncanny/幼い problem a drawn face has. */
+function silhouetteSvg(T, { w = 260, h = 572, pose = "concern" } = {}) {
+  const ink = hx(T.c.ink);
+  const limb = (d, sw) => `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  const head = `<ellipse cx="100" cy="40" rx="18.5" ry="22" fill="${ink}"/>
+  <rect x="91.5" y="56" width="17" height="18" fill="${ink}"/>`;
+  const torso = `<path fill="${ink}" d="M85 66 C75 68 68 71 64 77 C59 84 58 92 58 100
+    C58 122 61 148 63 170 C64 190 66 202 67 210 L133 210 C134 202 136 190 137 170
+    C139 148 142 122 142 100 C142 92 141 84 136 77 C132 71 125 68 115 66
+    C108 71 92 71 85 66 Z"/>`;
+  const leftArm = limb("M64 86 C59 112 57 138 57 160 C57 180 58 196 59 210", 13.5)
+    + `<ellipse cx="59" cy="218" rx="5.5" ry="8" fill="${ink}"/>`;
+  const legs = `<rect x="67" y="196" width="66" height="38" fill="${ink}"/>`
+    + limb("M85 232 L84 302", 22) + limb("M84 296 L82 332", 18) + limb("M82 326 L80 405", 14.5)
+    + limb("M115 232 L116 302", 22) + limb("M116 296 L118 332", 18) + limb("M118 326 L120 405", 14.5);
+  const shoes = `<rect x="58" y="408" width="34" height="14" rx="6" fill="${ink}"/>
+  <rect x="108" y="408" width="34" height="14" rx="6" fill="${ink}"/>`;
+  let rightArm;
+  if (pose === "present") {
+    rightArm = limb("M137 87 C151 86 164 79 172 72", 14)
+      + limb("M172 72 C180 66 187 60 192 55", 11)
+      + `<ellipse cx="194" cy="52" rx="6" ry="7.5" fill="${ink}"/>`;
+  } else {
+    rightArm = limb("M136 82 C152 76 164 68 172 58", 14)
+      + limb("M172 58 C160 40 140 28 122 24", 12)
+      + `<ellipse cx="119" cy="23" rx="7" ry="6.5" fill="${ink}"/>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 200 440">
+${head}${torso}${leftArm}${rightArm}${legs}${shoes}</svg>`;
+}
+
+/* Scene symbols (シーン記号): a SEPARATE code-drawn overlay near the figure's
+ * head — 悩み雲 / 電球(気づき) / 汗 / ？ / ↑↓. This layer is what keeps the
+ * figure asset-independent: the same symbol composes over the in-engine
+ * pictogram OR a licensed drop-in, because it depends only on the placement
+ * box (personaLayout.symbol), never on the figure's drawing style. Pure
+ * paths — no <text> (fonts would break render determinism). */
+const SYMBOL_NAMES = ["worry", "idea", "sweat", "question", "up", "down"];
+function sceneSymbol(T, { variant, w = 60, h = 60 } = {}) {
+  const c = hx(T.c.accentDp), soft = hx(T.c.accent);
+  const P = {
+    worry: `<path d="M7.2 13.8a4.1 4.1 0 01-.7-8.1 5 5 0 019.6-1 3.7 3.7 0 011.4 7.2" fill="none"/>
+      <circle cx="8" cy="17.6" r="1.15" fill="${c}" stroke="none"/><circle cx="5.4" cy="20.6" r="0.75" fill="${c}" stroke="none"/>`,
+    idea: `<path d="M12 3a5.7 5.7 0 00-3.35 10.3c.6.5.95 1 .95 1.7v.5h4.8v-.5c0-.7.35-1.2.95-1.7A5.7 5.7 0 0012 3z" fill="none"/>
+      <line x1="9.8" y1="18.4" x2="14.2" y2="18.4"/><line x1="10.6" y1="20.5" x2="13.4" y2="20.5"/>
+      <line x1="3.6" y1="5.4" x2="5.5" y2="6.6"/><line x1="20.4" y1="5.4" x2="18.5" y2="6.6"/>`,
+    sweat: `<path d="M12 3.4C9.2 8 7.2 10.9 7.2 14a4.8 4.8 0 009.6 0c0-3.1-2-6-4.8-10.6z" fill="${soft}" fill-opacity="0.35"/>`,
+    question: `<path d="M8.7 8.1C8.7 5.6 10.1 4 12.1 4s3.3 1.5 3.3 3.6c0 1.8-1 2.7-2.1 3.5-.9.7-1.3 1.4-1.3 2.6v.7" fill="none"/>
+      <circle cx="12" cy="19.3" r="1.3" fill="${c}" stroke="none"/>`,
+    up: `<line x1="12" y1="20" x2="12" y2="5.2"/><polyline points="6.6,10.6 12,5.2 17.4,10.6" fill="none"/>`,
+    down: `<line x1="12" y1="4" x2="12" y2="18.8"/><polyline points="6.6,13.4 12,18.8 17.4,13.4" fill="none"/>`,
+  };
+  if (!P[variant]) throw new Error(`sceneSymbol: unknown variant "${variant}" (use ${SYMBOL_NAMES.join("|")})`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 24 24"
+  fill="none" stroke="${c}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${P[variant]}</svg>`;
+}
+
+module.exports = { atmosphere, icon, motif, pattern, markerCircle, figureSvg, silhouetteSvg, bubbleSvg, avatarBustSvg, AVATAR_HAIR, sceneSymbol, SYMBOL_NAMES, ICONS, ICON_STROKE, ICON_NAMES, MOTIF_NAMES, PATTERN_NAMES };

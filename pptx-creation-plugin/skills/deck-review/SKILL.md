@@ -65,9 +65,26 @@ could be tighter."
 |---|---|---|
 | `messageLogic` | 25 | 1 slide / 1 message; titles are conclusions or questions (not topic labels); a coherent narrative frame (SCQA/PREP/PAS/BAB); the goal-action is clear. |
 | `visualIntegrity` | 25 | No overflow/overlap; uniform margins; alignment; contrast; **no AI-tells**. Driven directly by the §5 QA result above. |
-| `designFidelity` | 20 | One dominant color (60–70%) + one restrained accent; sandwich (dark cover/cta, light body); tokenized type/colors; consistent motif; matches the theme. |
-| `informationDesign` | 20 | Every slide carries a visual; charts are native and correctly chosen + labeled (unit/basis); density is right — not crammed, not empty. |
+| `designFidelity` | 20 | One dominant color (60–70%) + one restrained accent; sandwich (dark cover/cta, light body); tokenized type/colors; consistent motif; matches the theme. Emphasis stays scarce: one protagonist per slide, one `peak` per deck (a deck where everything shouts scores low here). |
+| `informationDesign` | 20 | Every slide carries a visual; charts are native and correctly chosen + labeled (unit/basis); density is right — not crammed, not empty. The declared protagonist (`emphasis`) actually reads first — heed design-lint's SALIENCY/RHYTHM warnings, then judge by eye. |
 | `contentIntegrity` | 10 | Honest claims; assumptions/metric definitions present where needed; no unsupported assertions; audience-appropriate tone. |
+
+> **重点確認 — emphasized claims & marker wording (機械では判定できない).** For
+> EVERY element the plan emphasizes (`emphasis`, a chart's `emphasizeIndex`),
+> every `marker`, and the `peak` slide, verify against the plan's `notes`/data:
+> **does the data actually support giving this number/claim the spotlight?**
+> Badge/arrow-note text especially: 「過去最高」 only when it IS the record,
+> 「初」 only when it IS the first, 「3期連続」 only when the three periods
+> check out — the lint blocks hype adjectives, but factuality is YOURS.
+> Emphasizing a forecast or estimate as if it were an actual, enlarging only
+> the flattering figure, or loss-aversion scare framing is a `contentIntegrity`
+> failure (house-quality-bar §4; visual-psychology.md §7) — score it down and
+> write the finding even when the slide renders beautifully. Financial/factual
+> decks: strictest. A saliency-lint WARN that exists BECAUSE honesty forbids
+> emphasizing the biggest number (e.g. a forecast bar taller than the
+> emphasized actual) is a deliberate override — check the `notes` justify it.
+> The lints guarantee only scarcity (1 emphasis/slide, 1 marker/slide,
+> 1 peak/deck); the *meaning* is yours to approve.
 
 `totalScore` is the sum of the five `score` values.
 

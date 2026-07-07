@@ -1,0 +1,85 @@
+{
+  "meta": { "title": "torture: emphasis/peak abuse", "author": "adversarial", "footerLabel": "", "showPageNumbers": true },
+  "slides": [
+    { "pattern": "stat-grid", "content": {
+      "kicker": "違反1：emphasis と emphasizeIndex の併記",
+      "title": "二重の強調指定は主役不在",
+      "stats": [
+        { "value": "10%", "label": "指標A" },
+        { "value": "20%", "label": "指標B" },
+        { "value": "30%", "label": "指標C" }
+      ],
+      "emphasis": 0,
+      "emphasizeIndex": 2,
+      "notes": "MUST fire EMPHASIS-COUNT ERROR (two specs on one slide)."
+    } },
+    { "pattern": "flow", "content": {
+      "kicker": "違反2：範囲外の emphasis",
+      "title": "存在しない主役",
+      "steps": ["受付", "審査", "承認"],
+      "emphasis": 7,
+      "notes": "MUST fire EMPHASIS-COUNT ERROR (out of range; engine must not throw)."
+    } },
+    { "pattern": "stat-grid", "content": {
+      "kicker": "違反3：主役より目立つ脇役",
+      "title": "わざと最小の値を強調する",
+      "stats": [
+        { "value": "3件", "label": "小さな主役", "sub": "わざと最小の値を強調" },
+        { "value": "1,234,567円", "label": "巨大な脇役", "sub": "主役より長く大きい" },
+        { "value": "8%", "label": "その他" }
+      ],
+      "emphasis": 0,
+      "notes": "MUST fire SALIENCY WARN (card 1 out-shines card 0)."
+    } },
+    { "pattern": "chart", "peak": true, "content": {
+      "kicker": "違反4：peak その1＋最小バーの強調",
+      "title": "最小のバーを強調しても最大のバーが目立つ",
+      "series": { "name": "売上", "labels": ["A", "B", "C", "D"], "values": [10, 40, 70, 100] },
+      "emphasizeIndex": 0,
+      "takeawayHead": "強調の失敗例",
+      "takeaway": "最小バーの強調は、最大バーという脇役に負ける。",
+      "notes": "MUST fire SALIENCY WARN (bar 3 out-shines bar 0); with 違反5 this is one of the 2 peaks for the deck-level ERROR."
+    } },
+    { "pattern": "cta", "peak": true, "content": {
+      "kicker": "違反5：cta への peak",
+      "titleLines": ["山場は本文に置く"],
+      "offerHead": "個別相談",
+      "offerBody": "cta は既に暗い締めの面なので peak 不可。",
+      "notes": "MUST fire EMPHASIS-COUNT ERROR (peak on cta)."
+    } },
+    { "pattern": "table", "content": {
+      "kicker": "違反6：密4連の1",
+      "title": "密なスライドの連続その1",
+      "columns": ["項目", "数値"],
+      "rows": [["あ", "1"], ["い", "2"]],
+      "notes": "dense run 1/4."
+    } },
+    { "pattern": "comparison", "content": {
+      "kicker": "違反6：密4連の2",
+      "title": "密なスライドの連続その2",
+      "left": { "label": "左", "role": "その1", "points": ["点1", "点2"] },
+      "right": { "label": "右", "role": "その2", "points": ["点1", "点2"] },
+      "notes": "dense run 2/4."
+    } },
+    { "pattern": "chart", "content": {
+      "kicker": "違反6：密4連の3",
+      "title": "密なスライドの連続その3",
+      "chartType": "band",
+      "series": [
+        { "name": "材料費", "labels": ["FY23", "FY24"], "values": [40, 38] },
+        { "name": "人件費", "values": [35, 36] },
+        { "name": "その他", "values": [25, 26] }
+      ],
+      "takeawayHead": "密度テスト",
+      "takeaway": "band は密パターンとして数える。",
+      "notes": "dense run 3/4."
+    } },
+    { "pattern": "table", "content": {
+      "kicker": "違反6：密4連の4",
+      "title": "密なスライドの連続その4",
+      "columns": ["項目", "数値"],
+      "rows": [["う", "3"], ["え", "4"]],
+      "notes": "dense run 4/4 — MUST fire RHYTHM WARN (4 consecutive dense slides)."
+    } }
+  ]
+}

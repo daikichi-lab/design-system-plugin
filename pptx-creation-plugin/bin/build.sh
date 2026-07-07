@@ -49,9 +49,28 @@ if [ "$BAKE" = 1 ]; then
   fi
 fi
 
+# 1b. markers + personas (rasterize circle markers / persona figure+bubble)
+# — optional, same graceful skip as bake (badges/arrow-notes are native).
+if node -e "const p=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')); const s=Array.isArray(p)?p:p.slides; process.exit(s.some(x=>x.content&&(x.content.marker&&x.content.marker.type==='circle'&&!x.content.marker.image)||(x.content.persona&&x.content.persona.quote&&!x.content.persona.bubbleImage)||(x.pattern==='dialogue'||x.pattern==='testimonial'))?0:1)" "$GENPLAN" 2>/dev/null; then
+  MARKED="$WORK/$(basename "${OUT%.pptx}").marked.json"
+  echo "== markers =="
+  if node "$HERE/graphics/make-markers.js" --plan "$GENPLAN" "${THEMEARG[@]}" --out "$MARKED" --assets "$WORK/assets" 2>"$WORK/.markers.err"; then
+    GENPLAN="$MARKED"
+  else
+    echo "  WARN: make-markers skipped (browser engine absent) — circle markers will not be drawn:"
+    sed 's/^/      /' "$WORK/.markers.err"
+  fi
+fi
+
 # 2. generate (hard requirement)
 echo "== generate =="
 node "$HERE/generate.js" --plan "$GENPLAN" "${THEMEARG[@]}" --out "$OUT" || { echo "generate FAILED"; exit 1; }
+
+# 2b. geometry-lint (純幾何の構成品質 — lints the generated pptx XML;
+# COLLISION is BLOCKING, family/connector/alignment drifts are advisory)
+echo "== geometry-lint =="
+node "$HERE/lint/geometry-lint.js" --pptx "$OUT" --plan "$GENPLAN" "${THEMEARG[@]}"; GL=$?
+[ "$GL" -eq 1 ] && echo "  geometry-lint reported a blocking COLLISION above."
 
 # 3. design-lint (static gate, always — BLOCKING on ERROR, incl. card overflow)
 echo "== design-lint =="
@@ -70,10 +89,19 @@ node "$HERE/lint/image-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" || echo "  im
 echo "== render (then OPEN every slide-*.jpg and inspect — M-2) =="
 bash "$HERE/qa.sh" "$OUT"
 
+# 5b. saliency-lint (顕著性 — advisory, on the rendered pixels; skips gracefully
+# without the browser engine). A WARN means the declared protagonist is being
+# out-shone — strengthen it or move the emphasis, then LOOK again.
+QA_DIR="$(dirname "$OUT")/qa"
+if [ -d "$QA_DIR" ]; then
+  echo "== saliency-lint (主役が主役に見えているか — advisory) =="
+  node "$HERE/lint/saliency-lint.js" --plan "$GENPLAN" "${THEMEARG[@]}" --render "$QA_DIR" || echo "  saliency-lint skipped (browser engine absent) — judge emphasis by eye."
+fi
+
 # 6. blocking verdict — design-lint ERRORs (e.g. card overflow) fail the build.
 # The deck is still rendered above so a break can be inspected, but a non-zero
 # exit tells create-deck / CI the deck is NOT clean (M-4: don't ship it).
-if [ "${DL:-0}" -ne 0 ]; then
+if [ "${DL:-0}" -ne 0 ] || [ "${GL:-0}" -eq 1 ]; then
   echo ""
   echo "BLOCKED: design-lint found blocking error(s) — the deck rendered for inspection but is NOT clean."
   echo "        Fix the plan (shorten the flagged field or split the slide) and rebuild."

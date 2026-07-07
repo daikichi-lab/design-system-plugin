@@ -24,10 +24,19 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 // Diagram skeletons compute their node geometry here too, so the floor
 // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
 // engine draws labels into.
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadBodyBox } = require("../graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
+}
+
+// The emphasized (protagonist) flow/cycle node is DRAWN one size step up
+// (emphSizePt in generate.js — peak opens one more); the floor must measure
+// and height-gate that node at the same size, or the gate would pass a label
+// the engine actually overflows. Non-emphasized elements return base unchanged.
+function emphNodeSize(slide, i, basePt) {
+  const c = slide.content || {};
+  return Number.isInteger(c.emphasis) && c.emphasis === i ? emphSizePt(basePt, slide.peak === true) : basePt;
 }
 
 /* ============================================================
@@ -76,6 +85,24 @@ function renderedHeightIn(nLines, sizePt, leading) {
 // tracked as a follow-up. Open boxes with no card behind them (two-column item
 // bodies, message caption, section/cover subtitles) can't "overflow a card" and
 // are out of scope by design.
+// dialogue: pair every content speaker with its layout row (plain or compare)
+function dialoguePairs(c, T) {
+  const L = dialogueLayout(T, c);
+  const pairs = [];
+  if (L.form === "compare") {
+    L.cols.forEach((col, ci) => col.speakers.forEach((row, i) => {
+      const sp = ((c.columns[ci] || {}).speakers || [])[i];
+      if (sp) pairs.push({ sp, row, path: `columns[${ci}].speakers[${i}].quote` });
+    }));
+  } else {
+    L.speakers.forEach((row, i) => {
+      const sp = (c.speakers || [])[i];
+      if (sp) pairs.push({ sp, row, path: `speakers[${i}].quote` });
+    });
+  }
+  return pairs;
+}
+
 function heightBoxes(slide, T) {
   const c = slide.content || {};
   const s = T.s, lead = T.lead;
@@ -101,9 +128,34 @@ function heightBoxes(slide, T) {
     "formula":    { topY: 1.15, bottomY: 3.65, sizePt: s.title },
     "card-grid":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "waterfall":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "positioning":{ topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "system":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "relation":   { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "before-after":{ topY: 1.15, bottomY: 2.5, sizePt: s.title },
   };
   const tb = TITLE_BOX[slide.pattern];
   if (tb && c.title) out.push({ id: "title header", path: "title", topY: tb.topY, bottomY: tb.bottomY, sizePt: tb.sizePt, leading: lead.title });
+  // persona quote is bounded by its bubble (sized from the estimated line
+  // count) — if the bake produces MORE lines than estimated, the gate errors
+  // and the author shortens the quote.
+  if (c.persona && typeof c.persona === "object" && c.persona.quote && (slide.pattern === "message" || slide.pattern === "two-column")) {
+    const L = personaLayout(c.persona, T, slide.pattern);
+    out.push({ id: "persona bubble", path: "persona.quote", topY: L.quote.y, bottomY: L.quote.y + L.quote.h + 0.06,
+      sizePt: L.quotePt, leading: L.quoteLead });
+  }
+  if (slide.pattern === "dialogue") {
+    for (const { row, path } of dialoguePairs(c, T)) {
+      out.push({ id: "dialogue bubble", path, topY: row.quote.y, bottomY: row.quote.y + row.quote.h + 0.06,
+        sizePt: row.quotePt, leading: T.lead.tight });
+    }
+  }
+  if (slide.pattern === "testimonial") {
+    const L = testimonialLayout(T, c);
+    L.cards.forEach((cd, i) => {
+      if ((c.items || [])[i]) out.push({ id: "testimonial card", path: `items[${i}].body`,
+        topY: cd.body.y, bottomY: cd.body.y + cd.body.h, sizePt: T.s.small, leading: T.lead.body });
+    });
+  }
   switch (slide.pattern) {
     case "chart":
       // takeaway card: card(cx, 2.4, cw, 3.85) -> bottom 6.25; body box y=3.78.
@@ -112,14 +164,15 @@ function heightBoxes(slide, T) {
       break;
     case "flow": {
       // each flow node: the label must fit its node's inner box (overflow => a
-      // hard error, exactly like a card). Same geometry the engine draws.
+      // hard error, exactly like a card). Same geometry the engine draws; the
+      // emphasized node is gated at its stepped-up size (emphNodeSize).
       const steps = c.steps || [];
       const { nodes } = flowLayout(T, steps.length, c.direction);
       steps.forEach((st, i) => {
         if (!nodes[i]) return;
         const ntb = nodeTextBox(nodes[i]);
         out.push({ id: `flow node ${i + 1}`, path: `steps[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h,
-          sizePt: s.head, leading: lead.tight });
+          sizePt: emphNodeSize(slide, i, s.head), leading: lead.tight });
       });
       break;
     }
@@ -130,7 +183,7 @@ function heightBoxes(slide, T) {
         if (!nodes[i]) return;
         const ntb = nodeTextBox(nodes[i]);
         out.push({ id: `cycle node ${i + 1}`, path: `steps[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h,
-          sizePt: s.head, leading: lead.tight });
+          sizePt: emphNodeSize(slide, i, s.head), leading: lead.tight });
       });
       break;
     }
@@ -219,6 +272,66 @@ function heightBoxes(slide, T) {
       });
       break;
     }
+    case "positioning": {
+      const L = positioningLayout(T, (c.positions || []).length);
+      (c.positions || []).forEach((ps, i) => {
+        const cd = L.cards[i]; if (!cd || !ps) return;
+        const hb = posHeadBox(cd), bb = posBodyBox(cd);
+        if (ps.head) out.push({ id: `positioning head ${i + 1}`, path: `positions[${i}].head`, topY: hb.y, bottomY: hb.y + hb.h, sizePt: s.compareLabel, leading: lead.title });
+        if (ps.body) out.push({ id: `positioning body ${i + 1}`, path: `positions[${i}].body`, topY: bb.y, bottomY: bb.y + bb.h, sizePt: s.body, leading: lead.tight });
+      });
+      break;
+    }
+    case "system": {
+      const L = systemLayout(T, (c.nodes || []).length, c.links);
+      (c.nodes || []).forEach((nd, i) => {
+        const node = L.nodes[i]; if (!node) return;
+        const ntb = nodeTextBox(node);
+        out.push({ id: `system node ${i + 1}`, path: `nodes[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h, sizePt: s.head, leading: lead.tight });
+      });
+      (c.links || []).forEach((lk, k) => {
+        if (!lk || !lk.label) return;
+        const box = (lk.to === lk.from + 1 ? L.fwd : L.back).find((a) => a.label === lk.label);
+        if (box) out.push({ id: `system link label ${k + 1}`, path: `links[${k}].label`, topY: box.labelBox.y, bottomY: box.labelBox.y + box.labelBox.h, sizePt: s.small, leading: lead.tight });
+      });
+      break;
+    }
+    case "relation": {
+      const nL = (c.left || []).length, nR = (c.right || []).length;
+      if (relationIsPartition(nL, nR, c.links)) {
+        const Z = relationZones(T, nL, nR, c.links);
+        (c.left || []).forEach((it, i) => {
+          const zh = Z.zones[i] && Z.zones[i].head; if (!zh) return;
+          out.push({ id: `relation zone head ${i + 1}`, path: `left[${i}]`, topY: zh.y, bottomY: zh.y + zh.h, sizePt: s.compareLabel, leading: lead.tight });
+        });
+        (c.right || []).forEach((it, j) => {
+          const b = Z.memberBoxes[j]; if (!b) return;
+          const tb = nodeTextBox(b);
+          out.push({ id: `relation member ${j + 1}`, path: `right[${j}]`, topY: tb.y, bottomY: tb.y + tb.h, sizePt: s.head, leading: lead.tight });
+        });
+        break;
+      }
+      const L = relationLayout(T, nL, nR, c.links);
+      (c.left || []).forEach((it, i) => {
+        const b = L.left[i]; if (!b) return;
+        const tb = nodeTextBox(b);
+        out.push({ id: `relation left ${i + 1}`, path: `left[${i}]`, topY: tb.y, bottomY: tb.y + tb.h, sizePt: s.head, leading: lead.tight });
+      });
+      (c.right || []).forEach((it, j) => {
+        const b = L.right[j]; if (!b) return;
+        const tb = nodeTextBox(b);
+        out.push({ id: `relation right ${j + 1}`, path: `right[${j}]`, topY: tb.y, bottomY: tb.y + tb.h, sizePt: s.head, leading: lead.tight });
+      });
+      break;
+    }
+    case "before-after": {
+      const top = 2.5, h = 3.95;
+      for (const side of ["before", "after"]) {
+        const panel = c[side];
+        if (panel && panel.body) out.push({ id: `${side} panel`, path: `${side}.body`, topY: top + 1.15, bottomY: top + h - 0.3, sizePt: s.body, leading: lead.body });
+      }
+      break;
+    }
     case "cta":
       // offer panel: roundRect(px, 4.25, pw, 1.85) -> bottom 6.10; body box y=py+0.95=5.20.
       out.push({ id: "offer panel", path: "offerBody", topY: 4.25 + 0.95, bottomY: 4.25 + 1.85,
@@ -285,10 +398,29 @@ function wrappingFields(slide, T) {
   // here. A heading is measured at role "heading" (Yu Gothic bold) + lead.title.
   const sectionTitleSize = s.sectionTitle || s.title;
   const TITLE_W = { "two-column": 7.0, "comparison": W - 2 * m, "chart": 8.5,
-    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m, "branch": W - 2 * m, "formula": W - 2 * m, "card-grid": W - 2 * m, "waterfall": W - 2 * m };
+    "section": 8.0, "stat-grid": W - 2 * m, "table": W - 2 * m, "flow": W - 2 * m, "cycle": W - 2 * m, "matrix": W - 2 * m, "timeline": W - 2 * m, "steps": W - 2 * m, "branch": W - 2 * m, "formula": W - 2 * m, "card-grid": W - 2 * m, "waterfall": W - 2 * m, "positioning": W - 2 * m, "system": W - 2 * m, "relation": W - 2 * m, "before-after": W - 2 * m };
   if (TITLE_W[slide.pattern] != null) {
     const size = slide.pattern === "section" ? sectionTitleSize : s.title;
     push("title", c.title, TITLE_W[slide.pattern], size, "heading", lead.title);
+  }
+  // persona quote (education register): native text over the bubble raster —
+  // measured at the bubble's inner width so bake protects kinsoku + number
+  // atoms exactly like any prose field.
+  if (slide.pattern === "dialogue") {
+    for (const { sp, row, path } of dialoguePairs(c, T)) {
+      push(path, sp.quote, row.quote.w, row.quotePt, "body", T.lead.tight);
+    }
+  }
+  if (slide.pattern === "testimonial") {
+    const L = testimonialLayout(T, c);
+    L.cards.forEach((cd, i) => {
+      const it = (c.items || [])[i];
+      if (it && it.body) push(`items[${i}].body`, it.body, cd.body.w, T.s.small, "body", T.lead.body);
+    });
+  }
+  if (c.persona && typeof c.persona === "object" && (slide.pattern === "message" || slide.pattern === "two-column")) {
+    const L = personaLayout(c.persona, T, slide.pattern);
+    push("persona.quote", c.persona.quote, L.quote.w, L.quotePt, "body", L.quoteLead);
   }
   switch (slide.pattern) {
     case "message":
@@ -297,12 +429,12 @@ function wrappingFields(slide, T) {
     case "flow": {
       // each step label is centered native text inside its node — measured at the
       // node's inner box so kinsoku/orphan apply per node (same geometry the
-      // engine draws with).
+      // engine draws with; the emphasized node measures at its stepped-up size).
       const steps = c.steps || [];
       const { nodes } = flowLayout(T, steps.length, c.direction);
       steps.forEach((st, i) => {
         if (!nodes[i]) return;
-        push(`steps[${i}]`, st, nodeTextBox(nodes[i]).w, s.head, "heading", lead.tight);
+        push(`steps[${i}]`, st, nodeTextBox(nodes[i]).w, emphNodeSize(slide, i, s.head), "heading", lead.tight);
       });
       break;
     }
@@ -311,7 +443,7 @@ function wrappingFields(slide, T) {
       const { nodes } = cycleLayout(T, steps.length);
       steps.forEach((st, i) => {
         if (!nodes[i]) return;
-        push(`steps[${i}]`, st, nodeTextBox(nodes[i]).w, s.head, "heading", lead.tight);
+        push(`steps[${i}]`, st, nodeTextBox(nodes[i]).w, emphNodeSize(slide, i, s.head), "heading", lead.tight);
       });
       break;
     }
@@ -401,6 +533,51 @@ function wrappingFields(slide, T) {
       push("takeaway", c.takeaway, cw, s.body, "body", lead.body);
       break;
     }
+    case "positioning": {
+      const L = positioningLayout(T, (c.positions || []).length);
+      (c.positions || []).forEach((ps, i) => {
+        const cd = L.cards[i]; if (!cd || !ps) return;
+        push(`positions[${i}].head`, ps.head, posHeadBox(cd).w, s.compareLabel, "heading", lead.title);
+        push(`positions[${i}].body`, ps.body, posBodyBox(cd).w, s.body, "body", lead.tight);
+      });
+      break;
+    }
+    case "system": {
+      const L = systemLayout(T, (c.nodes || []).length, c.links);
+      (c.nodes || []).forEach((nd, i) => {
+        if (!L.nodes[i]) return;
+        push(`nodes[${i}]`, nd, nodeTextBox(L.nodes[i]).w, s.head, "heading", lead.tight);
+      });
+      (c.links || []).forEach((lk, k) => {
+        if (!lk || !lk.label) return;
+        const box = (lk.to === lk.from + 1 ? L.fwd : L.back).find((a) => a.label === lk.label);
+        if (box) push(`links[${k}].label`, lk.label, box.labelBox.w, s.small, "caption", lead.tight);
+      });
+      break;
+    }
+    case "relation": {
+      const nL = (c.left || []).length, nR = (c.right || []).length;
+      if (relationIsPartition(nL, nR, c.links)) {
+        const Z = relationZones(T, nL, nR, c.links);
+        (c.left || []).forEach((it, i) => { const zh = Z.zones[i] && Z.zones[i].head; if (zh) push(`left[${i}]`, it, zh.w, s.compareLabel, "heading", lead.tight); });
+        (c.right || []).forEach((it, j) => { if (Z.memberBoxes[j]) push(`right[${j}]`, it, nodeTextBox(Z.memberBoxes[j]).w, s.head, "heading", lead.tight); });
+        break;
+      }
+      const L = relationLayout(T, nL, nR, c.links);
+      (c.left || []).forEach((it, i) => { if (L.left[i]) push(`left[${i}]`, it, nodeTextBox(L.left[i]).w, s.head, "heading", lead.tight); });
+      (c.right || []).forEach((it, j) => { if (L.right[j]) push(`right[${j}]`, it, nodeTextBox(L.right[j]).w, s.head, "heading", lead.tight); });
+      break;
+    }
+    case "before-after": {
+      const top = 2.5, arrowW = 1.0;
+      const w = (W - 2 * m - arrowW - 0.5) / 2;
+      for (const side of ["before", "after"]) {
+        const panel = c[side]; if (!panel) continue;
+        push(`${side}.label`, panel.label, w - 0.9, s.compareLabel, "heading", lead.title);
+        push(`${side}.body`, panel.body, w - 0.9, s.body, "body", lead.body);
+      }
+      break;
+    }
     case "cta":
       push("offerBody", c.offerBody, 8.7 - 1, s.small, "body", lead.tight);
       break;
@@ -408,10 +585,15 @@ function wrappingFields(slide, T) {
       push("subtitle", c.subtitle, 8.0, s.coverSub, "body", lead.tight);
       break;
     case "stat-grid": {
+      // widths follow the AREA-emphasis cells (protagonist wide, others narrow)
+      // so kinsoku/orphan predictions match what the engine actually draws.
       const stats = c.stats || [], n = Math.max(stats.length, 1);
-      const cardW = ((W - 2 * m) - (n - 1) * 0.4) / n;
-      stats.forEach((st, i) =>
-        push(`stats[${i}].sub`, st.sub, cardW - 0.8, s.small, "body", lead.tight));
+      const eIdx = Number.isInteger(c.emphasis) ? c.emphasis : -1;
+      const { cells } = resolveStatGrid(T, stats, eIdx);
+      stats.forEach((st, i) => {
+        if (!cells[i]) return;
+        push(`stats[${i}].sub`, st.sub, cells[i].w - 0.8, s.small, "body", lead.tight);
+      });
       break;
     }
     case "card-grid": {

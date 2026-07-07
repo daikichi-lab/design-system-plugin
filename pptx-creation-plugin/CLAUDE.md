@@ -132,7 +132,11 @@ reintroduce one by hand-editing output or hand-rolling a shape:
 
 ## Toolchain
 
-- **Runtime:** Node + `pptxgenjs` (the only runtime dependency; `npm install`).
+- **Runtime:** Node + `pptxgenjs` (+ `budoux`, `playwright-core`, `pngjs`; `npm install`).
+- **Figure generation (build-time, offline):** vendored `@dicebear/core` +
+  `@dicebear/collection` — `bin/graphics/gen-figures.js` deterministically
+  regenerates the committed CC0 masters in `assets/generated/figures/openpeeps/`.
+  Never call a DiceBear HTTP API.
 - **QA rendering:** `bin/qa.sh` shells out to **LibreOffice (`soffice`)** for
   PPTX → PDF and **poppler (`pdftoppm`)** for PDF → JPG. If `soffice` isn't on the
   `PATH`, the official Anthropic `pptx` skill's `scripts/office/soffice.py` is a

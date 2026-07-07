@@ -20,8 +20,21 @@ off. Read these before planning:
 
 - `../../references/principles/house-quality-bar.md` — the bar every deck meets. One slide / one message; titles are conclusions or questions, never topic labels.
 - `../../references/principles/slide-design-principles.md` — narrative frames and the message-first method.
+- `../../references/principles/visual-psychology.md` — the gaze-design layer: one protagonist per slide (`emphasis`), one climax per deck (`peak`), and the honesty guard on what may be emphasized.
+- `../../references/principles/education-register.md` — the REGISTER gate (`meta.intent`): financial/board vs seminar/education, the inversion table, the three education modes with their honesty guards, the persona 床規則, and the imaginability transform. **Read before designing any deck** — the register decides which defaults flip.
 - `../../references/patterns/catalog.md` — the nine patterns, their jobs, and each one's `capacity`.
 - `../../schemas/deck_plan.schema.json` — the exact shape you must emit.
+
+## Step 0 — Declare the register (`meta.intent`)
+
+Before the spine: is this deck for **decision-makers** (`financial` / `board` —
+restraint = trust; personas and speech bubbles are a lint ERROR) or for
+**learners** (`seminar` / `education` — 理解・定着・共感; the inversion table in
+education-register.md flips the diagram default to "迷えば構造を見せる",
+allows a livelier tone and the persona device, and turns the imaginability
+transform ON)? The shared floors (honesty / CUD / number atoms / no AI images /
+1 emphasis per slide / 1 peak per deck) hold in BOTH registers. Write the
+chosen intent into `meta.intent` — the lints read it.
 
 ---
 
@@ -118,6 +131,34 @@ that doesn't is worse than text.
 When a beat exceeds capacity, **split it into two slides** — never shrink the
 copy or cram past the bar. Two clean slides beat one crowded one every time.
 
+**Name each slide's protagonist (`emphasis`).** For every body beat, ask: *which
+single element proves this slide's message?* — the KPI card, the process step,
+the quadrant, the row. Put its index in `emphasis` (see each pattern's block in
+catalog.md / diagram-recipes.md; a chart's bar protagonist is `emphasizeIndex`).
+One per slide — the lint (EMPHASIS-COUNT) hard-errors on more. Two rules:
+
+- **If you cannot name the protagonist, the message is fuzzy** — that is a sign
+  to rework the beat (split it, or sharpen the title), not to skip emphasis.
+  Leaving `emphasis` unset is fine for genuinely equal-weight slides (an agenda,
+  a balanced 強み/リスク comparison) — record *why* in `notes`.
+- **誠実ガード (MUST):** emphasize only what the data actually supports. Never
+  enlarge the flattering number, never emphasize a forecast/estimate as if it
+  were an actual (実績を強調し、予想はミュートのまま注記する), no loss-aversion
+  scare wording. This is house-quality-bar §4 applied to emphasis; deck-review
+  checks every emphasized claim against it. Financial/factual decks: strictest.
+
+Record the reasoning in the slide's `notes` (`【emphasis=N】主役は…、なぜなら…`)
+— the reviewer must be able to audit the choice.
+
+**Markers (`marker`, optional — the 見せ場 device).** The protagonist may carry
+ONE marker: `circle` (hand-drawn ring around the number), `badge` (a small pill
+with a FACT label — 過去最高/初/3期連続, ≤8 chars), or `arrow-note` (arrow +
+one-line note, ≤14 chars). Use sparingly — a marker on every slide is no marker
+at all; one or two per deck, on the beats that must be remembered. Badge/note
+wording must be a fact the data supports (hype adjectives are lint-blocked;
+factuality itself is deck-review's audit). Supported: stat-grid / message
+(all 3), chart takeaway / flow / cycle nodes (badge & arrow-note).
+
 ## Step 3b — Diagram? (conservative — default to text)
 
 The diagram skeletons (`flow` / `cycle` / `matrix`) are powerful, but the failure
@@ -172,10 +213,21 @@ call, so leave the reasoning behind.
    deck (sandwich rule in catalog.md and house-quality-bar.md §1.4).
 2. **Body is light.** Never place two dark slides adjacent in the body.
 3. **Vary patterns** — don't repeat the same one 3× in a row. Alternate
-   `two-column` / `comparison` / `chart` / `message` to keep rhythm.
+   `two-column` / `comparison` / `chart` / `message` to keep rhythm. Density
+   too: 3+ dense slides in a row (table / comparison / busy chart) read as one
+   grey wall — the RHYTHM lint warns; break the run with a `message`/`section`.
 4. **6–14 slides** is the healthy range for most decks. Shorter risks thin;
    longer risks losing the room — split into sections or cut beats.
-5. Sanity-check the **goal-action ladder**: read titles top to bottom. Do they
+5. **Pick the deck's ONE peak** (`"peak": true` on the slide, next to
+   `pattern`): the body slide that *proves* the main message — usually the
+   `message` beat carrying the headline number, or the chart that clinches the
+   argument. Peak-end (ピーク・エンドの法則): the audience remembers the peak
+   and the ending, so place the peak where the argument lands and let the `cta`
+   be the end. Exactly one; never on `cover`/`cta` (lint ERRORs). Record *why
+   this slide is the peak* in its `notes`. A deck may omit the peak (a flat
+   informational deck), but a persuasion deck without a climax is usually a
+   sign the main message is weak.
+6. Sanity-check the **goal-action ladder**: read titles top to bottom. Do they
    form a single argument that arrives at the `cta`? If a slide doesn't move
    the audience toward the goal-action, cut it.
 
