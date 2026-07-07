@@ -22,8 +22,8 @@ the pattern contracts you are filling live in
 
 You need two files:
 
-- **A deck plan** — an ordered list of slides, each naming one of the nine
-  patterns plus that pattern's content slots. It must validate against
+- **A deck plan** — an ordered list of slides, each naming one of the **24
+  patterns** plus that pattern's content slots. It must validate against
   [`../../schemas/deck_plan.schema.json`](../../schemas/deck_plan.schema.json).
   Normally `deck-strategy` produces this; if no plan exists, author one first
   (audience → scene → goal-action → message → pattern, per the house bar §1).
@@ -44,9 +44,12 @@ directory may be empty or partial, so treat it as help rather than a hard
 requirement; regardless, financial decks must label estimates and never omit
 assumptions (house bar §4).
 
-The nine patterns are exactly: `cover`, `message`, `two-column`, `comparison`,
-`chart`, `stat-grid`, `table`, `section`, `cta`. Any other `pattern` id makes
-the engine throw.
+The 24 pattern ids live in the engine's `PATTERNS` map (`bin/generate.js`) and
+each one's contract in `catalog.md` — base patterns (`cover`…`cta`), diagram
+skeletons (`flow`/`cycle`/…/`relation`), and the register-gated devices
+(`dialogue`, `testimonial`). Any other `pattern` id makes the engine throw.
+The plan's `meta.intent` and `meta.personStyle` drive the register/style gates
+— they are content decisions (deck-strategy's), not yours to change here.
 
 ---
 
@@ -62,8 +65,12 @@ bash bin/build.sh --plan <plan.json> --theme <theme.json> --out <out.pptx>
 
 Under the hood: [`bin/layout-html/bake.js`](../../bin/layout-html/bake.js) (compute
 balanced breaks in real Yu Gothic → explicit line arrays, spec §5) →
-[`bin/generate.js`](../../bin/generate.js) (draw natively) → `design-lint` +
-`typo-lint` (§3) → [`bin/qa.sh`](../../bin/qa.sh) (render).
+[`bin/graphics/make-markers.js`](../../bin/graphics/make-markers.js) (rasterize
+every persona figure / avatar / bubble / marker / scene symbol as a transparent
+PNG **sized by the same layout the engine draws with**) →
+[`bin/generate.js`](../../bin/generate.js) (draw natively) →
+`geometry-lint` + `design-lint` + `typo-lint` + `image-lint` (§3) →
+[`bin/qa.sh`](../../bin/qa.sh) (render) → `saliency-lint` (advisory).
 
 - **Baking is the typesetting floor**
   ([`typography.md`](../../references/principles/typography.md),
@@ -90,13 +97,19 @@ A written `.pptx` is **not** a finished deck. The first render almost always has
 few breaks. Run this loop every single generation. Full procedure:
 [`house-quality-bar.md` §5](../../references/principles/house-quality-bar.md).
 
-**Two automatic gates run first (no eyes needed — `build.sh` runs them):**
-**design-lint** ([`bin/lint/design-lint.js`](../../bin/lint/design-lint.js) —
-contrast, margins, capacity, **card overflow**, AI-tell characters, placeholders;
-§6-1) and **typo-lint** ([`bin/lint/typo-lint.js`](../../bin/lint/typo-lint.js) —
-predicts Japanese line breaks and flags 泣き別れ/orphans; §5.5). Clear their ERRORs
-first — a design-lint ERROR is a **blocking gate**: `build.sh` still renders the
-deck so you can look, but exits non-zero so a break can't ship unnoticed.
+**The automatic gates run first (no eyes needed — `build.sh` runs them):**
+**geometry-lint** (parses the GENERATED pptx XML — outline/drift/alignment/
+connector quality; a text **COLLISION blocks**), **design-lint**
+([`bin/lint/design-lint.js`](../../bin/lint/design-lint.js) — contrast, margins,
+capacity, **card overflow**, emphasis/register/marker rules, AI-tell characters,
+placeholders; blocking on ERROR), **typo-lint** (predicted Japanese line breaks,
+泣き別れ/orphans), and **image-lint** ([`bin/lint/image-lint.js`](../../bin/lint/image-lint.js)
+— every embedded image's 2x-resolution floor, transparency (OPACITY), the
+LICENSE record floor for supplied figures, AVATAR-UNIFORM, and **STYLE-UNIFORM**
+= 1デッキ1様式). After the render, **saliency-lint** warns when a bystander
+out-shines the declared protagonist (advisory). Clear the ERRORs first —
+`build.sh` still renders the deck so you can look, but exits non-zero so a
+break can't ship unnoticed.
 
 Orphan / compound-split / height protection covers both the **prose** fields and
 the auto-wrapping **heading** (`title`) — so an enlarged heading that wraps and
@@ -149,6 +162,11 @@ not what's actually on the slide. Checklist, most-frequent failure first:
   [`house-quality-bar.md` §2](../../references/principles/house-quality-bar.md) —
   do not restate or relax it; just confirm none has crept in. To emphasize a card,
   the engine uses a soft tint (`surfaceAccent`) + soft shadow, **never** a stripe.
+- **Person composites** (persona / dialogue / testimonial slides) — the figure
+  or avatar actually rendered (a missed raster trigger once shipped bubble-less
+  slides), the bubble tail points at ITS speaker, quotes fit their bubbles,
+  ※例 marks present and colliding with nothing, and every person is the SAME
+  style (混在は lint が捕るが、様式が場に合うかは目視).
 - **Leftover placeholders** — `lorem` / `ipsum` / `TODO` / `[insert`. `qa.sh`
   flags these in the binary, but eyeball the render too.
 

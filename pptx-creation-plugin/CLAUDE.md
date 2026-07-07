@@ -1,146 +1,173 @@
-# CLAUDE.md — developer memo (NOT loaded as context)
+# CLAUDE.md
 
-> **Read this first (M-5).** This file is an **engineering memo for humans
-> hacking on the plugin**. It is *not* loaded as plugin/project context, and it
-> deliberately holds **none** of the quality core. The design norms, the hard
-> rules, the AI-tell blocklist, the scoring rubric, and the pattern contracts
-> live in `references/` and the SKILLs — **never here**. If you came looking for
-> "what makes a good deck," you are in the wrong file: go to
-> `references/principles/house-quality-bar.md` and `references/patterns/catalog.md`.
-> Putting design norms in CLAUDE.md is a violation of M-5; keep this file purely
-> mechanical.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+> **Read this first (M-5).** This file is an **engineering memo for humans and
+> agents hacking on the plugin**. It deliberately holds **none** of the quality
+> core. The design norms, the hard rules, the AI-tell blocklist, the scoring
+> rubric, and the pattern contracts live in `references/` and the SKILLs —
+> **never here**. If you came looking for "what makes a good deck," go to
+> `references/principles/house-quality-bar.md` and
+> `references/patterns/catalog.md`. Putting design norms in CLAUDE.md is a
+> violation of M-5; keep this file purely mechanical.
 
 ## What this plugin is
 
-`pptx-creation` plans, generates, and reviews high-quality PPTX decks (the
-target output is Japanese business decks). The *real* guidance — the stuff a
-model must obey — lives in three places, and CLAUDE.md just points at them:
+`pptx-creation` plans, generates, and reviews high-quality PPTX decks (target:
+Japanese business decks). The guidance a model must obey lives in three places:
 
-- **Principles** — `references/principles/house-quality-bar.md` (the hard rules,
-  the AI-tell blocklist, the QA loop, the scoring rubric) and
-  `references/principles/chart-design.md`.
+- **Principles** — `references/principles/`: `house-quality-bar.md` (hard rules
+  M-1..M-6, AI-tell blocklist, QA loop, rubric), `chart-design.md`,
+  `hybrid-architecture.md` (M-7..M-10 + the asset pipeline),
+  `visual-psychology.md` (emphasis/peak/marker layer),
+  `education-register.md` (intent gate, persona/人物方針).
 - **Patterns** — `references/patterns/catalog.md` (machine-readable recipes for
-  the six slide patterns + the deck-plan envelope).
-- **SKILLs** — `skills/*/SKILL.md`: `theme-init`, `deck-strategy`, `create-deck`,
-  `deck-review`. These are the agent-facing playbooks.
+  all 24 patterns + the deck-plan envelope + 幾何契約). Also
+  `references/graphics/diagram-recipes.md` and `references/design-languages/`
+  (the style bookshelf — one language per deck).
+- **SKILLs** — `skills/*/SKILL.md`: `theme-init`, `deck-brief`, `deck-strategy`,
+  `design-language`, `design-doc`, `create-deck`, `deck-review`,
+  `project-scaffold`. These are the agent-facing playbooks.
 
 Everything below is plumbing.
 
-## Repo layout
+## Commands
 
+```bash
+npm install                       # pptxgenjs + budoux + playwright-core + pngjs (+ @dicebear/* for figure gen)
+bash bin/layout-html/setup.sh     # one-time: pin the headless Chromium (bake / rasterize / pixel lints)
+
+# THE build (full gated pipeline — use this, not bare generate, for real decks):
+bash bin/build.sh --plan <deck_plan.json> [--theme <theme.json>] --out <out.pptx>
+#   bake → make-markers (persona/avatar/bubble/marker rasters) → generate
+#   → geometry-lint (BLOCKING on COLLISION) → design-lint (BLOCKING on ERROR)
+#   → typo-lint → image-lint → qa render → saliency-lint (advisory)
+#   Exit 1 when a blocking gate fails; the deck still renders for inspection.
+
+node bin/generate.js --plan <p.json> [--theme <t.json>] --out <o.pptx>   # engine only (no gates)
+bash bin/qa.sh <out.pptx>         # PPTX → PDF → qa/slide-*.jpg; then OPEN and LOOK (M-2)
+bash tests/run-gate.sh            # regression gate: all themes × examples + adversarial tortures
+node bin/validate.js [--plan <p> --theme <t>]   # dev pre-flight vs schemas/ (needs ajv)
+
+# individual lints (all take --plan <plan.json> [--theme <t.json>]):
+node bin/lint/design-lint.js      # static gate: capacity/emphasis/register/atoms/AI-tells (exit 1 on ERROR)
+node bin/lint/geometry-lint.js    # parses the GENERATED pptx XML: outline/drift/align/connector/collision
+node bin/lint/image-lint.js       # pixel gate: scrim/2x-resolution/OPACITY/LICENSE/AVATAR- & STYLE-UNIFORM
+node bin/lint/saliency-lint.js    # rendered-pixel salience (protagonist must out-shine bystanders)
+node bin/lint/typo-lint.js        # typesetting (kinsoku / orphans) — needs the browser
+
+node bin/graphics/gen-figures.js  # regenerate the CC0 openPeeps figure masters (offline, fixed seeds)
 ```
-pptx-creation-plugin/
-  bin/
-    generate.js        # the engine: every coordinate/size lives here (source of truth)
-    qa.sh              # PPTX -> PDF -> per-slide JPG for the visual QA loop
-  references/
-    principles/        # house-quality-bar.md, chart-design.md  <- quality core
-    patterns/          # catalog.md  <- the 6 pattern recipes + deck-plan envelope
-  schemas/             # theme.schema.json, deck_plan.schema.json, deck_review.schema.json
-  themes/
-    _default-neutral/  # theme.json (neutral-business) — look-and-feel ONLY
-  skills/              # theme-init, deck-strategy, create-deck, deck-review
-  examples/            # seminar-kanrikaikei (reference render), theme-swap-demo
-  agents/
-  .claude-plugin/      # plugin.json manifest
-  package.json
-```
+
+There is no separate test framework: `tests/run-gate.sh` + the adversarial
+fixtures in `tests/adversarial/` ARE the suite. To "run one test", run the
+relevant lint against a single plan (fixtures are plain deck plans).
 
 ## The 3-layer separation (do not collapse these)
 
-The engine's whole design is three layers that never bleed into each other:
+1. **Theme tokens** — `themes/<name>/theme.json` — look-and-feel ONLY (colors,
+   fonts, sizes, `theme.layout` composition knobs). **M-6:** a theme never
+   carries content or slide order. The bookshelf: `_default-neutral`, `swiss`,
+   `editorial`, `minimal`, `data-driven`, `wa-modern`.
+2. **Pattern builders** — `bin/generate.js` — reference theme **tokens only**
+   (`T.c.*`, `T.s.*`, `T.layout.*`); no hardcoded colors or sizes. 24 patterns
+   in the `PATTERNS` map; any other id throws at build time.
+3. **Deck content** — `deck_plan.json` per project — `{ meta, slides:[{pattern,
+   content}] }`. No geometry travels through the plan. `meta` carries the
+   register/style switches (`intent`, `personStyle`, `peak` on slides).
 
-1. **Theme tokens** — `themes/<name>/theme.json` — per-project *look-and-feel*:
-   colors, font family, point sizes, canvas. **M-6: a theme holds ONLY
-   look-and-feel.** It must never carry chapter structure or slide order — those
-   belong to `deck-strategy` content / the deck plan. If you want to put "slide 3
-   then slide 4" into a theme, stop; that is a plan, not a theme.
-2. **Pattern builders** — `bin/generate.js` — the "recipes." Builders reference
-   theme **tokens only** (`T.c.*`, `T.s.*`); no hardcoded colors or point sizes.
-   This is why a theme swap restyles a deck without touching content.
-3. **Deck content** — `deck_plan.json` — per-project *content*, an ordered list
-   of `{ pattern, content }`. No geometry ever travels through the plan.
+`loadTheme` maps human-friendly `theme.json` color keys onto short internal
+token keys via `COLOR_MAP` (e.g. `accentDeep` → `T.c.accentDp`,
+`surfaceAccent` → `T.c.surfaceA`).
 
-`loadTheme` maps the human-friendly `theme.json` color keys onto the short
-internal token keys the builders use (`COLOR_MAP` in `bin/generate.js`). The nine
-patterns are registered in `PATTERNS` and are **exactly**: `cover`, `message`,
-`two-column`, `comparison`, `chart`, `stat-grid`, `table`, `section`, `cta`. Any
-other `pattern` id makes the engine throw at build time.
+## One geometry, N consumers (the key cross-file invariant)
 
-## How to run
+`bin/graphics/diagrams.js` is the **single source of truth for layout math**
+(node boxes, caps, emphasis scales, persona/speaker/stat-grid geometry). It is
+consumed by FOUR independent readers that must never disagree:
 
-```bash
-npm install                       # pptxgenjs (runtime) + ajv (dev, for validate.js)
-node bin/generate.js --plan <deck_plan.json> --theme <theme.json> --out <out.pptx>
-bash bin/qa.sh <out.pptx>         # render to qa/slide-*.jpg, then OPEN and inspect
-node bin/validate.js              # dev pre-flight: validate all example plans/themes vs schemas/
-node bin/validate.js --plan <p.json> --theme <t.json>   # validate specific files
-```
+- `bin/generate.js` — draws with it,
+- `bin/layout-html/geometry.js` — the bake floor (kinsoku line-break + height
+  gate) measures the SAME boxes,
+- `bin/lint/design-lint.js` — capacity/overflow checks read the same caps,
+- `bin/lint/image-lint.js` / `saliency-lint.js` — pixel checks locate regions
+  with the same layouts.
 
-`bin/validate.js` is a **dev-only** convenience (needs the `ajv` devDependency);
-the engine itself already fails loudly on a bad plan/theme at build time, so
-validation is a pre-flight, not a runtime requirement.
+If you change a coordinate in one place only, the floor will measure a size the
+engine doesn't draw. Always change `diagrams.js` and let every consumer follow.
 
-`--theme` defaults to `themes/_default-neutral/theme.json` when omitted. The plan
-may be a bare `[ {pattern, content}, ... ]` array or a `{ meta, slides }` object
-(see the envelope in `references/patterns/catalog.md`). Try it end-to-end against
-`examples/seminar-kanrikaikei/deck_plan.json`.
+The same single-source rule applies to raster assets:
+`bin/graphics/make-markers.js` materializes every SVG→PNG (markers, persona
+figures, bubbles, scene symbols, avatars) **sized by the same layout the engine
+draws with**, via `materialize()` (SVG master saved next to a transparent PNG
+at ≥2x; >5in → 3x, >8in → 4x). The pptx embeds ONLY PNGs, never SVG.
+`bin/build.sh` decides when to call it — if you add a new pattern that needs
+rasters, extend the trigger condition in `build.sh` too (a missed trigger ships
+slides without their images; this happened once).
 
-**M-2: generating the `.pptx` is NOT "done."** Every generation runs the
-mandatory QA loop (`bin/qa.sh` then *look at each image*). The full procedure is
-`references/principles/house-quality-bar.md` §5 and `skills/create-deck/SKILL.md`
-§3 — follow it there, don't reinvent it here. **M-4: if a break can't be cleanly
-fixed, STOP and report with the screenshot** — never ship a compromised slide.
+## Verify the verifier (M-10)
+
+Every lint/check must be proven BOTH ways before it counts: a torture fixture
+that FIRES it and a clean fixture that PASSES. Adversarial fixtures live in
+`tests/adversarial/` and are wired into `tests/run-gate.sh`. The regression bar
+for engine changes is: all gates + run-gate + byte-identical slide XML for
+`examples/*/out/deck.pptx` when the feature is unused (features default
+OFF/empty).
 
 ## How to ADD a pattern (the only sanctioned path)
 
-The roadmap candidates (`section`, `process`, `table`, `stat-grid`) are listed in
-`references/patterns/catalog.md`. To promote one to "available," do these steps
-**in order** — never mark a pattern available before it has passed QA:
+1. Layout math in `bin/graphics/diagrams.js` (+ its cap in `CAPS`).
+2. Builder in `bin/generate.js` (tokens only) + register in `PATTERNS`.
+3. Bake-floor wiring in `bin/layout-html/geometry.js` (`wrappingFields` +
+   `heightBoxes`) so native text goes through kinsoku + the height gate.
+4. Lint wiring: capacity in `design-lint.js`; raster trigger in `build.sh` and
+   materialization in `make-markers.js` if it embeds images.
+5. Schema block in `schemas/deck_plan.schema.json` (pattern enum + content).
+6. Recipe in `references/patterns/catalog.md` — engine and catalog ship as a
+   pair; if they disagree, the engine wins, fix the catalog.
+7. Example render + full QA loop + a torture fixture. Only then call it
+   available.
 
-1. **Implement the builder** in `bin/generate.js`: a function
-   `(pres, content, T, ctx) -> slide` that references **theme tokens only** (no
-   literal colors/sizes — add a `sizes.*` token to the theme + schema if you need
-   a new size).
-2. **Register it** in the `PATTERNS` map under its `pattern` id.
-3. **Add the recipe** to `references/patterns/catalog.md` (content slots, params,
-   `capacity`). The catalog documents the contract; the engine stays the source
-   of truth for numbers — if they disagree, fix the catalog, never fork the code.
-4. **Render an example** deck that exercises the pattern.
-5. **Pass the QA loop** (`bin/qa.sh` + visual inspection; clear all §5 breaks).
-6. **Only then** describe it as available (and remove it from the catalog
-   roadmap). Update the engine and the catalog **together** — they ship as a pair.
+## Assets policy (`assets/generated/` is git-ignored)
 
-## pptxgenjs landmines (same list `create-deck` cites — see SKILL §6)
+Supplied figure assets (socost カラー, 黒シルエット, user PNGs) must NEVER be
+committed into the plugin — redistribution guard (ソコスト規約) + M-6.
+`assets/generated/figures/figures-index.md` is the reviewer's only inventory
+window; per-asset `LICENSE.md` records live next to the assets (never create an
+empty LICENSE.md just to silence the LICENSE lint — the floor must not lie).
+The CC0 openPeeps masters are reproducible offline via
+`bin/graphics/gen-figures.js` (fixed seeds, vendored `@dicebear/*`, md5-stable)
+— never call a DiceBear HTTP API.
 
-The verified engine already navigates all of these; know them so you don't
-reintroduce one by hand-editing output or hand-rolling a shape:
+## pptxgenjs landmines
 
-- **Colors are 6-digit hex WITHOUT a leading `#`** (theme stores them bare, e.g.
-  `accent: "0E7C86"`). That is what pptxgenjs wants.
-- **Never bake opacity into an 8-digit alpha hex** — use the `opacity` property
-  (the engine's `cardShadow` uses `opacity: 0.12`). An 8-digit hex won't render
-  as you expect.
-- **Native bullets via `bullet: true`** (or `bullet: { indent: … }`, as in the
-  `comparison` builder) — **never** a literal `•` typed into the string.
-- **Build a FRESH options/shadow object per call.** pptxgenjs *mutates* the
-  option objects you pass it, so a shared object bleeds state across shapes. The
-  engine returns a new object every call (`cardShadow = (T) => ({ … })`); do the
-  same for any shape you add.
-- **`.pptx` is a ZIP.** Do not hand-edit the file or its XML — you will corrupt
-  the archive. To change a slide, change the plan and regenerate.
+The engine already navigates these; don't reintroduce one:
+
+- **Colors are 6-digit hex WITHOUT a leading `#`** (theme stores them bare).
+- **Never bake opacity into 8-digit alpha hex** — use the `opacity` property.
+- **Native bullets via `bullet: true`** — never a literal `•` in the string
+  (design-lint flags it as an AI-tell).
+- **Build a FRESH options/shadow object per call** — pptxgenjs mutates the
+  option objects you pass; shared objects bleed state across shapes.
+- **`.pptx` is a ZIP** — never hand-edit the archive; change the plan and
+  regenerate. (Reading it read-only with `unzip -p` is fine — geometry-lint
+  does exactly that.)
 
 ## Toolchain
 
-- **Runtime:** Node + `pptxgenjs` (+ `budoux`, `playwright-core`, `pngjs`; `npm install`).
+- **Runtime:** Node + `pptxgenjs`, `budoux`, `playwright-core`, `pngjs`.
 - **Figure generation (build-time, offline):** vendored `@dicebear/core` +
-  `@dicebear/collection` — `bin/graphics/gen-figures.js` deterministically
-  regenerates the committed CC0 masters in `assets/generated/figures/openpeeps/`.
-  Never call a DiceBear HTTP API.
-- **QA rendering:** `bin/qa.sh` shells out to **LibreOffice (`soffice`)** for
-  PPTX → PDF and **poppler (`pdftoppm`)** for PDF → JPG. If `soffice` isn't on the
-  `PATH`, the official Anthropic `pptx` skill's `scripts/office/soffice.py` is a
-  drop-in stand-in (`qa.sh` prints this hint).
-- **Charts render fine headless.** The `chart` pattern emits a *native*
-  PowerPoint column chart (`pres.charts.BAR`), which LibreOffice rasterizes
-  correctly in the headless PPTX → PDF step — no special handling needed.
+  `@dicebear/collection` — see `bin/graphics/gen-figures.js`.
+- **QA rendering:** `bin/qa.sh` shells out to LibreOffice (`soffice`) for
+  PPTX → PDF and poppler (`pdftoppm`) for PDF → JPG. Charts render fine
+  headless (native pptx charts, no Java needed).
+- **Headless Chromium** (pinned via `bin/layout-html/setup.sh`) powers the bake
+  measurements, SVG rasterization (`bin/svg-render.js`) and the pixel lints;
+  build.sh degrades gracefully when it is absent (markers skipped, bake skipped)
+  but gated decks should always be built WITH it.
+
+**M-2: generating the `.pptx` is NOT "done."** Every generation runs `qa.sh`
+and you LOOK at each image (`house-quality-bar.md` §5). Independent
+verification is soffice→PDF→PNG; 字面 (Yu Gothic vs Noto substitution) is the
+one thing it cannot represent — that stays with the user on real PowerPoint.
+**M-4: if a break can't be cleanly fixed, STOP and report with the screenshot.**

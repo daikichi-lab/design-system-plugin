@@ -42,6 +42,8 @@ mandatory loop yourself — see §5 of
    - low text/background contrast
    - misaligned columns / cards
    - **any AI-tell from §2** of the house quality bar sneaking in
+   - person composites: figures/avatars rendered, bubble tails point at their
+     own speaker, ※例 marks present, ONE person style across the deck
    - leftover placeholders (`lorem|ipsum|TODO|[insert`)
 
 Record what you saw, per slide, in `visualQa.slides[]`. A clean slide is an
@@ -85,6 +87,17 @@ could be tighter."
 > emphasized actual) is a deliberate override — check the `notes` justify it.
 > The lints guarantee only scarcity (1 emphasis/slide, 1 marker/slide,
 > 1 peak/deck); the *meaning* is yours to approve.
+
+> **Register & persons (same principle).** The machine enforces the mechanics —
+> REGISTER-GATE (persona/dialogue/testimonial on financial/board = ERROR),
+> PERSONA-MARK (missing ※例 = WARN), STYLE-UNIFORM (人物様式の混在 = ERROR),
+> LICENSE (supplied figures without a record = WARN). What is YOURS:
+> does the register itself fit the audience (`meta.intent` vs who actually
+> reads it)? Does the chosen `personStyle` fit the occasion (格式 vs 親しみ)?
+> Are fictional例示 kept clearly apart from factual claims even WITH the ※例
+> mark? Does each figure choice match its scene (the plan's `notes` must say
+> why — audit them)? A beautifully rendered persona in the wrong register is a
+> `contentIntegrity`/`designFidelity` finding, not a pass.
 
 `totalScore` is the sum of the five `score` values.
 

@@ -22,7 +22,7 @@ off. Read these before planning:
 - `../../references/principles/slide-design-principles.md` — narrative frames and the message-first method.
 - `../../references/principles/visual-psychology.md` — the gaze-design layer: one protagonist per slide (`emphasis`), one climax per deck (`peak`), and the honesty guard on what may be emphasized.
 - `../../references/principles/education-register.md` — the REGISTER gate (`meta.intent`): financial/board vs seminar/education, the inversion table, the three education modes with their honesty guards, the persona 床規則, and the imaginability transform. **Read before designing any deck** — the register decides which defaults flip.
-- `../../references/patterns/catalog.md` — the nine patterns, their jobs, and each one's `capacity`.
+- `../../references/patterns/catalog.md` — the 24 patterns, their jobs, and each one's `capacity`.
 - `../../schemas/deck_plan.schema.json` — the exact shape you must emit.
 
 ## Step 0 — Declare the register (`meta.intent`)
@@ -34,7 +34,19 @@ education-register.md flips the diagram default to "迷えば構造を見せる"
 allows a livelier tone and the persona device, and turns the imaginability
 transform ON)? The shared floors (honesty / CUD / number atoms / no AI images /
 1 emphasis per slide / 1 peak per deck) hold in BOTH registers. Write the
-chosen intent into `meta.intent` — the lints read it.
+chosen intent into `meta.intent` — the lints read it. `marketing` behaves like
+the learner registers for the device gates.
+
+**Also declare `meta.personStyle` whenever ANY person will appear** (persona
+figures, dialogue/testimonial avatars): `"silhouette"` (黒シルエット — 抑制・
+格式・数字主体) or `"illustration"` (カラーイラスト — 親しみ・共感・セミナー/
+マーケ). **1デッキ1様式** — the STYLE-UNIFORM lint ERRORs on mixing; the
+register decides which. Pick each slide's figure from the project's
+`assets/generated/figures/figures-index.md` (the scene→figure catalog; 1シーン
+1枚 for fixed-pose sets) and record WHY in `notes`. No matching素材 → bubble-only
+(+PERSONA-FIGURE WARN) or the in-engine fallbacks (`style:"silhouette"|"pictogram"`)
+— never mix styles to fill a gap. Fictional persons/voices always carry ※例
+(`mark`) — 例示を事実主張と混ぜない.
 
 ---
 
@@ -98,6 +110,12 @@ For every beat, pick the pattern whose *job* matches it
 | One thing splits into N / N merge into one | `branch` (diagram) |
 | A quantity decomposed into factors (掛け算) | `formula` (diagram) |
 | A level, its drivers, the next level (ブリッジ) | `waterfall` (diagram) |
+| 2–3 options/plans side by side + a VS verdict | `positioning` (diagram) |
+| An ecosystem of actors + labeled flows between them | `system` (diagram) |
+| Category ⇔ member correspondence / 分類 | `relation` (diagram; partition→zones) |
+| A common misunderstanding → the correction | `before-after` |
+| A conversation that dramatizes the point; ○×の会話比較 | `dialogue` (register-gated) |
+| 受講者/お客様の声 (social proof) | `testimonial` (register-gated) |
 | A chapter break in a longer deck (dark) | `section` |
 | The opening promise (dark) | `cover` |
 | The single next action (dark) | `cta` |
@@ -125,6 +143,12 @@ that doesn't is worse than text.
 - `formula`: 2–4 operands + optional result — labels are short TERMS, not sentences.
 - `waterfall`: 3–8 items ({label, value, total?}); group small drivers into その他.
 - `chart` band type: 2–4 segments × 1–5 rows; pie/doughnut: 2–5 slices.
+- `positioning`: 2–3 options; `system`: 2–5 actors; `relation`: 2–4 per side,
+  ≤8 links; `cycle`/`flow` node labels ≤ ~5 chars per line (the height gate
+  fails an overflowing node — the floor caught 7-char cycle steps).
+- `dialogue`: plain 2–4 speakers; compare form exactly 2 columns × 1–2 speakers.
+  Quotes must fit their bubbles — 2 short lines each is the safe zone.
+- `testimonial`: grid 2–6 items, stack 2–3; bodies ≤ 2 short lines.
 - `section`: title ≤ 1 line; index 1–2 chars; only in decks of 8+ slides.
 - `cover` / `cta` / `message`: title ≤ 2 lines.
 
@@ -196,6 +220,18 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   (営業利益ブリッジ, 前期→当期の増減分解). 3–8 items; mark levels `total: true`.
   The deltas must genuinely SUM from one level to the next — if they don't
   reconcile, fix the numbers, not the diagram. Negatives render ▲ automatically.
+
+- **`relation`** — categories and members that correspond (勘定科目の分類,
+  対応マップ). THE FORM FOLLOWS THE DATA: a partition (each member belongs to
+  exactly one category) renders as ZONE GROUPING automatically; only true
+  many-to-many keeps correspondence lines. 2–4 per side.
+- **`positioning` / `system` / `before-after`** — see their blocks in
+  diagram-recipes.md / catalog.md; same conservative gate: name the structure
+  in one word or keep it as text.
+- **`dialogue` / `testimonial`** are persuasion devices, not diagrams: use them
+  only in learner/marketing registers (financial/board = lint ERROR), always
+  with `mark` (※例). The avatar is neutral — meaning rides in the words,
+  scene symbols and ○×ラベル, never in a pose.
 
 **When in doubt, do NOT diagram.** Keep the beat as text / `message` / `two-column`
 / `stat-grid` / `comparison`. Reach for a skeleton only when you can name the
@@ -300,8 +336,9 @@ Validate the JSON against the schema before handing off.
 
 ## Step 7 — Hand off to create-deck
 
-Pass the validated `deck_plan.json` to **`create-deck`**, which runs
-`bin/generate.js` against the project theme and then the mandatory QA loop
+Pass the validated `deck_plan.json` to **`create-deck`**, which runs the full
+gated pipeline (`bin/build.sh`: bake → asset rasters → generate → lints →
+render) against the project theme and then the mandatory QA loop
 (house-quality-bar.md §5, M-2). You do not render or QA the pptx here.
 
 ---

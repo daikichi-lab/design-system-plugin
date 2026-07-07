@@ -17,7 +17,7 @@ Your job is to turn whatever the user gave into a **complete brief**, asking the
 can correct one word instead of re-briefing. You do not choose patterns, colours,
 or render anything — you set the intent, then hand off.
 
-## The brief — 10 slots (fill every one)
+## The brief — 11 slots (fill every one)
 
 | Slot | What it fixes | Owner downstream | If missing |
 |---|---|---|---|
@@ -31,6 +31,7 @@ or render anything — you set the intent, then hand off.
 | **デザイン / design** | theme / tone | design-language | default: `neutral-business`; or infer/name a shelf language |
 | **制約 / constraints** | slide cap, forbiddens, brand/font, output path | all layers | default: 6–14 slides · no invented numbers · Meiryo/Yu Gothic |
 | **検証 / verification** | how hard to prove it | create-deck / deck-review | default: run the QA loop + review; `external`(≥90) if outward-facing |
+| **レジスター＆人物 / register & persons** | `meta.intent` (financial/board/seminar/education/marketing) → which devices are even allowed (persona・吹き出し・dialogue/testimonial は financial/board で lint ERROR), and `meta.personStyle` (silhouette=格式 / illustration=親しみ — 1デッキ1様式) + 人物素材の有無 (供給 or 機内fallback) | deck-strategy Step 0; assets: `assets/generated/figures/figures-index.md` | infer from audience+scene and **state it** (役員/財務→financial・人物なし; セミナー/教育→education・illustration が既定寄り). Ask only when persons are clearly wanted but no素材/様式が読めない |
 
 ## Procedure
 
@@ -50,7 +51,8 @@ or render anything — you set the intent, then hand off.
    rules already applied). Do **not** ask what you can default; do not interrogate
    slot by slot.
 4. **Infer the rest and say so**, e.g. "構成はおまかせ（deck-strategy に SCQA で
-   組ませます）／デザインは DESIGN.md の neutral-business／12枚以内／出力は Desktop
+   組ませます）／デザインは DESIGN.md の neutral-business／register は education・
+   人物はイラスト様式（変えるなら silhouette）／12枚以内／出力は Desktop
    — 変えたい所だけ教えてください。"
 5. **Emit the filled brief** as a short, scannable block (the 10 slots, noting
    which came from DESIGN.md), so the user sees the whole intent at a glance and

@@ -38,6 +38,14 @@ In the **project repo** (not the plugin), create three things:
    one, so the engine runs before any branding work is done.
 3. **`outputs/`** — where generated decks land (`outputs/*.pptx` and their QA
    renders). Keep it out of the way of source so a rebuild never clobbers input.
+4. **`assets/generated/figures/`** *(only when the project will use persons —
+   persona/dialogue/testimonial)* — the landing zone for **user-supplied**
+   figure assets, with two record files the floors read:
+   `figures-index.md` (the inventory + scene→figure catalog — the reviewer's
+   only window into what's inside) and a per-set `LICENSE.md` (出所・帰属要否・
+   商用可否 — the LICENSE lint WARNs until a real record exists; **never write
+   an empty one just to silence it**). Supplied assets stay in the PROJECT repo
+   and out of git if their license forbids redistribution (ソコスト等).
 
 That is the whole scaffold. Resist adding more — extra folders become clutter
 the project never uses.
@@ -68,9 +76,14 @@ The scaffold exists to feed a fixed four-skill pipeline. Spell it out in
 artifact lives:
 
 ```
-theme-init  →  deck-strategy  →  create-deck  →  deck-review
- (look)        (structure)       (generate)      (score)
+[deck-brief] →  theme-init  →  deck-strategy  →  create-deck  →  deck-review
+ (intake)        (look)         (structure)       (generate)      (score)
 ```
+
+(`deck-brief` is the front door for vague asks — it fixes audience, goal,
+message, honesty labels, register (`meta.intent`) and person style
+(`meta.personStyle`) before any structure exists. Skip it only when the
+request already arrives as a complete brief.)
 
 | Step | Skill | Reads | Produces | Lives in |
 |---|---|---|---|---|

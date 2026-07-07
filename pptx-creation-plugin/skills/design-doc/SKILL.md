@@ -58,7 +58,10 @@ adapted to the deck surface:
    title+kicker, cards (surface/emphasis), charts (unit・強調・▲), tables,
    diagram nodes, footer. What each looks like and when to use it.
 8. **§1-7 deck conventions** (below) — audience/voice, design language +
-   theme.json pointer, per-audience presets, honesty house rules,
+   theme.json pointer, per-audience presets (each preset SHOULD fix its
+   register `meta.intent` and person style `meta.personStyle` — e.g. 役員向け=
+   financial・人物なし / 受講者向け=education・illustration — so deck-brief
+   inherits them as defaults instead of asking), honesty house rules,
    constraints, verification bar, visual/diagram conventions.
 9. **Do's and Don'ts** — 7+ each, every line carrying its *why*
    ("クリームが差別化。純白は他社のAIツールに見える" — not "白を使わない").
