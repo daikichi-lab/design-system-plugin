@@ -154,6 +154,10 @@ DESIGN.md (project, standing) × the brief (one deck) is the precision multiplie
 
 ## Skills
 
+The full pipeline map and per-skill boundaries live in
+[`skills/README.md`](skills/README.md); each skill's playbook is its
+`SKILL.md`.
+
 | Skill | Use it to… |
 |---|---|
 | [`design-doc`](skills/design-doc/SKILL.md) | author the project's `DESIGN.md` — its standing design system + deck conventions (read by `deck-brief`) |
