@@ -258,6 +258,57 @@ look:     "totals accentDeep / increases accent / decreases muted; light zero
 renders clean with ▲ labels and step connectors; n=2 / n=9 → CAPACITY; a 2-line
 category label → OVERFLOW at 101%; run-gate PASS across all 6 themes.
 
+## `identity` — stacked identity (積み上げ恒等式)
+
+The accounting canonical form (`visual-psychology.md` §3.5 正準形ライブラリ): a
+WHOLE on the left **＝** its components STACKED to the same total height on the
+right — 資産 ＝ 負債 ＋ 純資産, 収入 ＝ 税 ＋ 手取り. The **areas carry the
+identity**: erase the ＝ and the composition still reads (the symbol-erasure
+test). This is the content `formula` must NOT take — equal boxes joined by ＋
+render an identity as 額装 (the exact failure the canonical library exists to
+prevent).
+
+```yaml
+id: identity
+content:
+  kicker:   { type: string, required: false }
+  title:    { type: string|string[], required: false }
+  left:     { type: object, required: true, note: "the WHOLE {label, value?} —
+              a short TERM (資産/収入). value omitted + all parts numeric ->
+              the engine shows the honest sum." }
+  parts:    { type: array, required: true, note: "2-4 of {label, value?} stacked
+              to the whole's height. Values are ALL-OR-NONE: with values the
+              stack heights are proportional (honest); without, equal split —
+              the engine never invents proportions (盛らない). Non-negative
+              only: 債務超過・赤字 are increments/decrements -> use waterfall." }
+  emphasis: { type: integer, required: false, note: "protagonist part (usually
+              the 残り — 純資産 / 自由なお金): surfaceAccent tint + accentDeep." }
+  unit:     { type: string, required: false, note: "shown once bottom-left (単位：…)" }
+capacity: "2-4 parts (CAPS.identity). 1 part is a message; >4 -> group into
+           その他 or use waterfall. Labels are short TERMS — a proportional thin
+           slice (≲12% of the whole) holds only a very short label; the height
+           gate hard-errors past that (shorten, or carry the point in notes)."
+geometry: "left block spans the full stack height; ＝ lives in its own fixed-width
+           cell (never collides); part heights = (H − gaps) × value/sum when
+           proportional, else equal; stack bottom == whole bottom (the identity,
+           machine-checked in the fixture)"
+labels:   "part values ENGINE-formatted (thousands comma, decimals kept when any
+           value is fractional), joined on the label line; the whole's sum line
+           appears only when honest (author value or computed from full parts)"
+floor:    "whole + every part label baked (kinsoku) + height-gated per box"
+look:     "whole surface (the reference, not the protagonist); parts surface;
+           the emphasis part surfaceAccent + accentDeep (house emphasis);
+           ＝ glyph accent at title size — native text, no shapes"
+```
+
+**Verified (2026-07-08)** — concept form (no values, 2 parts) splits equally and
+closes the identity (stack bottom = whole bottom, 0.01in); proportional form
+(128,340/164,890/136,740 千円) renders heights at exactly 0.298/0.383/0.318 of
+the stack with the honest sum on the whole; n=1 / n=5 → CAPACITY; a negative
+part → CAPACITY (waterfall へ誘導); mixed values → all-or-none WARN; a 3% slice
+with a sentence-length label → OVERFLOW (height gate); run-gate PASS across all
+6 themes (torture-09).
+
 ## `positioning` — 2-3 competitive positions + VS (education register)
 
 ```yaml

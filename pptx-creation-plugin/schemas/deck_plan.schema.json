@@ -935,6 +935,97 @@
           "if": {
             "properties": {
               "pattern": {
+                "const": "identity"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "left",
+                  "parts"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "left": {
+                    "type": "object",
+                    "required": [
+                      "label"
+                    ],
+                    "properties": {
+                      "label": {
+                        "type": [
+                          "string",
+                          "array"
+                        ],
+                        "description": "The WHOLE (資産 / 収入). Short TERM, not a sentence."
+                      },
+                      "value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Optional. Omitted + all parts numeric -> the engine shows the honest sum."
+                      }
+                    }
+                  },
+                  "parts": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "label"
+                      ],
+                      "properties": {
+                        "label": {
+                          "type": [
+                            "string",
+                            "array"
+                          ]
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "All-or-none across parts: with values, stack heights are proportional (honest); without, equal split — the engine never invents proportions."
+                        }
+                      }
+                    },
+                    "description": "2-4 components stacked to the whole's height. Negative components (債務超過) are out of scope — use waterfall."
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Protagonist part (usually the 残り — 純資産 / 自由なお金): surfaceAccent tint + accentDeep head."
+                  },
+                  "unit": {
+                    "type": "string",
+                    "description": "Shown once bottom-left (単位：…)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
                 "const": "card-grid"
               }
             }

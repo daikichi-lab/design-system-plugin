@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -1354,6 +1354,71 @@ function slideWaterfall(pres, d, T, ctx) {
 }
 
 
+/* ---------------- DIAGRAM: identity (stacked identity, 積み上げ恒等式) ----------------
+ * The accounting canonical form (visual-psychology.md §3.5 正準形ライブラリ):
+ * a WHOLE on the left ＝ its parts STACKED to the same total height on the
+ * right (資産 ＝ 負債 ＋ 純資産 / 収入 ＝ 税 ＋ 手取り). The areas carry the
+ * identity — erase the ＝ and the composition still reads (the symbol-erasure
+ * test that `formula` cannot pass for this content: equal boxes joined by ＋
+ * are 額装). Heights go proportional ONLY when every part has a numeric value
+ * (all-or-none — the engine never invents proportions); values render plain
+ * (fmt as waterfall), unit once bottom-left. emphasis tints the protagonist
+ * part (usually the 残り — 純資産 / 自由なお金) with the house tint. */
+function slideIdentity(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const parts = d.parts || [];
+  const L = identityLayout(T, parts);
+  const anyDecimal = parts.some((p) => typeof p.value === "number" && !Number.isInteger(p.value))
+    || (d.left && typeof d.left.value === "number" && !Number.isInteger(d.left.value));
+  const fmt = (v) => {
+    const a = Math.abs(v);
+    const [int, dec] = (anyDecimal ? a.toFixed(1) : String(Math.round(a))).split(".");
+    return int.replace(/\B(?=(\d{3})+$)/g, ",") + (dec ? `.${dec}` : "");
+  };
+  const eIdx = Number.isInteger(d.emphasis) ? d.emphasis : -1;
+  // the whole (left) — the reference, not the protagonist: plain surface card
+  const lf = d.left || {};
+  card(s, T, L.left.x, L.left.y, L.left.w, L.left.h, { fill: T.c.surface });
+  const leftVal = typeof lf.value === "number" ? lf.value
+    : (L.proportional ? parts.reduce((a, p) => a + p.value, 0) : null);
+  {
+    const tb = nodeTextBox(L.left);
+    const runs = [{ text: Array.isArray(lf.label) ? lf.label.join("\n") : (lf.label || ""),
+      options: { fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.ink, breakLine: leftVal !== null } }];
+    if (leftVal !== null) runs.push({ text: fmt(leftVal),
+      options: { fontFace: T.font.heading, fontSize: T.s.body, bold: true, color: T.c.muted } });
+    s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  }
+  // the ＝ — native glyph in its own cell, never colliding with labels
+  s.addText("＝", { x: L.op.x, y: L.op.y, w: L.op.w, h: L.op.h, margin: 0,
+    fontFace: T.font.heading, fontSize: T.s.title, bold: true, color: T.c.accent,
+    align: "center", valign: "middle" });
+  // the parts — stacked; the protagonist takes the house tint
+  parts.forEach((p, i) => {
+    const b = L.parts[i]; if (!b || !p) return;
+    const emph = eIdx === i;
+    card(s, T, b.x, b.y, b.w, b.h, { fill: emph ? T.c.surfaceA : T.c.surface });
+    const tb = nodeTextBox(b);
+    const runs = [{ text: Array.isArray(p.label) ? p.label.join("\n") : (p.label || ""),
+      options: { fontFace: T.font.heading, fontSize: T.s.head, bold: true,
+        color: emph ? T.c.accentDp : T.c.ink } }];
+    if (typeof p.value === "number") runs.push({ text: "　" + fmt(p.value),
+      options: { fontFace: T.font.heading, fontSize: T.s.small, bold: true,
+        color: emph ? T.c.accentDp : T.c.muted } });
+    s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  });
+  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
+    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 /* ---------------- DIAGRAM: positioning (2-3 competitive positions + VS) ----------------
  * 競争ポジション (education-register.md §2-1, structure word "positioning"):
  * side-by-side position cards with a VS cell between. emphasis tints the
@@ -1640,6 +1705,7 @@ const PATTERNS = {
   "branch": slideBranch,
   "formula": slideFormula,
   "waterfall": slideWaterfall,
+  "identity": slideIdentity,
   "positioning": slidePositioning,
   "system": slideSystem,
   "relation": slideRelation,

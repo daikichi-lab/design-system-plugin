@@ -186,7 +186,19 @@ function checkCapacity(slides, F) {
     const len = (v) => (Array.isArray(v) ? v.length : 0);
 
     switch (sl.pattern) {
-      case "dialogue": {
+      case "identity": {
+        const n = len(c.parts);
+        if (n < CAPS.identity[0] || n > CAPS.identity[1])
+          F.error(idx, "CAPACITY", `identity has ${n} parts (must be ${CAPS.identity[0]}-${CAPS.identity[1]}) — 1 part is a message; >4 -> group into その他 or use waterfall`);
+        const vals = (Array.isArray(c.parts) ? c.parts : []).map((p) => p && p.value);
+        const nums = vals.filter((v) => typeof v === "number");
+        if (nums.some((v) => v < 0))
+          F.error(idx, "CAPACITY", "identity part values must be non-negative — 負の構成（債務超過・赤字）は identity では嘘になる：waterfall で増減として描く");
+        if (nums.length > 0 && nums.length !== vals.length)
+          F.warn(idx, "CAPACITY", "identity values are all-or-none — 一部だけ数値を持つと比例せず等分描画になる（エンジンは比率を発明しない）。全てに値を入れるか、全て外す");
+        break;
+      }
+            case "dialogue": {
         if (Array.isArray(c.columns)) {
           if (c.columns.length !== 2) F.error(idx, "CAPACITY", `dialogue compare form needs exactly 2 columns (got ${c.columns.length})`);
           c.columns.forEach((col, ci) => {
@@ -442,6 +454,7 @@ const EMPHASIS_SLOTS = {
   "card-grid": (c) => (Array.isArray(c.cards) ? c.cards.length : 0),
   "two-column": (c) => (Array.isArray(c.items) ? c.items.length : 0),
   "comparison": () => 2,
+  "identity": (c) => (Array.isArray(c.parts) ? c.parts.length : 0),
 };
 
 // Marker support matrix (§2): which marker types each pattern can carry.
@@ -642,8 +655,8 @@ function checkRhythm(slides, F) {
  *     record the one-word structure test (順序/ループ/2軸/ポジション/システム/
  *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
  *     意味の正しさ自体は人の承認領域。 */
-const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall"];
-const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|時系列|段階|sequence|loop|two-axis|positioning|system|relation/i;
+const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity"];
+const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
 const PERSONA_PATTERNS = ["message", "two-column"];
 
 function checkRegister(slides, meta, F) {

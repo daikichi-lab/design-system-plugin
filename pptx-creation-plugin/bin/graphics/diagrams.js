@@ -18,7 +18,7 @@
  * ============================================================ */
 
 const NODE_PAD = 0.16;               // inner padding of a node text box (in)
-const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4], waterfall: [3, 8], positioning: [2, 3], system: [2, 5], relation: [2, 4],
+const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4], waterfall: [3, 8], identity: [2, 4], positioning: [2, 3], system: [2, 5], relation: [2, 4],
   dialogue: [2, 4], testimonial: [2, 6],
 }; // [min, max] element count; matrix is fixed 4
 
@@ -440,6 +440,35 @@ function waterfallLayout(T, items) {
   return { area, bars, valueBoxes, catBoxes, connectors, zeroY: y(0), plotTop, plotBot };
 }
 
+/* ---------------- identity: stacked identity (積み上げ恒等式) ---------------- */
+// The accounting canonical form (visual-psychology.md §3.5 正準形ライブラリ):
+// a WHOLE on the left, its decomposition STACKED on the right at the same total
+// height — the areas carry the identity (資産 ＝ 負債 ＋ 純資産, 収入 ＝ 税 ＋ 手取り).
+// This is what `formula` must NOT be used for: equal boxes joined by ＋ render
+// the identity as 額装 (the symbol-erasure test fails); here, erase the ＝ and
+// the stacked composition still reads. Honesty: heights are proportional ONLY
+// when every part carries a numeric value (all-or-none); with no values the
+// parts split evenly — the engine never invents proportions (盛らない).
+const ID_H = 3.3, ID_OP_W = 0.7, ID_GAP = 0.12, ID_MIN_PART = 0.42;
+
+function identityLayout(T, parts) {
+  const area = diagramArea(T);
+  const y0 = area.y + (area.h - ID_H) / 2;
+  const w = (area.w - ID_OP_W) / 2;
+  const n = Math.max(parts.length, 1);
+  const vals = parts.map((p) => (p && typeof p.value === "number" ? p.value : null));
+  const proportional = vals.length > 0 && vals.every((v) => typeof v === "number" && v >= 0) && vals.some((v) => v > 0);
+  const stackH = ID_H - (n - 1) * ID_GAP;
+  const sum = proportional ? vals.reduce((a, b) => a + b, 0) : 0;
+  const heights = parts.map((p, i) =>
+    proportional ? Math.max(stackH * (vals[i] / (sum || 1)), 0.02) : stackH / n);
+  const left = { x: area.x, y: y0, w, h: ID_H };
+  const op = { x: area.x + w, y: y0, w: ID_OP_W, h: ID_H };
+  let py = y0;
+  const partBoxes = heights.map((h) => { const b = { x: area.x + w + ID_OP_W, y: py, w, h }; py += h + ID_GAP; return b; });
+  return { area, left, op, parts: partBoxes, proportional, minPart: ID_MIN_PART };
+}
+
 /* ---------------- emphasized column chart (native rects) ----------------
  * When a column chart DECLARES a protagonist bar (emphasizeIndex), the native
  * pptx chart cannot vary bar WIDTH per point nor BOLD one data label — so the
@@ -826,7 +855,7 @@ function quadBodyBox(q, hasHead) {
 }
 
 module.exports = {
-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout,
+  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout,
   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
   EMPH_SCALE, PEAK_EMPH_SCALE, emphSizePt,
   STAT_GRID, EMPH_CARD_SCALE, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, statGridLayout, splitValueUnit, estTextWidthIn,

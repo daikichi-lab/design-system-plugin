@@ -205,7 +205,7 @@ bash tests/run-gate.sh
 node bin/validate.js
 ```
 
-## Pattern catalog (24 patterns)
+## Pattern catalog (25 patterns)
 
 **Content patterns** — `cover` · `message` · `two-column` · `comparison` ·
 `chart` · `stat-grid` · `card-grid` · `table` · `section` · `cta` ·
@@ -213,7 +213,7 @@ node bin/validate.js
 
 **Diagram skeletons** (native shapes + native labels, gated per cell by the
 height floor) — `flow` · `cycle` · `matrix` · `timeline` · `steps` · `branch` ·
-`formula` · `waterfall` · `positioning` (options + VS) · `system` (actors +
+`formula` · `waterfall` · `identity` (積み上げ恒等式 — the whole ＝ its parts stacked to the same height) · `positioning` (options + VS) · `system` (actors +
 labeled flows) · `relation` (対応/分類 — the form follows the data: a partition
 renders as zone grouping, not a line web). Diagrams are chosen
 **conservatively** (default to text — deck-strategy §3b,
