@@ -107,14 +107,28 @@ gates the deck: any unresolved overflow/overlap caps it below 80
 should still have been split (setup + payoff on one slide = two ideas = two
 slides) is a judgment call `deck-review` makes under Information design.
 
-## 5. Vertical rhythm — consistent kicker → title → body gaps (REVIEWER)
+## 5. Vertical rhythm — the five fixed bands (REVIEWER)
 
-The vertical gaps between **kicker, title, and body** are constant across
-patterns, so a reader moving slide to slide feels one steady beat instead of a
-jumping baseline. The engine already fixes these (kicker sits above the title at
-a set offset, the title-to-body gap is uniform within a light body slide); the
-patterns inherit the same rhythm because they share the same tokens and
-coordinates (`../patterns/catalog.md`).
+Think of every light body slide as **five horizontal bands**, top to bottom:
+
+1. **Kicker band** — the eyebrow label, always at the same height.
+2. **Title band** — the message, always at the same height.
+3. **Content band** — the ONLY band that varies slide to slide.
+4. **Closing-line band** — the one-line takeaway/結び, when a pattern carries
+   one, lands at a consistent height near the bottom.
+5. **Footer band** — brand + page number, fixed.
+
+Because four of the five bands never move, paging through the deck the screen
+does not "shake" — a viewer registers a title that shifts by even ~2mm between
+slides as unconscious unease, without being able to say why. This is the
+vertical half of the coordinate grammar (`slide-design-principles.md` §8). The
+engine already fixes these (kicker sits above the title at a set offset, the
+title-to-body gap is uniform within a light body slide, the footer is a shared
+helper); the patterns inherit the same rhythm because they share the same
+tokens and coordinates (`../patterns/catalog.md`). Horizontally the same
+economy applies: a pattern decides only its outer margin and gap — element
+*widths* are derived (`width = (W − 2·margin − (n−1)·gap) ÷ n`), so the fewer
+free variables a layout has, the less it can drift between slides.
 
 - Don't fight the built-in rhythm by stuffing an extra line into a kicker or
   pushing a title down to "center" it — that desyncs this slide from the deck.

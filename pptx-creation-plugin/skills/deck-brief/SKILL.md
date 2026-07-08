@@ -22,7 +22,7 @@ or render anything — you set the intent, then hand off.
 | Slot | What it fixes | Owner downstream | If missing |
 |---|---|---|---|
 | **読み手 / audience** | vocabulary, tone, density | deck-strategy §1.1 | **ASK** — can't guess |
-| **場面 / scene** | length, on-screen vs read-alone | deck-strategy §1.2 | infer from audience; state it |
+| **場面 / scene** | length, on-screen vs read-alone, **and the type-size floor** (会場投影は screen-share/print より床が上がる — 誰が・何で・どの距離で見るか; `references/principles/typography.md` §5) | deck-strategy §1.2; typography floor | infer from audience; state it — **note projection / older audiences explicitly**, they change the floor |
 | **目的＝行動 / goal-action** | the `cta`; the whole spine | deck-strategy §1.3 | **ASK** — an action, not "understand X" |
 | **結論 / one message** | cover promise; every title ladders to it | deck-strategy §1.5 | **ASK** — a conclusion/question, never a label |
 | **素材 / material** | the actual copy & numbers (note any process / loop / 2-axis structure) | the deck content | ASK for the data; never fabricate figures |

@@ -88,6 +88,17 @@ Pick the frame that fits the audience's starting psychology (Step 1.4). See
 
 The frame decides the **order of beats**. Each beat is one idea you must land.
 
+**Then map the emotional curve** (read-aloud decks especially — see
+`slide-design-principles.md` §3): write down the named emotional states the
+audience should pass through (約束 → 期待 → 共感 → どん底 → 気づき → 安心 →
+高揚 …) and mark the **転換点** — the beats where the room's state must flip.
+Turning points take the dark statement treatment (情報を処理させるページは白、
+感情を刻むページは紺) and are the candidates for the one `peak`. **This
+classification is the one step no lint can check** — the turning-point list is
+manuscript comprehension. Record it (each turning point's slide gets a `notes`
+line saying why it flips the room) so the human approving the plan can catch a
+mis-read; everything downstream of the classification is mechanical.
+
 ## Step 3 — Map each beat to a pattern
 
 For every beat, pick the pattern whose *job* matches it
@@ -170,6 +181,11 @@ One per slide — the lint (EMPHASIS-COUNT) hard-errors on more. Two rules:
   were an actual (実績を強調し、予想はミュートのまま注記する), no loss-aversion
   scare wording. This is house-quality-bar §4 applied to emphasis; deck-review
   checks every emphasized claim against it. Financial/factual decks: strictest.
+  **Arithmetic is part of honesty:** even illustrative/dummy figures must
+  reconcile (a ミニ決算書 whose 縦計算 doesn't sum, deltas that don't bridge —
+  reverse-engineer the numbers until they check out, or drop them). A wrong
+  number on a "読めなくていい" slide is the worst break of trust
+  (house-quality-bar §4).
 
 Record the reasoning in the slide's `notes` (`【emphasis=N】主役は…、なぜなら…`)
 — the reviewer must be able to audit the choice.
@@ -247,7 +263,10 @@ call, so leave the reasoning behind.
 
 1. **`cover` first, `cta` last** — always. Both are dark; they bookend the
    deck (sandwich rule in catalog.md and house-quality-bar.md §1.4).
-2. **Body is light.** Never place two dark slides adjacent in the body.
+2. **Body is light.** Never place two dark slides adjacent in the body, and
+   budget dark as a scarce resource: **all dark faces together (cover + cta +
+   sections + dark turning-point beats) ≤ ~25–30% of the deck** — beyond that
+   the darkening loses its "now it matters" signal (house-quality-bar §1.4).
 3. **Vary patterns** — don't repeat the same one 3× in a row. Alternate
    `two-column` / `comparison` / `chart` / `message` to keep rhythm. Density
    too: 3+ dense slides in a row (table / comparison / busy chart) read as one
@@ -265,7 +284,17 @@ call, so leave the reasoning behind.
    sign the main message is weak.
 6. Sanity-check the **goal-action ladder**: read titles top to bottom. Do they
    form a single argument that arrives at the `cta`? If a slide doesn't move
-   the audience toward the goal-action, cut it.
+   the audience toward the goal-action, cut it. (This 縦読みテスト doubles as
+   the story check: the titles alone, read in order, must work as one
+   narrative — a latecomer or a skimmer gets the spine from titles only.)
+7. **Time-density check (read-aloud decks).** A slide is a container of time:
+   estimate minutes-per-slide per section from the scene (Step 1.2) and match
+   each beat's density to its screen time, not its importance — statement /
+   `section` beats are **3-second slides** (one line; more kills the rhythm),
+   worked diagrams / tables / charts are **dwell slides** (2–3 min on screen —
+   give them re-reading depth + one 種明かし line). A dense beat in a 3-second
+   slot (or a thin beat in a 2-minute slot) is a planning bug — re-cut the
+   beats. See `../../references/usecases/seminar.md` §3.5.
 
 ## Step 5 — Consult the usecase guide (if one exists)
 
@@ -328,7 +357,11 @@ Rules for the emit:
   requires `left`/`right`, each `{label, role, points}`).
 - Put the side you advocate on `comparison.right` (the accent-emphasized card).
 - Every `content` may carry `"notes"` → speaker notes. Use them for the
-  presenter's intent, not for overflow copy.
+  presenter's intent, not for overflow copy. For read-aloud decks the notes
+  are also the **receiving vessel of the 先回り rule**: the line that lands
+  hardest spoken aloud is *removed from the slide* and parked here (the slide
+  is the speaker's backdrop, not the script — `seminar.md` §3.5); when no
+  separate script exists, notes carry the spoken part per slide.
 - **Titles are messages**, not labels: 「月次で見ると、打ち手が早くなる」, not 「月次推移」.
 - A full worked example: `../../examples/seminar-kanrikaikei/deck_plan.json`.
 

@@ -26,6 +26,23 @@ doubt, the SKILL.md wins.
   `deck-review` (banded score). A tiny one-slide ask may skip strategy;
   nothing skips the QA loop.
 
+The pipeline is **three bundles**, and knowing which bundle a step belongs to
+tells you how to fix it when output surprises:
+
+- **思考 (thinking)** — `deck-brief` / `deck-strategy`: extracting meaning and
+  relations from the manuscript (spine, 7-way beat classification, emotional
+  turning points, emphasis choices). The ONLY bundle that can wobble — its
+  outputs (the plan, the turning-point list in `notes`) are the intermediate
+  artifacts a human approves before generating.
+- **規約 (convention)** — `design-doc` / `theme-init` / `design-language` +
+  the lints: tokens, prohibitions, coordinates. Fully mechanical.
+- **工程 (process)** — `create-deck` / `deck-review`: build, QA, score. Fully
+  mechanical.
+
+When a deck comes out wrong, the fix is almost never in 規約/工程 code — it is
+in the 思考 bundle's classification (re-map the beat, re-pick the turning
+point). Push judgment upstream; keep everything downstream a pure mapping.
+
 ## The eight skills
 
 | Skill | One job | Reads | Emits |

@@ -40,7 +40,9 @@ Schema: `schemas/deck_plan.schema.json`.
 
 **Sandwich rule:** open with a dark pattern (`cover`), close with a dark
 pattern (`cta`); keep the body light. Don't put two dark slides adjacent in
-the body.
+the body, and keep the deck's total dark share (cover + cta + `section`
+dividers + any dark statement beats) to **~25–30% at most** — dark marks the
+emotional turning points, and it only works while it is scarce.
 
 **Emphasis, peak & markers (visual-psychology layer — see
 `references/principles/visual-psychology.md`).** A slide's content may name ONE

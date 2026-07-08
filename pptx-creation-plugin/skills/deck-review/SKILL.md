@@ -99,6 +99,28 @@ could be tighter."
 > why — audit them)? A beautifully rendered persona in the wrong register is a
 > `contentIntegrity`/`designFidelity` finding, not a pass.
 
+> **0.5秒テスト (per body slide, under `informationDesign`).** Imagine every
+> glyph replaced by a grey bar: does the slide still communicate *how many
+> items, which one is the answer, and each item's ○/✕*? A slide that fails
+> hasn't mis-styled — it has mis-classified the relation between its items;
+> the fix to prescribe is a re-mapping of the beat (deck-strategy Step 3 /
+> `slide-design-principles.md` §7), **never** a font/color tweak. saliency-lint
+> approximates the "answer reads first" half mechanically; the item-count and
+> ○/✕ halves are yours.
+
+> **Arithmetic reconciliation (under `contentIntegrity`).** Spot-check every
+> figure set — including illustrative/dummy ones: does the ミニ決算書 sum, do
+> the deltas bridge, do the percentages total? A dummy number that fails its
+> own 縦計算 is an instant-trust finding even on a slide "nobody needs to
+> read" (house-quality-bar §4). Also verify chart geometry: bar lengths /
+> areas exactly proportional to values.
+
+**Inspect in the priority order** 言葉 (messageLogic) → 数字 (contentIntegrity
+の整合) → 構造 (informationDesign) → 色・装飾 (designFidelity / visual polish)
+— `slide-design-principles.md` §2. An upper-layer finding always outranks a
+bottom-layer one in `findings[]` ordering: a topic-label title beats a tint
+nitpick every time.
+
 `totalScore` is the sum of the five `score` values.
 
 The AI-tell blocklist you check `visualIntegrity` against lives in §2 of

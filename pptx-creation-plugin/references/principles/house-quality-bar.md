@@ -22,6 +22,9 @@ than that.
 3. **Every slide carries a visual element** — chart, diagram, icon, number
    cut, card, or number-circle. No wall-of-text slides.
 4. **Sandwich structure.** Cover and closing are dark; body slides are light.
+   Dark carves emotion, light carries information — so dark stays scarce:
+   **≤ ~25–30% of the deck**, never two adjacent in the body (dividers and
+   dark statement beats included). All-dark = no emphasis at all.
 5. **One dominant color (60–70%) + one restrained accent.** Colors are never
    laid out as equals. The accent is a single sharp hue.
 6. **Body text left-aligned.** Only titles may center. Size contrast between
@@ -66,6 +69,13 @@ stripe.** (See the `comparison` and `chart` patterns: the emphasized card is
   misreading guards. Label estimates as estimates. **No unsupported
   assertions** ("約60%（イメージ）" is honest; "60%が失敗する" stated as fact is not).
 - Numbers on a chart need a unit and, where relevant, a basis/period.
+- **Numbers must reconcile — even dummy ones.** An illustrative mini-P/L, a
+  収入→税→手取 flow, a set of deltas: the internal arithmetic must check out
+  (合計が合う・縦計算が通る) even when the figures are labeled イメージ. A
+  spot-checkable inconsistency on a "you don't need to read this" slide is the
+  fastest way to lose the room. Chart geometry is part of the same promise:
+  bar lengths / areas exactly proportional to values — never lengthened for
+  effect (see `chart-design.md`).
 
 ---
 

@@ -193,3 +193,12 @@ system + this deck's specific intent → a deck that is both on-brand and on-poi
   token, and honest unknowns live in Known Gaps. A DESIGN.md nobody maintains
   drifts from the theme; the Iteration Guide + frontmatter/`theme.json` sync is
   what keeps it alive.
+- **DESIGN.md is the vessel that absorbs correction history.** Its judgment
+  calls start as the authoring model's defaults, not the project's taste — the
+  calibration comes from shipping. After each deck, fold every 「ここは違う」
+  correction the user made into the section it belongs to (a Don't with its
+  why, a preset tweak, a §7 convention — e.g. which concept owns the accent
+  across decks, the coordinate grammar of `slide-design-principles.md` §8).
+  Two or three decks of this and the defaults converge on the project's
+  actual taste; a DESIGN.md that never receives corrections isn't finished,
+  it's unused.

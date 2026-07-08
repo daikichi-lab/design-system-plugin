@@ -55,6 +55,19 @@ A deck is an argument, not a gallery — two consequences:
   also why decorative AI-tells are banned outright — see §2 of
   `house-quality-bar.md`.)
 
+The full priority ladder, top to bottom, is:
+
+> **言葉の正しさ (words: is every title a true, asserted message?) ＞ 数字の誠実さ
+> (numbers: honest and internally consistent?) ＞ 構造の写像 (structure: does the
+> layout mirror the logical relation?) ＞ 色と装飾 (color & decoration).**
+
+Color and layout sit at the *bottom* of this ladder on purpose: when the upper
+layers are right they mostly decide themselves, and no amount of bottom-layer
+polish rescues a broken upper layer. A deck whose titles assert, whose numbers
+reconcile, and whose layouts mirror the logic wins even with plain styling.
+Review in the same order — `deck-review` weights Message & logic first
+(house-quality-bar.md §6) and inspects top-down.
+
 ## 3. Narrative frames — pick the one that fits the move
 
 The spine from §2 should follow a recognizable frame so the audience can feel
@@ -80,6 +93,23 @@ frame.
 
 A whole deck usually nests these: SCQA to open, PREP/PAS in the body, BAB into
 the closing `cta`. Don't mix frames *within* one beat — pick one per move.
+
+**Map the emotional curve, not just the logic.** A read-aloud deck (seminar,
+pitch) is a story: across the session the audience should pass through *named*
+emotional states — e.g. 約束 → 期待 → 共感 → どん底 → 気づき → 安心 → 高揚.
+Write that curve down next to the spine and mark its **転換点 (turning
+points)** — the beats where the room's state must flip (the 「でも――」 pivot,
+the failure confession, the moment of relief). Turning points are where the
+visual register changes: they take the dark statement treatment, and they are
+the natural candidates for the deck's one `peak`. The rule that governs the
+dark/light allocation: **情報を処理させるページは白、感情を刻むページは紺** —
+the moment the screen darkens, the room braces for something important. Dark
+is a scarce resource: keep it to roughly **25–30% of the deck at most** (all
+dark and the effect vanishes) and never run two dark slides adjacent in the
+body (house-quality-bar.md §1.4; catalog sequencing). Identifying *which*
+sentence deserves a turning point is manuscript comprehension — the one step
+no lint can perform — so record the turning-point list in the plan's `notes`
+and have a human approve it before generating (deck-strategy Step 2).
 
 ## 4. One slide = one message; the title is the conclusion or the question
 
@@ -161,8 +191,8 @@ following `../patterns/catalog.md`'s "Choosing & sequencing" guidance:
   takeaway card)
 - the opening and the closing ask → `cover` and `cta` (the dark sandwich ends)
 
-The 9 patterns are exactly `cover`, `message`, `two-column`, `comparison`,
-`chart`, `stat-grid`, `table`, `section`, `cta` — nothing else is implemented.
+The full pattern set (24, including the diagram skeletons) lives in
+`../patterns/catalog.md` — nothing outside it is implemented.
 A picked-wrong visual is its own
 defect: a `chart` with data that has no point, or a `comparison` forced onto
 three things, fails the "Information design" dimension even if it renders
@@ -171,7 +201,68 @@ labels, honesty of the number), follow `chart-design.md`. Card emphasis is
 always tint + soft shadow, never a stripe or band — restating the AI-tell
 blocklist in `house-quality-bar.md` §2 by reference.
 
-## 8. How this feeds the rest of the pipeline
+**Layout mirrors the RELATION, not the content.** When you read a beat, look
+first at the relation between its items — the relation, not the topic, decides
+the form: 並列・同格 → cards (the count is visible before a word is read);
+順序・変遷 → numbered circles / timeline; 流れ・変換 → arrow flow; 対比 →
+two columns or a true-scale bar; 構成・包含 → box diagram (area and position
+*are* the arithmetic); 単一主張 → a bare statement. The same three items take
+a different form when their relation differs — a card's real job is that the
+audience knows "the promise has three parts" before reading, which is why a
+card is information, never decoration. Text carries the **content**; layout,
+color, and symbols carry the **meta-message** — what relates to what, and what
+verdict to reach. (The relation→pattern mapping is deck-strategy Step 3 /
+catalog; this is the reasoning behind it.)
+
+**Symbols declare the verdict; pictures earn their place.** A symbol is placed
+only to pre-state the evaluation the audience should reach about an item:
+✕ = これは否定です, a numbered circle = 順番があります, → = 変換・因果です,
+＝ = 同じものです. Pictorial icons that carry no verdict — 電球・ロケット・握手
+— are zero-information decoration and read instantly as auto-generated (the
+clip-art/emoji family, house-quality-bar.md §2). The test: **if a text symbol
+(✕ → ＝ 数字) suffices, never use a picture; use a picture only when the
+concept itself is spatial** — which is exactly the diagram skeletons' territory.
+The patterns already embed this mapping (number circles, flow arrows, formula
+operators, dialogue ○×) — don't invent new symbols. (Fuller decision tree:
+`visual-psychology.md`.)
+
+**The 0.5-second test (the element-level 検算).** Before generating — and again
+at review — imagine every glyph on the slide replaced by a grey bar. Does the
+page still communicate: *how many items there are, which one is the answer,
+and each item's ○/✕?* If yes, the element-level design is right. If no, the
+fix is **not** a font or color tweak — go back up to the relation
+classification above and re-map the beat. (saliency-lint approximates this
+mechanically on the render — "does the protagonist read first" — but the
+author-side test runs before a single slide is generated, where it is cheap.)
+
+## 8. Known → unknown, and the deck's coordinate grammar
+
+Two ordering rules operate *across* elements and slides:
+
+- **既知→未知の順序は絶対 (known before unknown).** Never present the new thing
+  before the familiar thing it hangs on — at deck level (teach the personal
+  balance sheet before the corporate one) *and* within a slide. Spatially:
+  **place the known on the left, the new on the right** — Japanese horizontal
+  reading enters from the left/top, so the familiar item sits at the eye's
+  entrance and the unknown lands on prepared ground. The engine already leans
+  this way (comparison's advocated/new side is the right card; before-after
+  runs before → after) — this is the principle behind those defaults.
+- **The coordinate grammar: same concept = same color AND same position, every
+  slide.** Stronger than any single slide's beauty is cross-slide invariance:
+  if 純資産 is accent-tinted on slide 26, it is accent-tinted on 28 and 29; if
+  "individual" sits left as a neutral card once, it never migrates right; the
+  closing line sits at the same height on every body slide. By the second or
+  third slide the audience has *unconsciously learned the grammar* ("gold =
+  what remains, what matters") and reads new slides' structure before the
+  speaker explains them. **The felt "consistency" of a well-designed deck is
+  exactly this grammar holding** — not the colors being pretty. The tokens and
+  shared helpers enforce the mechanical half (one accent role, fixed
+  kicker/title/footer bands); the *semantic* half — which concept owns the
+  accent, which side owns which actor — is a deck-strategy/DESIGN.md decision:
+  assign it once, then never re-assign mid-deck (record the assignment in the
+  project's DESIGN.md §7 when it recurs across decks).
+
+## 9. How this feeds the rest of the pipeline
 
 These principles don't stop at a single slide — they are the input to two
 downstream steps:
@@ -199,7 +290,9 @@ read, not standing instructions baked into the agent.
 ---
 
 **Recap.** Decide audience → scene → goal-action → psychology → message before
-any pixel; make every title a conclusion or a question; keep one message per
-slide; choose the visual whose job fits the beat; split rather than cram; let
-`deck-strategy` order it and `deck-review` (with the QA loop) prove it clears the
-bar in `house-quality-bar.md`.
+any pixel; map the emotional curve and its turning points; make every title a
+conclusion or a question; keep one message per slide; let the *relation* pick
+the visual and the 0.5-second test verify it; keep known before unknown and the
+coordinate grammar unbroken; split rather than cram; judge in the order words >
+numbers > structure > color; let `deck-strategy` order it and `deck-review`
+(with the QA loop) prove it clears the bar in `house-quality-bar.md`.

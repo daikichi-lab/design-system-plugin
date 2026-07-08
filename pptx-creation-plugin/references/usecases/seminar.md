@@ -70,6 +70,29 @@ Vary patterns; don't repeat one 3× in a row. If a longer seminar (8+ slides) ne
 chapters, add `section` dividers between arcs and consider an extra `stat-grid`
 (2–4 KPIs) or `message` beat — but never two dark slides adjacent in the body.
 
+## 3.5 The slide is the speaker's backdrop — two seminar-specific disciplines
+
+- **話者の先回りをしない (don't preempt the speaker).** A read-aloud slide that
+  says everything kills the talk's peaks: **the line that lands hardest when
+  *spoken* gets REMOVED from the slide** and parked in `notes` — the slide is
+  the speaker's backdrop, never a summary of the script. The deliberate
+  exception is the reverse move: *show* the line, then let the speaker fall
+  silent (a dark statement beat carrying the payload works because the silence
+  is the delivery). Choose one per beat — write it or say it, never both.
+- **時間密度との整合 (info ∝ screen time, not importance).** A slide is a
+  container of *time*: budget minutes-per-slide from the section plan (e.g.
+  60分 ÷ 32枚 ≈ 1.9分/枚 average — but never distribute evenly). Two slide
+  species follow:
+  - **3-second slides** (statement `message`, `section` dividers): the speaker
+    turns, one breath, moves on. ONE line only — anything added makes the room
+    stop to read and the rhythm dies.
+  - **Dwell slides** (the worked diagram, the reference `table`, the `chart`):
+    on screen for 2–3 minutes, so they must reward re-reading — the full
+    structure plus the one 種明かし line to discover.
+  Sanity-check each section: minutes ÷ slides tells you which species each
+  beat must be; a "3-second" beat carrying a dense diagram (or a 2-minute beat
+  showing one thin line) is a planning bug — fix the plan, not the design.
+
 ## 4. Content cautions (specific to this type)
 
 - **誠実に。押し売りしない.** The audience fears a hard sell — defuse it explicitly.
