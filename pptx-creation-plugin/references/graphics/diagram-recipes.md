@@ -258,6 +258,110 @@ look:     "totals accentDeep / increases accent / decreases muted; light zero
 renders clean with ▲ labels and step connectors; n=2 / n=9 → CAPACITY; a 2-line
 category label → OVERFLOW at 101%; run-gate PASS across all 6 themes.
 
+## `identity` — stacked identity (積み上げ恒等式)
+
+The accounting canonical form (`visual-psychology.md` §3.5 正準形ライブラリ): a
+WHOLE on the left **＝** its components STACKED to the same total height on the
+right — 資産 ＝ 負債 ＋ 純資産, 収入 ＝ 税 ＋ 手取り. The **areas carry the
+identity**: erase the ＝ and the composition still reads (the symbol-erasure
+test). This is the content `formula` must NOT take — equal boxes joined by ＋
+render an identity as 額装 (the exact failure the canonical library exists to
+prevent).
+
+```yaml
+id: identity
+content:
+  kicker:   { type: string, required: false }
+  title:    { type: string|string[], required: false }
+  left:     { type: object, required: true, note: "the WHOLE {label, value?} —
+              a short TERM (資産/収入). value omitted + all parts numeric ->
+              the engine shows the honest sum." }
+  parts:    { type: array, required: true, note: "2-4 of {label, value?, sub?} stacked
+              to the whole's height. Values are ALL-OR-NONE: with values the
+              stack heights are proportional (honest); without, equal split —
+              the engine never invents proportions (盛らない). Non-negative
+              only: 債務超過・赤字 are increments/decrements -> use waterfall." }
+  emphasis: { type: integer, required: false, note: "protagonist part (usually
+              the 残り — 純資産 / 自由なお金): surfaceAccent tint + accentDeep." }
+  parts[].sub: { type: array, required: false, note: "ONE-LEVEL NESTING (the
+              STRAC form — お金のブロックパズル): 2-3 {label, value?} stacked in a
+              third column to exactly the parent part's height (売上＝変動費＋
+              限界利益; 限界利益＝固定費＋利益). At most ONE part may carry sub
+              (more -> split the slide); values all-or-none; the lint cross-checks
+              縦計算 (sub sum vs parent, parts sum vs whole) and WARNs on drift." }
+  subEmphasis: { type: integer, required: false, note: "protagonist among the sub
+              items (STRAC: 利益). Mutually exclusive with emphasis — one slide,
+              one protagonist (lint ERROR on both)." }
+  unit:     { type: string, required: false, note: "shown once bottom-left (単位：…)" }
+capacity: "2-4 parts (CAPS.identity). 1 part is a message; >4 -> group into
+           その他 or use waterfall. Labels are short TERMS — a proportional thin
+           slice (≲12% of the whole) holds only a very short label; the height
+           gate hard-errors past that (shorten, or carry the point in notes)."
+geometry: "left block spans the full stack height; ＝ lives in its own fixed-width
+           cell (never collides); part heights = (H − gaps) × value/sum when
+           proportional, else equal; stack bottom == whole bottom (the identity,
+           machine-checked in the fixture)"
+labels:   "part values ENGINE-formatted (thousands comma, decimals kept when any
+           value is fractional), joined on the label line; the whole's sum line
+           appears only when honest (author value or computed from full parts)"
+floor:    "whole + every part label baked (kinsoku) + height-gated per box"
+look:     "whole surface (the reference, not the protagonist); parts surface;
+           the emphasis part surfaceAccent + accentDeep (house emphasis);
+           ＝ glyph accent at title size — native text, no shapes"
+```
+
+**Verified (2026-07-08)** — concept form (no values, 2 parts) splits equally and
+closes the identity (stack bottom = whole bottom, 0.01in); proportional form
+(128,340/164,890/136,740 千円) renders heights at exactly 0.298/0.383/0.318 of
+the stack with the honest sum on the whole; n=1 / n=5 → CAPACITY; a negative
+part → CAPACITY (waterfall へ誘導); mixed values → all-or-none WARN; a 3% slice
+with a sentence-length label → OVERFLOW (height gate); run-gate PASS across all
+6 themes (torture-09). **STRAC nesting verified (2026-07-08)** — the textbook
+売上100＝変動費40＋限界利益60; 限界利益60＝固定費45＋利益15 renders both levels
+at exact proportions (1.272/1.908 and 1.341/0.447 in) with the sub column flush
+to its parent's bounds (Δ≤0.001in); thin slices (the canonical 利益 at 15%) keep
+their honest height and step the TYPE down instead (identityTextSpec — the
+single source the builder draws with and the gate measures with); two parts
+with sub / emphasis+subEmphasis / 縦計算 drift → lint (torture-09).
+
+## `breakeven` — CVP / 損益分岐点図
+
+The other 会計セミナー staple beside STRAC: the 売上高線 and the 総費用線
+(固定費 floor + 変動費 slope) crossing at the 損益分岐点, with 損失/利益 regions.
+**Purely structural — the skeleton carries TERMS, never value labels** (numbers
+belong to `chart` / `waterfall` / `table`); the geometry derives from
+{fixed, variableRate} when both are given (honest), else the engine draws the
+schematic **and auto-stamps ※模式図** (house-bar §4 — a schematic must never
+wear a data face).
+
+```yaml
+id: breakeven
+content:
+  kicker:       { type: string, required: false }
+  title:        { type: string|string[], required: false }
+  fixed:        { type: number, required: false, note: "固定費 (>0). Pair with variableRate." }
+  variableRate: { type: number, required: false, note: "変動費率, 0<v<1. v≥1 has no
+                  限界利益 — the structure cannot break even and the lint hard-errors." }
+  labels:       { type: object, required: false, note: "term overrides — sales/cost/
+                  fixed/bep/loss/profit (default 売上高/総費用/固定費/損益分岐点/損失/利益)" }
+  unit:         { type: string, required: false }
+capacity: "fixed structure (2 lines + floor + BEP). Terms are short; a numeric
+           story (いくらで分岐するか) belongs on a companion chart/table slide."
+geometry: "axes carry no ticks; the x-axis spans 1.6×BEP so the crossing sits at
+           62.5% — a presentation scale, not a data claim; with data the relation
+           f = (1−v)·xBEP is exact"
+floor:    "title band gated; line terms are fixed short slots (right edge / left
+           floor / under the axis)"
+look:     "sales line accent (the protagonist, thicker); cost line muted; fixed
+           floor dashed muted; BEP dot + dashed drop accentDeep; 利益 region label
+           accentDeep, 損失 muted — native shapes + native text"
+```
+
+**Verified (2026-07-08)** — data form (fixed=45, v=0.4) and schematic form both
+render clean across all 6 themes (run-gate PASS); the schematic auto-stamps
+※模式図 and the data form does not (machine-checked); v=1.2 → CAPACITY;
+fixed/variableRate unpaired → WARN (torture-09).
+
 ## `positioning` — 2-3 competitive positions + VS (education register)
 
 ```yaml

@@ -1,0 +1,193 @@
+{
+  "meta": {
+    "title": "torture: identity abuse",
+    "intent": "seminar"
+  },
+  "slides": [
+    {
+      "pattern": "cover",
+      "content": {
+        "titleLines": [
+          "identity 拷問デッキ"
+        ]
+      }
+    },
+    {
+      "pattern": "identity",
+      "content": {
+        "left": {
+          "label": "全体"
+        },
+        "parts": [
+          {
+            "label": "唯一の構成"
+          }
+        ],
+        "notes": "n=1 -> CAPACITY(ERROR)を発火させる"
+      }
+    },
+    {
+      "pattern": "identity",
+      "content": {
+        "left": {
+          "label": "全体"
+        },
+        "parts": [
+          {
+            "label": "一"
+          },
+          {
+            "label": "二"
+          },
+          {
+            "label": "三"
+          },
+          {
+            "label": "四"
+          },
+          {
+            "label": "五"
+          }
+        ],
+        "notes": "n=5 -> CAPACITY(ERROR)を発火させる"
+      }
+    },
+    {
+      "pattern": "identity",
+      "content": {
+        "left": {
+          "label": "資産"
+        },
+        "parts": [
+          {
+            "label": "負債",
+            "value": 120
+          },
+          {
+            "label": "純資産",
+            "value": -20
+          }
+        ],
+        "notes": "負の構成(債務超過) -> CAPACITY(ERROR)。waterfallへ誘導"
+      }
+    },
+    {
+      "pattern": "identity",
+      "content": {
+        "left": {
+          "label": "収入"
+        },
+        "parts": [
+          {
+            "label": "税",
+            "value": 30
+          },
+          {
+            "label": "手取り"
+          }
+        ],
+        "notes": "値のall-or-none違反 -> CAPACITY(WARN)。比率を発明しない"
+      }
+    },
+    {
+      "pattern": "identity",
+      "content": {
+        "left": {
+          "label": "全体"
+        },
+        "parts": [
+          {
+            "label": "圧倒的に小さいのに説明文のように長いラベルを持つ極小スライス",
+            "value": 3
+          },
+          {
+            "label": "大",
+            "value": 97
+          }
+        ],
+        "emphasis": 0,
+        "notes": "3%スライス×長文ラベル -> 高さゲートOVERFLOWを発火させる"
+      }
+    },
+    {
+      "pattern": "identity",
+      "content": {
+        "left": {
+          "label": "売上",
+          "value": 100
+        },
+        "parts": [
+          {
+            "label": "変動費",
+            "value": 40,
+            "sub": [
+              {
+                "label": "A",
+                "value": 20
+              },
+              {
+                "label": "B",
+                "value": 20
+              }
+            ]
+          },
+          {
+            "label": "限界利益",
+            "value": 60,
+            "sub": [
+              {
+                "label": "固定費",
+                "value": 45
+              },
+              {
+                "label": "利益",
+                "value": 15
+              }
+            ]
+          }
+        ],
+        "notes": "sub 2箇所 -> CAPACITY(ERROR)。入れ子は1パートまで"
+      }
+    },
+    {
+      "pattern": "identity",
+      "content": {
+        "left": {
+          "label": "売上",
+          "value": 100
+        },
+        "parts": [
+          {
+            "label": "変動費",
+            "value": 40
+          },
+          {
+            "label": "限界利益",
+            "value": 55
+          }
+        ],
+        "emphasis": 1,
+        "subEmphasis": 0,
+        "notes": "縦計算不一致(40+55≠100) -> IDENTITY-SUM(WARN) ＋ emphasis併記 -> EMPHASIS-COUNT(ERROR)"
+      }
+    },
+    {
+      "pattern": "breakeven",
+      "content": {
+        "fixed": 45,
+        "variableRate": 1.2,
+        "notes": "v≥1 -> CAPACITY(ERROR)。限界利益が無い構造"
+      }
+    },
+    {
+      "pattern": "cta",
+      "content": {
+        "titleLines": [
+          "締め"
+        ],
+        "offerHead": "行動",
+        "offerBody": "本文。"
+      }
+    }
+  ]
+}

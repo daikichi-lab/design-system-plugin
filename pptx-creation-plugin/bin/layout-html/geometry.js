@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 // Diagram skeletons compute their node geometry here too, so the floor
 // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
 // engine draws labels into.
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
@@ -128,6 +128,8 @@ function heightBoxes(slide, T) {
     "formula":    { topY: 1.15, bottomY: 3.65, sizePt: s.title },
     "card-grid":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "waterfall":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "identity":   { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+    "breakeven":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "positioning":{ topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "system":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
     "relation":   { topY: 1.15, bottomY: 2.45, sizePt: s.title },
@@ -224,6 +226,29 @@ function heightBoxes(slide, T) {
         const ntb = nodeTextBox(node);
         out.push({ id: `formula box ${i + 1}`, path: paths[i], topY: ntb.y, bottomY: ntb.y + ntb.h,
           sizePt: s.head, leading: lead.tight });
+      });
+      break;
+    }
+    case "identity": {
+      // whole + every part label baked (kinsoku) + height-gated per box — a
+      // proportional thin slice that cannot hold its label is a hard overflow
+      // (the author shortens the label or moves the point to notes).
+      const parts = c.parts || [];
+      const L = identityLayout(T, parts);
+      if (c.left && c.left.label) {
+        const sp = identityTextSpec(T, L.left);
+        out.push({ id: "identity whole", path: "left.label", topY: sp.tb.y, bottomY: sp.tb.y + sp.tb.h,
+          sizePt: sp.sizePt, leading: lead.tight });
+      }
+      parts.forEach((p, i) => {
+        const sp = identityTextSpec(T, L.parts[i]);
+        out.push({ id: `identity part ${i + 1}`, path: `parts[${i}].label`, topY: sp.tb.y, bottomY: sp.tb.y + sp.tb.h,
+          sizePt: sp.sizePt, leading: lead.tight });
+      });
+      if (L.subBoxes) (parts[L.subIdx].sub || []).forEach((p, i) => {
+        const sp = identityTextSpec(T, L.subBoxes[i]);
+        out.push({ id: `identity sub ${i + 1}`, path: `parts[${L.subIdx}].sub[${i}].label`, topY: sp.tb.y, bottomY: sp.tb.y + sp.tb.h,
+          sizePt: sp.sizePt, leading: lead.tight });
       });
       break;
     }

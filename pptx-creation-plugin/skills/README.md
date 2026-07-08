@@ -1,6 +1,6 @@
 # skills/ — the agent-facing playbooks
 
-Eight skills, one pipeline. Each `skills/<name>/SKILL.md` is the **single
+Nine skills, one pipeline. Each `skills/<name>/SKILL.md` is the **single
 definition file** (frontmatter `description` = when Claude invokes it; body =
 the playbook). This README is only a **hub** — it duplicates nothing; when in
 doubt, the SKILL.md wins.
@@ -17,6 +17,10 @@ doubt, the SKILL.md wins.
                               (pick ONE style from the bookshelf — feeds both)
 ```
 
+- **Once per domain (optional):** `domain-canon` — after `design-doc`, for a
+  project that will make decks in a specific field: writes the canonical-forms
+  catalog to `docs/canon/<domain>.md` (deck-strategy reads it at the
+  beat→pattern step). Domain knowledge stays project-side; the plugin stays generic.
 - **Once per project:** `project-scaffold` (folders, never overwrites) →
   `design-doc` (the standing `DESIGN.md` — required, template level) →
   `theme-init` (the project `theme.json`). `design-language` picks the style

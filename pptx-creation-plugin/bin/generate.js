@@ -25,7 +25,7 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, breakevenLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -1354,6 +1354,148 @@ function slideWaterfall(pres, d, T, ctx) {
 }
 
 
+/* ---------------- DIAGRAM: identity (stacked identity, 積み上げ恒等式) ----------------
+ * The accounting canonical form (visual-psychology.md §3.5 正準形ライブラリ):
+ * a WHOLE on the left ＝ its parts STACKED to the same total height on the
+ * right (資産 ＝ 負債 ＋ 純資産 / 収入 ＝ 税 ＋ 手取り). The areas carry the
+ * identity — erase the ＝ and the composition still reads (the symbol-erasure
+ * test that `formula` cannot pass for this content: equal boxes joined by ＋
+ * are 額装). Heights go proportional ONLY when every part has a numeric value
+ * (all-or-none — the engine never invents proportions); values render plain
+ * (fmt as waterfall), unit once bottom-left. emphasis tints the protagonist
+ * part (usually the 残り — 純資産 / 自由なお金) with the house tint. */
+function slideIdentity(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const parts = d.parts || [];
+  const L = identityLayout(T, parts);
+  const anyDecimal = parts.some((p) => typeof p.value === "number" && !Number.isInteger(p.value))
+    || (d.left && typeof d.left.value === "number" && !Number.isInteger(d.left.value));
+  const fmt = (v) => {
+    const a = Math.abs(v);
+    const [int, dec] = (anyDecimal ? a.toFixed(1) : String(Math.round(a))).split(".");
+    return int.replace(/\B(?=(\d{3})+$)/g, ",") + (dec ? `.${dec}` : "");
+  };
+  const eIdx = Number.isInteger(d.emphasis) ? d.emphasis : -1;
+  // the whole (left) — the reference, not the protagonist: plain surface card
+  const lf = d.left || {};
+  card(s, T, L.left.x, L.left.y, L.left.w, L.left.h, { fill: T.c.surface });
+  const leftVal = typeof lf.value === "number" ? lf.value
+    : (L.proportional ? parts.reduce((a, p) => a + p.value, 0) : null);
+  {
+    const spec = identityTextSpec(T, L.left); const tb = spec.tb;
+    const runs = [{ text: Array.isArray(lf.label) ? lf.label.join("\n") : (lf.label || ""),
+      options: { fontFace: T.font.heading, fontSize: spec.sizePt, bold: true, color: T.c.ink, breakLine: leftVal !== null } }];
+    if (leftVal !== null) runs.push({ text: fmt(leftVal),
+      options: { fontFace: T.font.heading, fontSize: T.s.body, bold: true, color: T.c.muted } });
+    s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  }
+  // the ＝ — native glyph in its own cell, never colliding with labels
+  s.addText("＝", { x: L.op.x, y: L.op.y, w: L.op.w, h: L.op.h, margin: 0,
+    fontFace: T.font.heading, fontSize: T.s.title, bold: true, color: T.c.accent,
+    align: "center", valign: "middle" });
+  // the parts — stacked; the protagonist takes the house tint
+  parts.forEach((p, i) => {
+    const b = L.parts[i]; if (!b || !p) return;
+    const emph = eIdx === i;
+    card(s, T, b.x, b.y, b.w, b.h, { fill: emph ? T.c.surfaceA : T.c.surface });
+    const spec = identityTextSpec(T, b); const tb = spec.tb;
+    const runs = [{ text: Array.isArray(p.label) ? p.label.join("\n") : (p.label || ""),
+      options: { fontFace: T.font.heading, fontSize: spec.sizePt, bold: true,
+        color: emph ? T.c.accentDp : T.c.ink } }];
+    if (typeof p.value === "number") runs.push({ text: "　" + fmt(p.value),
+      options: { fontFace: T.font.heading, fontSize: T.s.small, bold: true,
+        color: emph ? T.c.accentDp : T.c.muted } });
+    s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+  });
+  // one-level nesting (STRAC): the decomposed part's sub items stack beside it
+  if (L.subBoxes) {
+    const subs = parts[L.subIdx].sub || [];
+    const sIdx = Number.isInteger(d.subEmphasis) ? d.subEmphasis : -1;
+    subs.forEach((p, i) => {
+      const b = L.subBoxes[i]; if (!b || !p) return;
+      const emph = sIdx === i;
+      card(s, T, b.x, b.y, b.w, b.h, { fill: emph ? T.c.surfaceA : T.c.surface });
+      const spec = identityTextSpec(T, b); const tb = spec.tb;
+      const runs = [{ text: Array.isArray(p.label) ? p.label.join("\n") : (p.label || ""),
+        options: { fontFace: T.font.heading, fontSize: spec.sizePt, bold: true,
+          color: emph ? T.c.accentDp : T.c.ink } }];
+      if (typeof p.value === "number") runs.push({ text: "　" + fmt(p.value),
+        options: { fontFace: T.font.heading, fontSize: T.s.small, bold: true,
+          color: emph ? T.c.accentDp : T.c.muted } });
+      s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+        align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+    });
+  }
+  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
+    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
+/* ---------------- DIAGRAM: breakeven (CVP / 損益分岐点図) ----------------
+ * The 会計セミナー staple beside STRAC: 売上高線 and 総費用線（固定費＋変動費）
+ * crossing at the 損益分岐点. Purely structural — the skeleton carries TERMS,
+ * never numbers; with {fixed, variableRate} the crossing derives from the data,
+ * without them the engine draws the schematic AND auto-stamps ※模式図
+ * (house-bar §4 — a schematic must not wear a data face). */
+function slideBreakeven(pres, d, T, ctx) {
+  const s = pres.addSlide();
+  s.background = { color: T.c.bg };
+  bgLayer(s, T, d);
+  kicker(s, T, d.kicker, T.m);
+  if (d.title) title(s, T, d.title, 1.15);
+  const L = breakevenLayout(T, d.fixed, d.variableRate);
+  const P = L.plot;
+  const lbl = Object.assign({ sales: "売上高", cost: "総費用", fixed: "固定費",
+    bep: "損益分岐点", loss: "損失", profit: "利益" }, d.labels || {});
+  // axes
+  s.addShape("line", { x: P.x, y: P.y, w: 0, h: P.h, line: { color: T.c.line, width: 1.25 } });
+  s.addShape("line", { x: P.x, y: P.y + P.h, w: P.w, h: 0, line: { color: T.c.line, width: 1.25 } });
+  // fixed-cost floor (dashed, muted)
+  s.addShape("line", { x: P.x, y: L.fixedY, w: P.w, h: 0,
+    line: { color: T.c.muted, width: 1, dashType: "dash" } });
+  // cost line (muted, solid) — rises from the fixed floor
+  s.addShape("line", { x: L.cost.x1, y: L.cost.y2, w: L.cost.x2 - L.cost.x1, h: L.cost.y1 - L.cost.y2,
+    flipV: true, line: { color: T.c.muted, width: 2.25 } });
+  // sales line (accent, the protagonist) — from the origin, steeper
+  s.addShape("line", { x: L.sales.x1, y: L.sales.y2, w: L.sales.x2 - L.sales.x1, h: L.sales.y1 - L.sales.y2,
+    flipV: true, line: { color: T.c.accent, width: 2.75 } });
+  // BEP: dot + dashed drop + label under the axis
+  s.addShape("line", { x: L.bep.x, y: L.bep.y, w: 0, h: P.y + P.h - L.bep.y,
+    line: { color: T.c.accentDp, width: 1, dashType: "dash" } });
+  s.addShape("ellipse", { x: L.bep.x - 0.07, y: L.bep.y - 0.07, w: 0.14, h: 0.14,
+    fill: { color: T.c.accentDp }, line: { type: "none" } });
+  s.addText(richText(lbl.bep), { x: L.bep.x - 1.2, y: P.y + P.h + 0.08, w: 2.4, h: 0.3, margin: 0,
+    fontFace: T.font.heading, fontSize: T.s.small, bold: true, color: T.c.accentDp,
+    align: "center", valign: "top" });
+  // line terms at the right edge; fixed floor term at the left
+  const term = (text, y, color, bold) => s.addText(richText(text), {
+    x: P.x + P.w + 0.12, y: y - 0.14, w: 1.9, h: 0.3, margin: 0,
+    fontFace: T.font.heading, fontSize: T.s.small, bold: !!bold, color, align: "left", valign: "middle" });
+  term(lbl.sales, L.sales.y2, T.c.accent, true);
+  term(lbl.cost, L.cost.y2, T.c.muted);
+  s.addText(richText(lbl.fixed), { x: P.x + 0.08, y: L.fixedY + 0.04, w: 1.8, h: 0.26, margin: 0,
+    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
+  // loss / profit regions (between the two lines)
+  s.addText(richText(lbl.loss), { x: P.x + P.w * 0.16, y: L.fixedY - 0.42, w: 1.4, h: 0.3, margin: 0,
+    fontFace: T.font.body, fontSize: T.s.small, color: T.c.muted, align: "center", valign: "middle" });
+  s.addText(richText(lbl.profit), { x: L.bep.x + (P.x + P.w - L.bep.x) * 0.42 - 0.7, y: P.y + (L.bep.y - P.y) * 0.45, w: 1.4, h: 0.3, margin: 0,
+    fontFace: T.font.heading, fontSize: T.s.small, bold: true, color: T.c.accentDp, align: "center", valign: "middle" });
+  // honesty stamp: a schematic must say so
+  if (L.schematic) s.addText("※模式図", { x: P.x + P.w - 1.2, y: P.y + P.h - 0.32, w: 1.2, h: 0.26, margin: 0,
+    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "right", valign: "bottom" });
+  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
+    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  return s;
+}
+
 /* ---------------- DIAGRAM: positioning (2-3 competitive positions + VS) ----------------
  * 競争ポジション (education-register.md §2-1, structure word "positioning"):
  * side-by-side position cards with a VS cell between. emphasis tints the
@@ -1640,6 +1782,8 @@ const PATTERNS = {
   "branch": slideBranch,
   "formula": slideFormula,
   "waterfall": slideWaterfall,
+  "identity": slideIdentity,
+  "breakeven": slideBreakeven,
   "positioning": slidePositioning,
   "system": slideSystem,
   "relation": slideRelation,

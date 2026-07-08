@@ -324,6 +324,8 @@
             "formula",
             "card-grid",
             "waterfall",
+            "identity",
+            "breakeven",
             "positioning",
             "system",
             "relation",
@@ -922,6 +924,197 @@
                   "unit": {
                     "type": "string",
                     "description": "Shown once bottom-left (単位：…)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "identity"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "left",
+                  "parts"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "left": {
+                    "type": "object",
+                    "required": [
+                      "label"
+                    ],
+                    "properties": {
+                      "label": {
+                        "type": [
+                          "string",
+                          "array"
+                        ],
+                        "description": "The WHOLE (資産 / 収入). Short TERM, not a sentence."
+                      },
+                      "value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Optional. Omitted + all parts numeric -> the engine shows the honest sum."
+                      }
+                    }
+                  },
+                  "parts": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "label"
+                      ],
+                      "properties": {
+                        "label": {
+                          "type": [
+                            "string",
+                            "array"
+                          ]
+                        },
+                        "value": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "All-or-none across parts: with values, stack heights are proportional (honest); without, equal split — the engine never invents proportions."
+                        },
+                        "sub": {
+                          "type": "array",
+                          "minItems": 2,
+                          "maxItems": 3,
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "label"
+                            ],
+                            "properties": {
+                              "label": {
+                                "type": [
+                                  "string",
+                                  "array"
+                                ]
+                              },
+                              "value": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            }
+                          },
+                          "description": "One-level nesting (STRAC): this part's own decomposition, stacked beside it to exactly its height (限界利益 -> 固定費＋利益). At most ONE part may carry sub."
+                        }
+                      }
+                    },
+                    "description": "2-4 components stacked to the whole's height. Negative components (債務超過) are out of scope — use waterfall."
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Protagonist part (usually the 残り — 純資産 / 自由なお金): surfaceAccent tint + accentDeep head."
+                  },
+                  "unit": {
+                    "type": "string",
+                    "description": "Shown once bottom-left (単位：…)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "subEmphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2,
+                    "description": "Protagonist among the sub items (STRAC: 利益). Mutually exclusive with emphasis — one slide, one protagonist."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "breakeven"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "fixed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "固定費. With variableRate, the crossing derives from the data (honest); without both, the engine draws the schematic and auto-stamps ※模式図."
+                  },
+                  "variableRate": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "exclusiveMaximum": 1,
+                    "description": "変動費率 (0<v<1). v≥1 has no 限界利益 — the lint hard-errors."
+                  },
+                  "labels": {
+                    "type": "object",
+                    "properties": {
+                      "sales": {
+                        "type": "string"
+                      },
+                      "cost": {
+                        "type": "string"
+                      },
+                      "fixed": {
+                        "type": "string"
+                      },
+                      "bep": {
+                        "type": "string"
+                      },
+                      "loss": {
+                        "type": "string"
+                      },
+                      "profit": {
+                        "type": "string"
+                      }
+                    },
+                    "description": "Term overrides (default 売上高/総費用/固定費/損益分岐点/損失/利益). TERMS only — the skeleton never carries value labels; numbers belong to chart/waterfall/table."
+                  },
+                  "unit": {
+                    "type": "string"
                   },
                   "notes": {
                     "type": "string"

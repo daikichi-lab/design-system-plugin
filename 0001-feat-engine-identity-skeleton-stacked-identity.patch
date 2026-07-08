@@ -1,0 +1,566 @@
+From 24f7bb44c5d61cd8cdf6f95a02265dee379db670 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 8 Jul 2026 08:30:34 +0000
+Subject: [PATCH 1/2] =?UTF-8?q?feat(engine):=20identity=20skeleton=20?=
+ =?UTF-8?q?=E2=80=94=20stacked=20identity=20(=E7=A9=8D=E3=81=BF=E4=B8=8A?=
+ =?UTF-8?q?=E3=81=92=E6=81=92=E7=AD=89=E5=BC=8F)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The last unimplemented entry of the canonical-form library
+(visual-psychology.md §3.5): a WHOLE ＝ its parts STACKED to the same
+height, so the areas carry the identity (資産＝負債＋純資産). Closes the
+gap where 'formula' would render an identity as 額装 (equal boxes joined
+by ＋ — the symbol-erasure test fails).
+
+- diagrams.js: identityLayout (single source) + CAPS.identity [2,4].
+  Proportional heights ONLY with all-numeric parts (all-or-none — the
+  engine never invents proportions); else equal split.
+- generate.js: slideIdentity builder (house emphasis on one part;
+  waterfall-style value fmt; 単位 note bottom-left) + registry.
+- geometry.js: whole + every part label baked + height-gated per box.
+- design-lint: CAPACITY (n, negative parts -> waterfall誘導, mixed
+  values WARN), EMPHASIS_SLOTS, DIAGRAM_PATTERNS, struct words 恒等式/構成.
+- schema: pattern enum + content contract.
+- docs: diagram-recipes recipe (Verified 2026-07-08), deck-strategy
+  capacities, visual-psychology §3.5 machine-face note, READMEs 24->25.
+- tests: torture-09-identity-abuse (CAPACITY x3, all-or-none WARN,
+  3% slice OVERFLOW; engine must not throw).
+
+Verified: concept form splits equally and closes the identity (stack
+bottom = whole bottom, 0.01in); proportional form renders exactly
+0.298/0.383/0.318; run-gate PASS across all 6 themes.
+---
+ README.md                                     |  2 +-
+ pptx-creation-plugin/README.md                |  4 +-
+ pptx-creation-plugin/bin/generate.js          | 68 +++++++++++++-
+ pptx-creation-plugin/bin/graphics/diagrams.js | 33 ++++++-
+ .../bin/layout-html/geometry.js               | 21 ++++-
+ pptx-creation-plugin/bin/lint/design-lint.js  | 19 +++-
+ .../references/graphics/diagram-recipes.md    | 51 ++++++++++
+ .../principles/visual-psychology.md           |  2 +-
+ .../schemas/deck_plan.schema.json             | 93 ++++++++++++++++++-
+ .../skills/deck-strategy/SKILL.md             |  2 +
+ .../torture-09-identity-abuse.json            | 36 +++++++
+ 11 files changed, 319 insertions(+), 12 deletions(-)
+ create mode 100644 pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json
+
+diff --git a/README.md b/README.md
+index 2ffaa12..f363253 100644
+--- a/README.md
++++ b/README.md
+@@ -4,7 +4,7 @@
+ 
+ - **[`pptx-creation`](pptx-creation-plugin/)** — 高品質な PowerPoint（`.pptx`）デッキを
+   「設計 → 構成 → 生成 → レビュー」する、**日本語ビジネス資料**に最適化したプラグイン。
+-  エンジンは1つ、デッキは無数。24パターン（図解骨格・会話/証言レイアウト含む）、
++  エンジンは1つ、デッキは無数。25パターン（図解骨格・会話/証言レイアウト含む）、
+   デザイン言語の"本棚"、視覚心理レイヤー（強調・山場・マーカー）、レジスター駆動の
+   人物図版（persona／1デッキ1様式）を備え、**検証ループ（5系統の lint＋レンダ＋
+   採点、いずれも「検証器の検証」済み）を必須**にすることで、崩れたデッキが世に
+diff --git a/pptx-creation-plugin/README.md b/pptx-creation-plugin/README.md
+index a82bc20..c383350 100644
+--- a/pptx-creation-plugin/README.md
++++ b/pptx-creation-plugin/README.md
+@@ -205,7 +205,7 @@ bash tests/run-gate.sh
+ node bin/validate.js
+ ```
+ 
+-## Pattern catalog (24 patterns)
++## Pattern catalog (25 patterns)
+ 
+ **Content patterns** — `cover` · `message` · `two-column` · `comparison` ·
+ `chart` · `stat-grid` · `card-grid` · `table` · `section` · `cta` ·
+@@ -213,7 +213,7 @@ node bin/validate.js
+ 
+ **Diagram skeletons** (native shapes + native labels, gated per cell by the
+ height floor) — `flow` · `cycle` · `matrix` · `timeline` · `steps` · `branch` ·
+-`formula` · `waterfall` · `positioning` (options + VS) · `system` (actors +
++`formula` · `waterfall` · `identity` (積み上げ恒等式 — the whole ＝ its parts stacked to the same height) · `positioning` (options + VS) · `system` (actors +
+ labeled flows) · `relation` (対応/分類 — the form follows the data: a partition
+ renders as zone grouping, not a line web). Diagrams are chosen
+ **conservatively** (default to text — deck-strategy §3b,
+diff --git a/pptx-creation-plugin/bin/generate.js b/pptx-creation-plugin/bin/generate.js
+index 821f216..e509803 100755
+--- a/pptx-creation-plugin/bin/generate.js
++++ b/pptx-creation-plugin/bin/generate.js
+@@ -25,7 +25,7 @@
+ const fs = require("fs");
+ const path = require("path");
+ const pptxgen = require("pptxgenjs");
+-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
++const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
+ 
+ /* ---------------- CLI ---------------- */
+ function parseArgs(argv) {
+@@ -1354,6 +1354,71 @@ function slideWaterfall(pres, d, T, ctx) {
+ }
+ 
+ 
++/* ---------------- DIAGRAM: identity (stacked identity, 積み上げ恒等式) ----------------
++ * The accounting canonical form (visual-psychology.md §3.5 正準形ライブラリ):
++ * a WHOLE on the left ＝ its parts STACKED to the same total height on the
++ * right (資産 ＝ 負債 ＋ 純資産 / 収入 ＝ 税 ＋ 手取り). The areas carry the
++ * identity — erase the ＝ and the composition still reads (the symbol-erasure
++ * test that `formula` cannot pass for this content: equal boxes joined by ＋
++ * are 額装). Heights go proportional ONLY when every part has a numeric value
++ * (all-or-none — the engine never invents proportions); values render plain
++ * (fmt as waterfall), unit once bottom-left. emphasis tints the protagonist
++ * part (usually the 残り — 純資産 / 自由なお金) with the house tint. */
++function slideIdentity(pres, d, T, ctx) {
++  const s = pres.addSlide();
++  s.background = { color: T.c.bg };
++  bgLayer(s, T, d);
++  kicker(s, T, d.kicker, T.m);
++  if (d.title) title(s, T, d.title, 1.15);
++  const parts = d.parts || [];
++  const L = identityLayout(T, parts);
++  const anyDecimal = parts.some((p) => typeof p.value === "number" && !Number.isInteger(p.value))
++    || (d.left && typeof d.left.value === "number" && !Number.isInteger(d.left.value));
++  const fmt = (v) => {
++    const a = Math.abs(v);
++    const [int, dec] = (anyDecimal ? a.toFixed(1) : String(Math.round(a))).split(".");
++    return int.replace(/\B(?=(\d{3})+$)/g, ",") + (dec ? `.${dec}` : "");
++  };
++  const eIdx = Number.isInteger(d.emphasis) ? d.emphasis : -1;
++  // the whole (left) — the reference, not the protagonist: plain surface card
++  const lf = d.left || {};
++  card(s, T, L.left.x, L.left.y, L.left.w, L.left.h, { fill: T.c.surface });
++  const leftVal = typeof lf.value === "number" ? lf.value
++    : (L.proportional ? parts.reduce((a, p) => a + p.value, 0) : null);
++  {
++    const tb = nodeTextBox(L.left);
++    const runs = [{ text: Array.isArray(lf.label) ? lf.label.join("\n") : (lf.label || ""),
++      options: { fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.ink, breakLine: leftVal !== null } }];
++    if (leftVal !== null) runs.push({ text: fmt(leftVal),
++      options: { fontFace: T.font.heading, fontSize: T.s.body, bold: true, color: T.c.muted } });
++    s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
++      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
++  }
++  // the ＝ — native glyph in its own cell, never colliding with labels
++  s.addText("＝", { x: L.op.x, y: L.op.y, w: L.op.w, h: L.op.h, margin: 0,
++    fontFace: T.font.heading, fontSize: T.s.title, bold: true, color: T.c.accent,
++    align: "center", valign: "middle" });
++  // the parts — stacked; the protagonist takes the house tint
++  parts.forEach((p, i) => {
++    const b = L.parts[i]; if (!b || !p) return;
++    const emph = eIdx === i;
++    card(s, T, b.x, b.y, b.w, b.h, { fill: emph ? T.c.surfaceA : T.c.surface });
++    const tb = nodeTextBox(b);
++    const runs = [{ text: Array.isArray(p.label) ? p.label.join("\n") : (p.label || ""),
++      options: { fontFace: T.font.heading, fontSize: T.s.head, bold: true,
++        color: emph ? T.c.accentDp : T.c.ink } }];
++    if (typeof p.value === "number") runs.push({ text: "　" + fmt(p.value),
++      options: { fontFace: T.font.heading, fontSize: T.s.small, bold: true,
++        color: emph ? T.c.accentDp : T.c.muted } });
++    s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
++      align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
++  });
++  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
++    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
++  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
++  return s;
++}
++
+ /* ---------------- DIAGRAM: positioning (2-3 competitive positions + VS) ----------------
+  * 競争ポジション (education-register.md §2-1, structure word "positioning"):
+  * side-by-side position cards with a VS cell between. emphasis tints the
+@@ -1640,6 +1705,7 @@ const PATTERNS = {
+   "branch": slideBranch,
+   "formula": slideFormula,
+   "waterfall": slideWaterfall,
++  "identity": slideIdentity,
+   "positioning": slidePositioning,
+   "system": slideSystem,
+   "relation": slideRelation,
+diff --git a/pptx-creation-plugin/bin/graphics/diagrams.js b/pptx-creation-plugin/bin/graphics/diagrams.js
+index 0cb8692..b489d95 100644
+--- a/pptx-creation-plugin/bin/graphics/diagrams.js
++++ b/pptx-creation-plugin/bin/graphics/diagrams.js
+@@ -18,7 +18,7 @@
+  * ============================================================ */
+ 
+ const NODE_PAD = 0.16;               // inner padding of a node text box (in)
+-const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4], waterfall: [3, 8], positioning: [2, 3], system: [2, 5], relation: [2, 4],
++const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4], waterfall: [3, 8], identity: [2, 4], positioning: [2, 3], system: [2, 5], relation: [2, 4],
+   dialogue: [2, 4], testimonial: [2, 6],
+ }; // [min, max] element count; matrix is fixed 4
+ 
+@@ -440,6 +440,35 @@ function waterfallLayout(T, items) {
+   return { area, bars, valueBoxes, catBoxes, connectors, zeroY: y(0), plotTop, plotBot };
+ }
+ 
++/* ---------------- identity: stacked identity (積み上げ恒等式) ---------------- */
++// The accounting canonical form (visual-psychology.md §3.5 正準形ライブラリ):
++// a WHOLE on the left, its decomposition STACKED on the right at the same total
++// height — the areas carry the identity (資産 ＝ 負債 ＋ 純資産, 収入 ＝ 税 ＋ 手取り).
++// This is what `formula` must NOT be used for: equal boxes joined by ＋ render
++// the identity as 額装 (the symbol-erasure test fails); here, erase the ＝ and
++// the stacked composition still reads. Honesty: heights are proportional ONLY
++// when every part carries a numeric value (all-or-none); with no values the
++// parts split evenly — the engine never invents proportions (盛らない).
++const ID_H = 3.3, ID_OP_W = 0.7, ID_GAP = 0.12, ID_MIN_PART = 0.42;
++
++function identityLayout(T, parts) {
++  const area = diagramArea(T);
++  const y0 = area.y + (area.h - ID_H) / 2;
++  const w = (area.w - ID_OP_W) / 2;
++  const n = Math.max(parts.length, 1);
++  const vals = parts.map((p) => (p && typeof p.value === "number" ? p.value : null));
++  const proportional = vals.length > 0 && vals.every((v) => typeof v === "number" && v >= 0) && vals.some((v) => v > 0);
++  const stackH = ID_H - (n - 1) * ID_GAP;
++  const sum = proportional ? vals.reduce((a, b) => a + b, 0) : 0;
++  const heights = parts.map((p, i) =>
++    proportional ? Math.max(stackH * (vals[i] / (sum || 1)), 0.02) : stackH / n);
++  const left = { x: area.x, y: y0, w, h: ID_H };
++  const op = { x: area.x + w, y: y0, w: ID_OP_W, h: ID_H };
++  let py = y0;
++  const partBoxes = heights.map((h) => { const b = { x: area.x + w + ID_OP_W, y: py, w, h }; py += h + ID_GAP; return b; });
++  return { area, left, op, parts: partBoxes, proportional, minPart: ID_MIN_PART };
++}
++
+ /* ---------------- emphasized column chart (native rects) ----------------
+  * When a column chart DECLARES a protagonist bar (emphasizeIndex), the native
+  * pptx chart cannot vary bar WIDTH per point nor BOLD one data label — so the
+@@ -826,7 +855,7 @@ function quadBodyBox(q, hasHead) {
+ }
+ 
+ module.exports = {
+-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout,
++  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout,
+   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
+   EMPH_SCALE, PEAK_EMPH_SCALE, emphSizePt,
+   STAT_GRID, EMPH_CARD_SCALE, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, statGridLayout, splitValueUnit, estTextWidthIn,
+diff --git a/pptx-creation-plugin/bin/layout-html/geometry.js b/pptx-creation-plugin/bin/layout-html/geometry.js
+index 8c077df..acde970 100644
+--- a/pptx-creation-plugin/bin/layout-html/geometry.js
++++ b/pptx-creation-plugin/bin/layout-html/geometry.js
+@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
+ // Diagram skeletons compute their node geometry here too, so the floor
+ // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
+ // engine draws labels into.
+-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
++const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
+ 
+ function effectiveWidth(rawIn, { bullet = false } = {}) {
+   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
+@@ -128,6 +128,7 @@ function heightBoxes(slide, T) {
+     "formula":    { topY: 1.15, bottomY: 3.65, sizePt: s.title },
+     "card-grid":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "waterfall":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
++    "identity":   { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "positioning":{ topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "system":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "relation":   { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+@@ -227,6 +228,24 @@ function heightBoxes(slide, T) {
+       });
+       break;
+     }
++    case "identity": {
++      // whole + every part label baked (kinsoku) + height-gated per box — a
++      // proportional thin slice that cannot hold its label is a hard overflow
++      // (the author shortens the label or moves the point to notes).
++      const parts = c.parts || [];
++      const L = identityLayout(T, parts);
++      if (c.left && c.left.label) {
++        const ltb = nodeTextBox(L.left);
++        out.push({ id: "identity whole", path: "left.label", topY: ltb.y, bottomY: ltb.y + ltb.h,
++          sizePt: s.head, leading: lead.tight });
++      }
++      parts.forEach((p, i) => {
++        const ntb = nodeTextBox(L.parts[i]);
++        out.push({ id: `identity part ${i + 1}`, path: `parts[${i}].label`, topY: ntb.y, bottomY: ntb.y + ntb.h,
++          sizePt: s.head, leading: lead.tight });
++      });
++      break;
++    }
+     case "waterfall": {
+       // category labels live in a fixed band under the plot; a label that wraps
+       // past the band is a hard overflow (value labels are engine-formatted).
+diff --git a/pptx-creation-plugin/bin/lint/design-lint.js b/pptx-creation-plugin/bin/lint/design-lint.js
+index 6ad3a34..4fa3b36 100644
+--- a/pptx-creation-plugin/bin/lint/design-lint.js
++++ b/pptx-creation-plugin/bin/lint/design-lint.js
+@@ -186,7 +186,19 @@ function checkCapacity(slides, F) {
+     const len = (v) => (Array.isArray(v) ? v.length : 0);
+ 
+     switch (sl.pattern) {
+-      case "dialogue": {
++      case "identity": {
++        const n = len(c.parts);
++        if (n < CAPS.identity[0] || n > CAPS.identity[1])
++          F.error(idx, "CAPACITY", `identity has ${n} parts (must be ${CAPS.identity[0]}-${CAPS.identity[1]}) — 1 part is a message; >4 -> group into その他 or use waterfall`);
++        const vals = (Array.isArray(c.parts) ? c.parts : []).map((p) => p && p.value);
++        const nums = vals.filter((v) => typeof v === "number");
++        if (nums.some((v) => v < 0))
++          F.error(idx, "CAPACITY", "identity part values must be non-negative — 負の構成（債務超過・赤字）は identity では嘘になる：waterfall で増減として描く");
++        if (nums.length > 0 && nums.length !== vals.length)
++          F.warn(idx, "CAPACITY", "identity values are all-or-none — 一部だけ数値を持つと比例せず等分描画になる（エンジンは比率を発明しない）。全てに値を入れるか、全て外す");
++        break;
++      }
++            case "dialogue": {
+         if (Array.isArray(c.columns)) {
+           if (c.columns.length !== 2) F.error(idx, "CAPACITY", `dialogue compare form needs exactly 2 columns (got ${c.columns.length})`);
+           c.columns.forEach((col, ci) => {
+@@ -442,6 +454,7 @@ const EMPHASIS_SLOTS = {
+   "card-grid": (c) => (Array.isArray(c.cards) ? c.cards.length : 0),
+   "two-column": (c) => (Array.isArray(c.items) ? c.items.length : 0),
+   "comparison": () => 2,
++  "identity": (c) => (Array.isArray(c.parts) ? c.parts.length : 0),
+ };
+ 
+ // Marker support matrix (§2): which marker types each pattern can carry.
+@@ -642,8 +655,8 @@ function checkRhythm(slides, F) {
+  *     record the one-word structure test (順序/ループ/2軸/ポジション/システム/
+  *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
+  *     意味の正しさ自体は人の承認領域。 */
+-const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall"];
+-const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|時系列|段階|sequence|loop|two-axis|positioning|system|relation/i;
++const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity"];
++const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
+ const PERSONA_PATTERNS = ["message", "two-column"];
+ 
+ function checkRegister(slides, meta, F) {
+diff --git a/pptx-creation-plugin/references/graphics/diagram-recipes.md b/pptx-creation-plugin/references/graphics/diagram-recipes.md
+index 18e818f..597866a 100644
+--- a/pptx-creation-plugin/references/graphics/diagram-recipes.md
++++ b/pptx-creation-plugin/references/graphics/diagram-recipes.md
+@@ -258,6 +258,57 @@ look:     "totals accentDeep / increases accent / decreases muted; light zero
+ renders clean with ▲ labels and step connectors; n=2 / n=9 → CAPACITY; a 2-line
+ category label → OVERFLOW at 101%; run-gate PASS across all 6 themes.
+ 
++## `identity` — stacked identity (積み上げ恒等式)
++
++The accounting canonical form (`visual-psychology.md` §3.5 正準形ライブラリ): a
++WHOLE on the left **＝** its components STACKED to the same total height on the
++right — 資産 ＝ 負債 ＋ 純資産, 収入 ＝ 税 ＋ 手取り. The **areas carry the
++identity**: erase the ＝ and the composition still reads (the symbol-erasure
++test). This is the content `formula` must NOT take — equal boxes joined by ＋
++render an identity as 額装 (the exact failure the canonical library exists to
++prevent).
++
++```yaml
++id: identity
++content:
++  kicker:   { type: string, required: false }
++  title:    { type: string|string[], required: false }
++  left:     { type: object, required: true, note: "the WHOLE {label, value?} —
++              a short TERM (資産/収入). value omitted + all parts numeric ->
++              the engine shows the honest sum." }
++  parts:    { type: array, required: true, note: "2-4 of {label, value?} stacked
++              to the whole's height. Values are ALL-OR-NONE: with values the
++              stack heights are proportional (honest); without, equal split —
++              the engine never invents proportions (盛らない). Non-negative
++              only: 債務超過・赤字 are increments/decrements -> use waterfall." }
++  emphasis: { type: integer, required: false, note: "protagonist part (usually
++              the 残り — 純資産 / 自由なお金): surfaceAccent tint + accentDeep." }
++  unit:     { type: string, required: false, note: "shown once bottom-left (単位：…)" }
++capacity: "2-4 parts (CAPS.identity). 1 part is a message; >4 -> group into
++           その他 or use waterfall. Labels are short TERMS — a proportional thin
++           slice (≲12% of the whole) holds only a very short label; the height
++           gate hard-errors past that (shorten, or carry the point in notes)."
++geometry: "left block spans the full stack height; ＝ lives in its own fixed-width
++           cell (never collides); part heights = (H − gaps) × value/sum when
++           proportional, else equal; stack bottom == whole bottom (the identity,
++           machine-checked in the fixture)"
++labels:   "part values ENGINE-formatted (thousands comma, decimals kept when any
++           value is fractional), joined on the label line; the whole's sum line
++           appears only when honest (author value or computed from full parts)"
++floor:    "whole + every part label baked (kinsoku) + height-gated per box"
++look:     "whole surface (the reference, not the protagonist); parts surface;
++           the emphasis part surfaceAccent + accentDeep (house emphasis);
++           ＝ glyph accent at title size — native text, no shapes"
++```
++
++**Verified (2026-07-08)** — concept form (no values, 2 parts) splits equally and
++closes the identity (stack bottom = whole bottom, 0.01in); proportional form
++(128,340/164,890/136,740 千円) renders heights at exactly 0.298/0.383/0.318 of
++the stack with the honest sum on the whole; n=1 / n=5 → CAPACITY; a negative
++part → CAPACITY (waterfall へ誘導); mixed values → all-or-none WARN; a 3% slice
++with a sentence-length label → OVERFLOW (height gate); run-gate PASS across all
++6 themes (torture-09).
++
+ ## `positioning` — 2-3 competitive positions + VS (education register)
+ 
+ ```yaml
+diff --git a/pptx-creation-plugin/references/principles/visual-psychology.md b/pptx-creation-plugin/references/principles/visual-psychology.md
+index 8ce50f9..cf53f29 100644
+--- a/pptx-creation-plugin/references/principles/visual-psychology.md
++++ b/pptx-creation-plugin/references/principles/visual-psychology.md
+@@ -127,7 +127,7 @@ whitespace.md の床が守る。この層で足すのは「**違うものは違
+ 検算：**記号を全部消しても関係が伝わるか**。伝わらなければ、量を寸法に・
+ 関係を位置に翻訳し直す（同サイズの箱を横に並べて記号でつなぐ構図は原則
+ 額装）。図解の形は原稿から導出できない——その分野の**正準形**（実務で使われる
+-図の型：BS=左右の積み上げ恒等式、資金の流れ=waterfall、規模比較=実寸横棒、
++図の型：BS=左右の積み上げ恒等式（`identity` 骨格）、資金の流れ=waterfall、規模比較=実寸横棒（chart `bar`）、
+ 決算書イメージ=書類風ミニチュア、構成比=帯）を呼び出す。正準形が分からない
+ 概念は、実装前に調査するか人間に確認する（diagram-recipes.md の各骨格が
+ このライブラリの機械化面）。
+diff --git a/pptx-creation-plugin/schemas/deck_plan.schema.json b/pptx-creation-plugin/schemas/deck_plan.schema.json
+index efdbf47..7fb43e8 100644
+--- a/pptx-creation-plugin/schemas/deck_plan.schema.json
++++ b/pptx-creation-plugin/schemas/deck_plan.schema.json
+@@ -931,6 +931,97 @@
+             }
+           }
+         },
++        {
++          "if": {
++            "properties": {
++              "pattern": {
++                "const": "identity"
++              }
++            }
++          },
++          "then": {
++            "properties": {
++              "content": {
++                "required": [
++                  "left",
++                  "parts"
++                ],
++                "properties": {
++                  "kicker": {
++                    "type": "string"
++                  },
++                  "title": {
++                    "type": [
++                      "string",
++                      "array"
++                    ],
++                    "items": {
++                      "type": "string"
++                    }
++                  },
++                  "left": {
++                    "type": "object",
++                    "required": [
++                      "label"
++                    ],
++                    "properties": {
++                      "label": {
++                        "type": [
++                          "string",
++                          "array"
++                        ],
++                        "description": "The WHOLE (資産 / 収入). Short TERM, not a sentence."
++                      },
++                      "value": {
++                        "type": "number",
++                        "minimum": 0,
++                        "description": "Optional. Omitted + all parts numeric -> the engine shows the honest sum."
++                      }
++                    }
++                  },
++                  "parts": {
++                    "type": "array",
++                    "minItems": 2,
++                    "maxItems": 4,
++                    "items": {
++                      "type": "object",
++                      "required": [
++                        "label"
++                      ],
++                      "properties": {
++                        "label": {
++                          "type": [
++                            "string",
++                            "array"
++                          ]
++                        },
++                        "value": {
++                          "type": "number",
++                          "minimum": 0,
++                          "description": "All-or-none across parts: with values, stack heights are proportional (honest); without, equal split — the engine never invents proportions."
++                        }
++                      }
++                    },
++                    "description": "2-4 components stacked to the whole's height. Negative components (債務超過) are out of scope — use waterfall."
++                  },
++                  "emphasis": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 3,
++                    "description": "Protagonist part (usually the 残り — 純資産 / 自由なお金): surfaceAccent tint + accentDeep head."
++                  },
++                  "unit": {
++                    "type": "string",
++                    "description": "Shown once bottom-left (単位：…)."
++                  },
++                  "notes": {
++                    "type": "string"
++                  }
++                }
++              }
++            }
++          }
++        },
+         {
+           "if": {
+             "properties": {
+@@ -2284,4 +2375,4 @@
+       }
+     }
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/pptx-creation-plugin/skills/deck-strategy/SKILL.md b/pptx-creation-plugin/skills/deck-strategy/SKILL.md
+index 5fbb051..7cad827 100644
+--- a/pptx-creation-plugin/skills/deck-strategy/SKILL.md
++++ b/pptx-creation-plugin/skills/deck-strategy/SKILL.md
+@@ -159,6 +159,8 @@ that doesn't is worse than text.
+ - `branch`: 1 source + 2–4 branches (labels short; 4 branches leave one line each).
+ - `formula`: 2–4 operands + optional result — labels are short TERMS, not sentences.
+ - `waterfall`: 3–8 items ({label, value, total?}); group small drivers into その他.
++- `identity`: 1 whole + 2–4 parts ({label, value?}) — values all-or-none
++  (proportional heights only with full values); non-negative; labels short TERMS.
+ - `chart` band type: 2–4 segments × 1–5 rows; pie/doughnut: 2–5 slices.
+ - `positioning`: 2–3 options; `system`: 2–5 actors; `relation`: 2–4 per side,
+   ≤8 links; `cycle`/`flow` node labels ≤ ~5 chars per line (the height gate
+diff --git a/pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json b/pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json
+new file mode 100644
+index 0000000..d78f47c
+--- /dev/null
++++ b/pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json
+@@ -0,0 +1,36 @@
++{
++  "meta": { "title": "torture: identity abuse", "intent": "seminar" },
++  "slides": [
++    { "pattern": "cover", "content": { "titleLines": ["identity 拷問デッキ"] } },
++    { "pattern": "identity", "content": {
++      "left": { "label": "全体" },
++      "parts": [ { "label": "唯一の構成" } ],
++      "notes": "n=1 -> CAPACITY(ERROR)を発火させる"
++    } },
++    { "pattern": "identity", "content": {
++      "left": { "label": "全体" },
++      "parts": [ { "label": "一" }, { "label": "二" }, { "label": "三" }, { "label": "四" }, { "label": "五" } ],
++      "notes": "n=5 -> CAPACITY(ERROR)を発火させる"
++    } },
++    { "pattern": "identity", "content": {
++      "left": { "label": "資産" },
++      "parts": [ { "label": "負債", "value": 120 }, { "label": "純資産", "value": -20 } ],
++      "notes": "負の構成(債務超過) -> CAPACITY(ERROR)。waterfallへ誘導"
++    } },
++    { "pattern": "identity", "content": {
++      "left": { "label": "収入" },
++      "parts": [ { "label": "税", "value": 30 }, { "label": "手取り" } ],
++      "notes": "値のall-or-none違反 -> CAPACITY(WARN)。比率を発明しない"
++    } },
++    { "pattern": "identity", "content": {
++      "left": { "label": "全体" },
++      "parts": [
++        { "label": "圧倒的に小さいのに説明文のように長いラベルを持つ極小スライス", "value": 3 },
++        { "label": "大", "value": 97 }
++      ],
++      "emphasis": 0,
++      "notes": "3%スライス×長文ラベル -> 高さゲートOVERFLOWを発火させる"
++    } },
++    { "pattern": "cta", "content": { "titleLines": ["締め"], "offerHead": "行動", "offerBody": "本文。" } }
++  ]
++}
+-- 
+2.43.0
+

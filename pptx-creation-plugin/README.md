@@ -205,7 +205,7 @@ bash tests/run-gate.sh
 node bin/validate.js
 ```
 
-## Pattern catalog (24 patterns)
+## Pattern catalog (26 patterns)
 
 **Content patterns** — `cover` · `message` · `two-column` · `comparison` ·
 `chart` · `stat-grid` · `card-grid` · `table` · `section` · `cta` ·
@@ -213,7 +213,7 @@ node bin/validate.js
 
 **Diagram skeletons** (native shapes + native labels, gated per cell by the
 height floor) — `flow` · `cycle` · `matrix` · `timeline` · `steps` · `branch` ·
-`formula` · `waterfall` · `positioning` (options + VS) · `system` (actors +
+`formula` · `waterfall` · `identity` (積み上げ恒等式 — the whole ＝ its parts stacked to the same height; one part may nest a 2nd level = the STRAC form) · `breakeven` (CVP / 損益分岐点 — terms only, ※模式図 auto-stamp without data) · `positioning` (options + VS) · `system` (actors +
 labeled flows) · `relation` (対応/分類 — the form follows the data: a partition
 renders as zone grouping, not a line web). Diagrams are chosen
 **conservatively** (default to text — deck-strategy §3b,
@@ -324,7 +324,7 @@ pptx-creation-plugin/
 │   ├── lint/                    #   design-lint · geometry-lint · typo-lint · image-lint · saliency-lint · ssim
 │   ├── layout-html/             #   bake · measure · geometry (kinsoku engine + the height floor)
 │   └── graphics/                #   diagrams.js (ALL layout math — the single source) · recipes (SVG) · make-markers (asset rasters) · gen-figures (CC0 busts)
-├── skills/                      # design-doc · deck-brief · design-language · deck-strategy · create-deck · theme-init · deck-review · project-scaffold
+├── skills/                      # design-doc · domain-canon · deck-brief · design-language · deck-strategy · create-deck · theme-init · deck-review · project-scaffold
 ├── references/                  # principles/ · patterns/ · graphics/ · design-languages/ · usecases/  (the design brain)
 ├── schemas/                     # theme · deck_plan · deck_review
 ├── themes/                      # neutral (default) + swiss · editorial · minimal · data-driven · wa-modern

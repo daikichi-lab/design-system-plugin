@@ -1,0 +1,1106 @@
+From 890156e9caf7bbe1086867ce5194bfcca8ee8955 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 8 Jul 2026 08:49:20 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?feat:=20STRAC=20nesting=20+=20breakeven=20s?=
+ =?UTF-8?q?keleton=20+=20domain-canon=20skill=20+=20=E4=BC=9A=E8=A8=88/FP/?=
+ =?UTF-8?q?=E4=BF=9D=E9=99=BA=20canonical=20catalog?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Engine (generic skeletons only — the plugin stays domain-free):
+- identity: one part may nest 2-3 sub items (the STRAC form / お金のブロック
+  パズル — 売上＝変動費＋限界利益; 限界利益＝固定費＋利益). Sub column stacks
+  to exactly the parent's height; identityTextSpec is the single source for
+  thin-slice handling (honest proportions kept, TYPE steps down head->small —
+  builder draws and gate measures with the same numbers). Lint: one-sub rule,
+  sub 2-3, all-or-none values, 縦計算 cross-checks (IDENTITY-SUM WARN on
+  parts-vs-whole and sub-vs-parent drift), emphasis+subEmphasis => ERROR.
+- breakeven (CVP / 損益分岐点図): 売上高線 × 総費用線 (固定費 floor + 変動費
+  slope) crossing at BEP, 損失/利益 regions. TERMS only, never value labels;
+  honest crossing from {fixed, variableRate}; without data the engine
+  auto-stamps ※模式図 (machine-checked). v>=1 => CAPACITY (no 限界利益).
+
+Knowledge (project-side, NOT plugin — the design-doc/DESIGN.md split):
+- docs/canon/accounting-fp-insurance.md: 会計/FP/保険の正準形カタログ
+  (~30 concept->skeleton mappings with honesty guards) + GAP台帳
+  (document-mock, coverage decay).
+- skills/domain-canon: the factory skill — inventory concepts, gate each form
+  (structure-word / symbol-erasure / honesty), map to skeletons, file GAPs as
+  recipe proposals, emit docs/canon/<domain>.md. deck-strategy now loads
+  docs/canon/*.md at the beat->pattern step.
+
+Verified: STRAC textbook case renders both levels at exact proportions
+(1.272/1.908, 1.341/0.447in; sub flush to parent, d<=0.001in); breakeven data
+vs schematic stamp machine-checked; torture-09 extended (2-sub, dual emphasis,
+sum drift, v=1.2); run-gate PASS across all 6 themes; validate PASS.
+---
+ README.md                                     |   2 +-
+ docs/canon/accounting-fp-insurance.md         |  70 ++++++
+ pptx-creation-plugin/README.md                |   6 +-
+ pptx-creation-plugin/bin/generate.js          |  88 ++++++-
+ pptx-creation-plugin/bin/graphics/diagrams.js |  88 ++++++-
+ .../bin/layout-html/geometry.js               |  20 +-
+ pptx-creation-plugin/bin/lint/design-lint.js  |  36 ++-
+ .../references/graphics/diagram-recipes.md    |  57 ++++-
+ .../schemas/deck_plan.schema.json             | 100 ++++++++
+ pptx-creation-plugin/skills/README.md         |   6 +-
+ .../skills/deck-strategy/SKILL.md             |  12 +-
+ .../skills/domain-canon/SKILL.md              |  89 +++++++
+ .../torture-09-identity-abuse.json            | 221 +++++++++++++++---
+ 13 files changed, 729 insertions(+), 66 deletions(-)
+ create mode 100644 docs/canon/accounting-fp-insurance.md
+ create mode 100644 pptx-creation-plugin/skills/domain-canon/SKILL.md
+
+diff --git a/README.md b/README.md
+index f363253..703155b 100644
+--- a/README.md
++++ b/README.md
+@@ -4,7 +4,7 @@
+ 
+ - **[`pptx-creation`](pptx-creation-plugin/)** — 高品質な PowerPoint（`.pptx`）デッキを
+   「設計 → 構成 → 生成 → レビュー」する、**日本語ビジネス資料**に最適化したプラグイン。
+-  エンジンは1つ、デッキは無数。25パターン（図解骨格・会話/証言レイアウト含む）、
++  エンジンは1つ、デッキは無数。26パターン（図解骨格・会話/証言レイアウト含む）、
+   デザイン言語の"本棚"、視覚心理レイヤー（強調・山場・マーカー）、レジスター駆動の
+   人物図版（persona／1デッキ1様式）を備え、**検証ループ（5系統の lint＋レンダ＋
+   採点、いずれも「検証器の検証」済み）を必須**にすることで、崩れたデッキが世に
+diff --git a/docs/canon/accounting-fp-insurance.md b/docs/canon/accounting-fp-insurance.md
+new file mode 100644
+index 0000000..f50dd23
+--- /dev/null
++++ b/docs/canon/accounting-fp-insurance.md
+@@ -0,0 +1,70 @@
++# 正準形カタログ — 会計・FP・保険（domain canonical forms）
++
++> **置き場所の意図：** これはドメイン知識であり、プラグイン（汎用エンジン）には
++> 組み込まない。プラグインが持つのは汎用の骨格（identity / breakeven /
++> waterfall / chart …）だけで、「この分野のこの概念にはこの型」という対応表は
++> 利用側リポジトリの `docs/canon/` に置く（DESIGN.md と同じ思想）。
++> 生成時は `deck-strategy` がこのファイルを読み、ビート→パターンの写像を
++> この分野の実務の型から始める。新しい分野のカタログは
++> `/pptx-creation:domain-canon` スキルで作る。
++
++**採用ガード（全行に適用）**
++1. 実務・教科書で実際に使われている型のみ（発明しない）。
++2. 記号消去テストに合格する型のみ（visual-psychology §3.5 — 額装は正準形ではない）。
++3. honesty列は必読 — 比例・位置・面積はデータがある時だけ意味を運ばせる。
++
++## 会計（経営者向け・セミナー）
++
++| 概念 | 正準形（実務の呼び名） | 骨格/パターン | honesty・容量の注意 |
++|---|---|---|---|
++| BS（貸借対照表の構造） | 積み上げ恒等式の箱図 | `identity` | 比例は全パート数値時のみ。負債超過は `waterfall` へ |
++| STRAC／お金のブロックパズル | 2段の積み上げ恒等式 | `identity`＋`parts[].sub` | 入れ子は1パートまで。縦計算はlintが検算 |
++| 損益分岐点（CVP） | 交差する2直線＋BEP | `breakeven` | 用語のみ・数値ラベル禁止。データ無しは※模式図が自動 |
++| 利益ブリッジ／増減要因 | 滝グラフ | `waterfall` | ▲表記はエンジン任せ。8超は「その他」に集約 |
++| 売上の分解（客数×単価） | 因数分解 | `formula` | ラベルは名詞句。文章を入れない |
++| 5段階利益（売上→純利益） | 段階の滝 | `waterfall`（totals活用） | 各levelにtotal:true |
++| 財務3表のつながり | 相互の流れ図 | `system` | 矢印ラベル＝何が流れるか（カネ/情報） |
++| 勘定科目の対応・分類 | 対応マップ | `relation` | 分類ならzone表示（線の網にしない） |
++| 月次・四半期推移 | 縦棒/折れ線 | `chart` column/line | 軸ゼロ基点・ラベルが真実（軸歪曲禁止） |
++| セグメント構成比 | 100%帯 | `chart` band | 四捨五入注記を`note`に |
++| 規模・件数の比較 | 実寸横棒 | `chart` bar | 実寸比例（印象操作しない） |
++| 決算書のイメージ提示 | 書類風ミニチュア | **GAP（未実装）** | 現状は使わない/写真不可。要engine提案。ダミーでも縦計算を合わせる |
++| 資金繰りサイクル（サイト） | 期日の帯/年表 | `timeline` | 日付は1行 |
++
++## FP（個人・ライフプラン）
++
++| 概念 | 正準形 | 骨格/パターン | 注意 |
++|---|---|---|---|
++| 額面→手取りの分解 | 積み上げ恒等式 | `identity` | 「自由なお金」をemphasisに（残りが主役） |
++| 家計の収支＋自由なお金の内訳 | 2段恒等式 | `identity`＋sub | STRACの家計版 |
++| ライフイベント年表 | 年表 | `timeline` | 3–7マイルストーン |
++| キャッシュフロー表 | 精緻な表 | `table` | 単位・前提を`note`に。6行超は分割 |
++| 資産推移シミュレーション | 折れ線 | `chart` line | 前提を明記、試算は「（試算）」打刻を著者側で |
++| リスクの4象限（頻度×影響→保険/貯蓄/回避/低減） | 2×2 | `matrix` | 相関を独立2軸に見せない（軸が本当に独立か） |
++| ポートフォリオ構成 | 円/帯 | `chart` pie(≤5)/band | 5切片まで |
++| 3大資金（教育・住宅・老後） | 並列カード | `stat-grid`/`card-grid` | 金額は出典・前提つき |
++| 公的年金の階層（1〜3階） | 積み上げ | `identity`（値なし等分可） | 階層＝構成。比例は制度額がある時のみ |
++
++## 保険
++
++| 概念 | 正準形 | 骨格/パターン | 注意 |
++|---|---|---|---|
++| 保障の全体像（公的＋企業＋私的） | 層の積み上げ | `identity` | 「私的で埋める層」をemphasisに |
++| 掛金の内訳（保障＋積立） | 恒等式 | `identity` | 商品実額があれば比例 |
++| 必要保障額の逓減（三角形） | 逓減ステップ／面グラフ | **GAP（未実装）** | chartにarea/step無し。暫定は`waterfall`（年代を段階に）か`timeline`＋文で。要engine提案 |
++| 見直し前後 | 対比 | `comparison`/`before-after` | 有利側を右・誇張しない |
++| 商品・プラン比較 | 表 | `table` | 保険料は前提（年齢・期間）必須 |
++| 給付金の流れ（誰から誰へ） | 流れ図 | `system`/`flow` | 矢印ラベル＝カネの名前 |
++| ライフステージ×必要保障 | 年表/2軸 | `timeline`/`matrix` | 段階なら年表、独立2軸ならmatrix |
++| 加入率・世帯統計 | 実寸横棒 | `chart` bar | 出典年次を`note`に |
++
++## GAP台帳（エンジン提案待ち）
++
++| 型 | 用途 | 提案の方向 |
++|---|---|---|
++| 書類風ミニチュア | 「これ読めますか」演出（決算書PL/BS） | 新パターン `document-mock`：白地・細罫・グレー数字。数値はエンジンが縦計算を強制 |
++| 逓減保障（三角形/面） | 必要保障額×収入保障のカバー | `chart` に area/step 追加 or 専用骨格 `coverage` |
++
++GAPは手描き回避（M-7）——実装されるまで代替パターンか本文で語る。
++エンジン提案は diagram-recipes.md のレシピ形式（yaml＋capacity＋floor＋look＋
++Verified条件）で起票する。
+diff --git a/pptx-creation-plugin/README.md b/pptx-creation-plugin/README.md
+index c383350..dd73a1c 100644
+--- a/pptx-creation-plugin/README.md
++++ b/pptx-creation-plugin/README.md
+@@ -205,7 +205,7 @@ bash tests/run-gate.sh
+ node bin/validate.js
+ ```
+ 
+-## Pattern catalog (25 patterns)
++## Pattern catalog (26 patterns)
+ 
+ **Content patterns** — `cover` · `message` · `two-column` · `comparison` ·
+ `chart` · `stat-grid` · `card-grid` · `table` · `section` · `cta` ·
+@@ -213,7 +213,7 @@ node bin/validate.js
+ 
+ **Diagram skeletons** (native shapes + native labels, gated per cell by the
+ height floor) — `flow` · `cycle` · `matrix` · `timeline` · `steps` · `branch` ·
+-`formula` · `waterfall` · `identity` (積み上げ恒等式 — the whole ＝ its parts stacked to the same height) · `positioning` (options + VS) · `system` (actors +
++`formula` · `waterfall` · `identity` (積み上げ恒等式 — the whole ＝ its parts stacked to the same height; one part may nest a 2nd level = the STRAC form) · `breakeven` (CVP / 損益分岐点 — terms only, ※模式図 auto-stamp without data) · `positioning` (options + VS) · `system` (actors +
+ labeled flows) · `relation` (対応/分類 — the form follows the data: a partition
+ renders as zone grouping, not a line web). Diagrams are chosen
+ **conservatively** (default to text — deck-strategy §3b,
+@@ -324,7 +324,7 @@ pptx-creation-plugin/
+ │   ├── lint/                    #   design-lint · geometry-lint · typo-lint · image-lint · saliency-lint · ssim
+ │   ├── layout-html/             #   bake · measure · geometry (kinsoku engine + the height floor)
+ │   └── graphics/                #   diagrams.js (ALL layout math — the single source) · recipes (SVG) · make-markers (asset rasters) · gen-figures (CC0 busts)
+-├── skills/                      # design-doc · deck-brief · design-language · deck-strategy · create-deck · theme-init · deck-review · project-scaffold
++├── skills/                      # design-doc · domain-canon · deck-brief · design-language · deck-strategy · create-deck · theme-init · deck-review · project-scaffold
+ ├── references/                  # principles/ · patterns/ · graphics/ · design-languages/ · usecases/  (the design brain)
+ ├── schemas/                     # theme · deck_plan · deck_review
+ ├── themes/                      # neutral (default) + swiss · editorial · minimal · data-driven · wa-modern
+diff --git a/pptx-creation-plugin/bin/generate.js b/pptx-creation-plugin/bin/generate.js
+index e509803..116221b 100755
+--- a/pptx-creation-plugin/bin/generate.js
++++ b/pptx-creation-plugin/bin/generate.js
+@@ -25,7 +25,7 @@
+ const fs = require("fs");
+ const path = require("path");
+ const pptxgen = require("pptxgenjs");
+-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
++const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, breakevenLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
+ 
+ /* ---------------- CLI ---------------- */
+ function parseArgs(argv) {
+@@ -1386,9 +1386,9 @@ function slideIdentity(pres, d, T, ctx) {
+   const leftVal = typeof lf.value === "number" ? lf.value
+     : (L.proportional ? parts.reduce((a, p) => a + p.value, 0) : null);
+   {
+-    const tb = nodeTextBox(L.left);
++    const spec = identityTextSpec(T, L.left); const tb = spec.tb;
+     const runs = [{ text: Array.isArray(lf.label) ? lf.label.join("\n") : (lf.label || ""),
+-      options: { fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.ink, breakLine: leftVal !== null } }];
++      options: { fontFace: T.font.heading, fontSize: spec.sizePt, bold: true, color: T.c.ink, breakLine: leftVal !== null } }];
+     if (leftVal !== null) runs.push({ text: fmt(leftVal),
+       options: { fontFace: T.font.heading, fontSize: T.s.body, bold: true, color: T.c.muted } });
+     s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+@@ -1403,9 +1403,9 @@ function slideIdentity(pres, d, T, ctx) {
+     const b = L.parts[i]; if (!b || !p) return;
+     const emph = eIdx === i;
+     card(s, T, b.x, b.y, b.w, b.h, { fill: emph ? T.c.surfaceA : T.c.surface });
+-    const tb = nodeTextBox(b);
++    const spec = identityTextSpec(T, b); const tb = spec.tb;
+     const runs = [{ text: Array.isArray(p.label) ? p.label.join("\n") : (p.label || ""),
+-      options: { fontFace: T.font.heading, fontSize: T.s.head, bold: true,
++      options: { fontFace: T.font.heading, fontSize: spec.sizePt, bold: true,
+         color: emph ? T.c.accentDp : T.c.ink } }];
+     if (typeof p.value === "number") runs.push({ text: "　" + fmt(p.value),
+       options: { fontFace: T.font.heading, fontSize: T.s.small, bold: true,
+@@ -1413,6 +1413,83 @@ function slideIdentity(pres, d, T, ctx) {
+     s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+       align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
+   });
++  // one-level nesting (STRAC): the decomposed part's sub items stack beside it
++  if (L.subBoxes) {
++    const subs = parts[L.subIdx].sub || [];
++    const sIdx = Number.isInteger(d.subEmphasis) ? d.subEmphasis : -1;
++    subs.forEach((p, i) => {
++      const b = L.subBoxes[i]; if (!b || !p) return;
++      const emph = sIdx === i;
++      card(s, T, b.x, b.y, b.w, b.h, { fill: emph ? T.c.surfaceA : T.c.surface });
++      const spec = identityTextSpec(T, b); const tb = spec.tb;
++      const runs = [{ text: Array.isArray(p.label) ? p.label.join("\n") : (p.label || ""),
++        options: { fontFace: T.font.heading, fontSize: spec.sizePt, bold: true,
++          color: emph ? T.c.accentDp : T.c.ink } }];
++      if (typeof p.value === "number") runs.push({ text: "　" + fmt(p.value),
++        options: { fontFace: T.font.heading, fontSize: T.s.small, bold: true,
++          color: emph ? T.c.accentDp : T.c.muted } });
++      s.addText(runs, { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
++        align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
++    });
++  }
++  if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
++    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
++  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
++  return s;
++}
++
++/* ---------------- DIAGRAM: breakeven (CVP / 損益分岐点図) ----------------
++ * The 会計セミナー staple beside STRAC: 売上高線 and 総費用線（固定費＋変動費）
++ * crossing at the 損益分岐点. Purely structural — the skeleton carries TERMS,
++ * never numbers; with {fixed, variableRate} the crossing derives from the data,
++ * without them the engine draws the schematic AND auto-stamps ※模式図
++ * (house-bar §4 — a schematic must not wear a data face). */
++function slideBreakeven(pres, d, T, ctx) {
++  const s = pres.addSlide();
++  s.background = { color: T.c.bg };
++  bgLayer(s, T, d);
++  kicker(s, T, d.kicker, T.m);
++  if (d.title) title(s, T, d.title, 1.15);
++  const L = breakevenLayout(T, d.fixed, d.variableRate);
++  const P = L.plot;
++  const lbl = Object.assign({ sales: "売上高", cost: "総費用", fixed: "固定費",
++    bep: "損益分岐点", loss: "損失", profit: "利益" }, d.labels || {});
++  // axes
++  s.addShape("line", { x: P.x, y: P.y, w: 0, h: P.h, line: { color: T.c.line, width: 1.25 } });
++  s.addShape("line", { x: P.x, y: P.y + P.h, w: P.w, h: 0, line: { color: T.c.line, width: 1.25 } });
++  // fixed-cost floor (dashed, muted)
++  s.addShape("line", { x: P.x, y: L.fixedY, w: P.w, h: 0,
++    line: { color: T.c.muted, width: 1, dashType: "dash" } });
++  // cost line (muted, solid) — rises from the fixed floor
++  s.addShape("line", { x: L.cost.x1, y: L.cost.y2, w: L.cost.x2 - L.cost.x1, h: L.cost.y1 - L.cost.y2,
++    flipV: true, line: { color: T.c.muted, width: 2.25 } });
++  // sales line (accent, the protagonist) — from the origin, steeper
++  s.addShape("line", { x: L.sales.x1, y: L.sales.y2, w: L.sales.x2 - L.sales.x1, h: L.sales.y1 - L.sales.y2,
++    flipV: true, line: { color: T.c.accent, width: 2.75 } });
++  // BEP: dot + dashed drop + label under the axis
++  s.addShape("line", { x: L.bep.x, y: L.bep.y, w: 0, h: P.y + P.h - L.bep.y,
++    line: { color: T.c.accentDp, width: 1, dashType: "dash" } });
++  s.addShape("ellipse", { x: L.bep.x - 0.07, y: L.bep.y - 0.07, w: 0.14, h: 0.14,
++    fill: { color: T.c.accentDp }, line: { type: "none" } });
++  s.addText(richText(lbl.bep), { x: L.bep.x - 1.2, y: P.y + P.h + 0.08, w: 2.4, h: 0.3, margin: 0,
++    fontFace: T.font.heading, fontSize: T.s.small, bold: true, color: T.c.accentDp,
++    align: "center", valign: "top" });
++  // line terms at the right edge; fixed floor term at the left
++  const term = (text, y, color, bold) => s.addText(richText(text), {
++    x: P.x + P.w + 0.12, y: y - 0.14, w: 1.9, h: 0.3, margin: 0,
++    fontFace: T.font.heading, fontSize: T.s.small, bold: !!bold, color, align: "left", valign: "middle" });
++  term(lbl.sales, L.sales.y2, T.c.accent, true);
++  term(lbl.cost, L.cost.y2, T.c.muted);
++  s.addText(richText(lbl.fixed), { x: P.x + 0.08, y: L.fixedY + 0.04, w: 1.8, h: 0.26, margin: 0,
++    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
++  // loss / profit regions (between the two lines)
++  s.addText(richText(lbl.loss), { x: P.x + P.w * 0.16, y: L.fixedY - 0.42, w: 1.4, h: 0.3, margin: 0,
++    fontFace: T.font.body, fontSize: T.s.small, color: T.c.muted, align: "center", valign: "middle" });
++  s.addText(richText(lbl.profit), { x: L.bep.x + (P.x + P.w - L.bep.x) * 0.42 - 0.7, y: P.y + (L.bep.y - P.y) * 0.45, w: 1.4, h: 0.3, margin: 0,
++    fontFace: T.font.heading, fontSize: T.s.small, bold: true, color: T.c.accentDp, align: "center", valign: "middle" });
++  // honesty stamp: a schematic must say so
++  if (L.schematic) s.addText("※模式図", { x: P.x + P.w - 1.2, y: P.y + P.h - 0.32, w: 1.2, h: 0.26, margin: 0,
++    fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "right", valign: "bottom" });
+   if (d.unit) s.addText(`単位：${d.unit}`, { x: T.m, y: 6.66, w: 2.6, h: 0.28, margin: 0,
+     fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.muted, align: "left", valign: "top" });
+   footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+@@ -1706,6 +1783,7 @@ const PATTERNS = {
+   "formula": slideFormula,
+   "waterfall": slideWaterfall,
+   "identity": slideIdentity,
++  "breakeven": slideBreakeven,
+   "positioning": slidePositioning,
+   "system": slideSystem,
+   "relation": slideRelation,
+diff --git a/pptx-creation-plugin/bin/graphics/diagrams.js b/pptx-creation-plugin/bin/graphics/diagrams.js
+index b489d95..215879d 100644
+--- a/pptx-creation-plugin/bin/graphics/diagrams.js
++++ b/pptx-creation-plugin/bin/graphics/diagrams.js
+@@ -18,7 +18,7 @@
+  * ============================================================ */
+ 
+ const NODE_PAD = 0.16;               // inner padding of a node text box (in)
+-const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4], waterfall: [3, 8], identity: [2, 4], positioning: [2, 3], system: [2, 5], relation: [2, 4],
++const CAPS = { flow: [3, 6], cycle: [3, 6], timeline: [3, 7], steps: [3, 5], branch: [2, 4], formula: [2, 4], waterfall: [3, 8], identity: [2, 4], identitySub: [2, 3], positioning: [2, 3], system: [2, 5], relation: [2, 4],
+   dialogue: [2, 4], testimonial: [2, 6],
+ }; // [min, max] element count; matrix is fixed 4
+ 
+@@ -449,24 +449,88 @@ function waterfallLayout(T, items) {
+ // the stacked composition still reads. Honesty: heights are proportional ONLY
+ // when every part carries a numeric value (all-or-none); with no values the
+ // parts split evenly — the engine never invents proportions (盛らない).
+-const ID_H = 3.3, ID_OP_W = 0.7, ID_GAP = 0.12, ID_MIN_PART = 0.42;
++const ID_H = 3.3, ID_OP_W = 0.7, ID_GAP = 0.12, ID_SUB_GAP = 0.14, ID_MIN_PART = 0.42;
+ 
+-function identityLayout(T, parts) {
+-  const area = diagramArea(T);
+-  const y0 = area.y + (area.h - ID_H) / 2;
+-  const w = (area.w - ID_OP_W) / 2;
+-  const n = Math.max(parts.length, 1);
+-  const vals = parts.map((p) => (p && typeof p.value === "number" ? p.value : null));
++// stackProportions: heights for a stack of items filling `total` (gaps out),
++// proportional ONLY when every item has a numeric value (all-or-none — the
++// engine never invents proportions); else equal split.
++function stackProportions(items, total, gap) {
++  const n = Math.max(items.length, 1);
++  const vals = items.map((p) => (p && typeof p.value === "number" ? p.value : null));
+   const proportional = vals.length > 0 && vals.every((v) => typeof v === "number" && v >= 0) && vals.some((v) => v > 0);
+-  const stackH = ID_H - (n - 1) * ID_GAP;
++  const stackH = total - (n - 1) * gap;
+   const sum = proportional ? vals.reduce((a, b) => a + b, 0) : 0;
+-  const heights = parts.map((p, i) =>
++  const heights = items.map((p, i) =>
+     proportional ? Math.max(stackH * (vals[i] / (sum || 1)), 0.02) : stackH / n);
++  return { heights, proportional };
++}
++
++// identityTextSpec — the SINGLE SOURCE for how an identity/STRAC box carries
++// its label: a thin slice (the canonical STRAC 利益 at 15% is one) keeps its
++// honest proportional height and steps the TYPE down instead (head -> small)
++// with a slim pad. The builder draws with this and the height gate measures
++// with the same numbers — never two opinions.
++const ID_THIN = 0.62, ID_THIN_PAD = 0.05;
++function identityTextSpec(T, box) {
++  const thin = box.h < ID_THIN;
++  const pad = thin ? ID_THIN_PAD : NODE_PAD;
++  return { thin, sizePt: thin ? T.s.small : T.s.head,
++    tb: { x: box.x + NODE_PAD, y: box.y + pad, w: box.w - 2 * NODE_PAD, h: box.h - 2 * pad } };
++}
++
++function identityLayout(T, parts) {
++  const area = diagramArea(T);
++  const y0 = area.y + (area.h - ID_H) / 2;
++  // one part may carry its own decomposition (`sub`, 2-3 items) — the STRAC
++  // form (売上＝変動費＋限界利益; 限界利益＝固定費＋利益): a THIRD column
++  // beside the decomposed part, stacked to exactly that part's height, so the
++  // areas keep carrying the identity at both levels.
++  const subIdx = parts.findIndex((p) => p && Array.isArray(p.sub) && p.sub.length);
++  const cols = subIdx >= 0 ? 3 : 2;
++  const w = (area.w - ID_OP_W - (cols === 3 ? ID_SUB_GAP : 0)) / cols;
++  const { heights, proportional } = stackProportions(parts, ID_H, ID_GAP);
+   const left = { x: area.x, y: y0, w, h: ID_H };
+   const op = { x: area.x + w, y: y0, w: ID_OP_W, h: ID_H };
+   let py = y0;
+   const partBoxes = heights.map((h) => { const b = { x: area.x + w + ID_OP_W, y: py, w, h }; py += h + ID_GAP; return b; });
+-  return { area, left, op, parts: partBoxes, proportional, minPart: ID_MIN_PART };
++  let subBoxes = null, subProportional = false;
++  if (subIdx >= 0) {
++    const parent = partBoxes[subIdx];
++    const sp = stackProportions(parts[subIdx].sub, parent.h, ID_GAP);
++    subProportional = sp.proportional;
++    let sy = parent.y;
++    subBoxes = sp.heights.map((h) => { const b = { x: parent.x + w + ID_SUB_GAP, y: sy, w, h }; sy += h + ID_GAP; return b; });
++  }
++  return { area, left, op, parts: partBoxes, proportional, subIdx, subBoxes, subProportional, minPart: ID_MIN_PART };
++}
++
++/* ---------------- breakeven: CVP / 損益分岐点図 ---------------- */
++// The other 会計セミナー staple: 売上高線 and 総費用線 (固定費 floor + 変動費
++// slope) crossing at the 損益分岐点. Purely STRUCTURAL — no value labels; the
++// line positions derive from {fixed, variableRate} when given (honest), else a
++// schematic default and the engine auto-stamps ※模式図 (house-bar §4: an
++// unlabeled schematic must not look like data).
++const BE_PAD_L = 0.5, BE_PAD_B = 0.5, BE_TOP = 0.25;
++
++function breakevenLayout(T, fixed, variableRate) {
++  const area = diagramArea(T);
++  const plot = { x: area.x + BE_PAD_L, y: area.y + BE_TOP,
++                 w: area.w - BE_PAD_L - 2.1, h: area.h - BE_TOP - BE_PAD_B };
++  const schematic = !(typeof fixed === "number" && fixed > 0 &&
++                      typeof variableRate === "number" && variableRate > 0 && variableRate < 1);
++  const v = schematic ? 0.55 : variableRate;
++  // sales units: BEP = F/(1−v); x-axis spans 1.6×BEP so the crossing sits at
++  // 62.5% — a presentation scale (axes carry no ticks), not a data claim.
++  const xBep = 0.625;
++  const salesAtMax = 1.0;                    // top of plot = sales at xMax
++  const fFrac = schematic ? (1 - v) * xBep   // keeps BEP at 62.5% by construction
++                          : (1 - v) * xBep;  // identical relation: f = (1−v)·xBep
++  const X = (fx) => plot.x + fx * plot.w;
++  const Y = (fy) => plot.y + plot.h - fy * plot.h;   // fy in sales units [0..1]
++  const sales = { x1: X(0), y1: Y(0), x2: X(1), y2: Y(salesAtMax) };
++  const cost  = { x1: X(0), y1: Y(fFrac), x2: X(1), y2: Y(fFrac + v * salesAtMax) };
++  const bep   = { x: X(xBep), y: Y(xBep * salesAtMax) };
++  return { area, plot, sales, cost, fixedY: Y(fFrac), bep, schematic };
+ }
+ 
+ /* ---------------- emphasized column chart (native rects) ----------------
+@@ -855,7 +919,7 @@ function quadBodyBox(q, hasHead) {
+ }
+ 
+ module.exports = {
+-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout,
++  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, breakevenLayout,
+   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
+   EMPH_SCALE, PEAK_EMPH_SCALE, emphSizePt,
+   STAT_GRID, EMPH_CARD_SCALE, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, statGridLayout, splitValueUnit, estTextWidthIn,
+diff --git a/pptx-creation-plugin/bin/layout-html/geometry.js b/pptx-creation-plugin/bin/layout-html/geometry.js
+index acde970..ec8a47c 100644
+--- a/pptx-creation-plugin/bin/layout-html/geometry.js
++++ b/pptx-creation-plugin/bin/layout-html/geometry.js
+@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
+ // Diagram skeletons compute their node geometry here too, so the floor
+ // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
+ // engine draws labels into.
+-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
++const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
+ 
+ function effectiveWidth(rawIn, { bullet = false } = {}) {
+   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
+@@ -129,6 +129,7 @@ function heightBoxes(slide, T) {
+     "card-grid":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "waterfall":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "identity":   { topY: 1.15, bottomY: 2.45, sizePt: s.title },
++    "breakeven":  { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "positioning":{ topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "system":     { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+     "relation":   { topY: 1.15, bottomY: 2.45, sizePt: s.title },
+@@ -235,14 +236,19 @@ function heightBoxes(slide, T) {
+       const parts = c.parts || [];
+       const L = identityLayout(T, parts);
+       if (c.left && c.left.label) {
+-        const ltb = nodeTextBox(L.left);
+-        out.push({ id: "identity whole", path: "left.label", topY: ltb.y, bottomY: ltb.y + ltb.h,
+-          sizePt: s.head, leading: lead.tight });
++        const sp = identityTextSpec(T, L.left);
++        out.push({ id: "identity whole", path: "left.label", topY: sp.tb.y, bottomY: sp.tb.y + sp.tb.h,
++          sizePt: sp.sizePt, leading: lead.tight });
+       }
+       parts.forEach((p, i) => {
+-        const ntb = nodeTextBox(L.parts[i]);
+-        out.push({ id: `identity part ${i + 1}`, path: `parts[${i}].label`, topY: ntb.y, bottomY: ntb.y + ntb.h,
+-          sizePt: s.head, leading: lead.tight });
++        const sp = identityTextSpec(T, L.parts[i]);
++        out.push({ id: `identity part ${i + 1}`, path: `parts[${i}].label`, topY: sp.tb.y, bottomY: sp.tb.y + sp.tb.h,
++          sizePt: sp.sizePt, leading: lead.tight });
++      });
++      if (L.subBoxes) (parts[L.subIdx].sub || []).forEach((p, i) => {
++        const sp = identityTextSpec(T, L.subBoxes[i]);
++        out.push({ id: `identity sub ${i + 1}`, path: `parts[${L.subIdx}].sub[${i}].label`, topY: sp.tb.y, bottomY: sp.tb.y + sp.tb.h,
++          sizePt: sp.sizePt, leading: lead.tight });
+       });
+       break;
+     }
+diff --git a/pptx-creation-plugin/bin/lint/design-lint.js b/pptx-creation-plugin/bin/lint/design-lint.js
+index 4fa3b36..67f7789 100644
+--- a/pptx-creation-plugin/bin/lint/design-lint.js
++++ b/pptx-creation-plugin/bin/lint/design-lint.js
+@@ -196,6 +196,40 @@ function checkCapacity(slides, F) {
+           F.error(idx, "CAPACITY", "identity part values must be non-negative — 負の構成（債務超過・赤字）は identity では嘘になる：waterfall で増減として描く");
+         if (nums.length > 0 && nums.length !== vals.length)
+           F.warn(idx, "CAPACITY", "identity values are all-or-none — 一部だけ数値を持つと比例せず等分描画になる（エンジンは比率を発明しない）。全てに値を入れるか、全て外す");
++        // 縦計算の検算 (数字の誠実性): whole vs parts が両方数値なら合っていること
++        if (c.left && typeof c.left.value === "number" && nums.length === vals.length && nums.length > 0) {
++          const sum = nums.reduce((a, b) => a + b, 0);
++          if (Math.abs(sum - c.left.value) > Math.max(Math.abs(c.left.value) * 0.005, 1e-9))
++            F.warn(idx, "IDENTITY-SUM", `parts sum ${sum} ≠ whole ${c.left.value} — 縦計算が合わない恒等式は専門家の信頼を一瞬で毀損する（丸めなら notes に注記）`);
++        }
++        // STRAC nesting: ONE part may decompose; sub は 2-3・非負・all-or-none・縦計算
++        const withSub = (Array.isArray(c.parts) ? c.parts : []).map((p, pi) => [p, pi]).filter(([p]) => p && Array.isArray(p.sub) && p.sub.length);
++        if (withSub.length > 1)
++          F.error(idx, "CAPACITY", `identity: ${withSub.length} parts carry sub — 入れ子は1パートまで（STRAC形）。それ以上の分解は2枚に割る`);
++        withSub.forEach(([p, pi]) => {
++          const m = p.sub.length;
++          if (m < CAPS.identitySub[0] || m > CAPS.identitySub[1])
++            F.error(idx, "CAPACITY", `identity parts[${pi}].sub has ${m} items (must be ${CAPS.identitySub[0]}-${CAPS.identitySub[1]})`);
++          const svals = p.sub.map((q) => q && q.value);
++          const snums = svals.filter((v) => typeof v === "number");
++          if (snums.some((v) => v < 0)) F.error(idx, "CAPACITY", `identity parts[${pi}].sub values must be non-negative`);
++          if (snums.length > 0 && snums.length !== svals.length)
++            F.warn(idx, "CAPACITY", `identity parts[${pi}].sub values are all-or-none（エンジンは比率を発明しない）`);
++          if (typeof p.value === "number" && snums.length === svals.length && snums.length > 0) {
++            const ssum = snums.reduce((a, b) => a + b, 0);
++            if (Math.abs(ssum - p.value) > Math.max(Math.abs(p.value) * 0.005, 1e-9))
++              F.warn(idx, "IDENTITY-SUM", `parts[${pi}].sub sum ${ssum} ≠ parent ${p.value} — 縦計算が合わない`);
++          }
++        });
++        if (Number.isInteger(c.emphasis) && Number.isInteger(c.subEmphasis))
++          F.error(idx, "EMPHASIS-COUNT", "identity: emphasis と subEmphasis の併記＝主役2人（1スライド1強調）。どちらか一方に");
++        break;
++      }
++      case "breakeven": {
++        if (typeof c.variableRate === "number" && (c.variableRate <= 0 || c.variableRate >= 1))
++          F.error(idx, "CAPACITY", `breakeven variableRate=${c.variableRate} — 変動費率は0<v<1（v≥1は限界利益が無く、損益分岐しない構造＝図が嘘になる）`);
++        if ((typeof c.fixed === "number") !== (typeof c.variableRate === "number"))
++          F.warn(idx, "CAPACITY", "breakeven fixed/variableRate は対で — 片方だけでは実データ比にならず模式図（※模式図が自動打刻）になる");
+         break;
+       }
+             case "dialogue": {
+@@ -655,7 +689,7 @@ function checkRhythm(slides, F) {
+  *     record the one-word structure test (順序/ループ/2軸/ポジション/システム/
+  *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
+  *     意味の正しさ自体は人の承認領域。 */
+-const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity"];
++const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity", "breakeven"];
+ const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
+ const PERSONA_PATTERNS = ["message", "two-column"];
+ 
+diff --git a/pptx-creation-plugin/references/graphics/diagram-recipes.md b/pptx-creation-plugin/references/graphics/diagram-recipes.md
+index 597866a..78eb059 100644
+--- a/pptx-creation-plugin/references/graphics/diagram-recipes.md
++++ b/pptx-creation-plugin/references/graphics/diagram-recipes.md
+@@ -276,13 +276,22 @@ content:
+   left:     { type: object, required: true, note: "the WHOLE {label, value?} —
+               a short TERM (資産/収入). value omitted + all parts numeric ->
+               the engine shows the honest sum." }
+-  parts:    { type: array, required: true, note: "2-4 of {label, value?} stacked
++  parts:    { type: array, required: true, note: "2-4 of {label, value?, sub?} stacked
+               to the whole's height. Values are ALL-OR-NONE: with values the
+               stack heights are proportional (honest); without, equal split —
+               the engine never invents proportions (盛らない). Non-negative
+               only: 債務超過・赤字 are increments/decrements -> use waterfall." }
+   emphasis: { type: integer, required: false, note: "protagonist part (usually
+               the 残り — 純資産 / 自由なお金): surfaceAccent tint + accentDeep." }
++  parts[].sub: { type: array, required: false, note: "ONE-LEVEL NESTING (the
++              STRAC form — お金のブロックパズル): 2-3 {label, value?} stacked in a
++              third column to exactly the parent part's height (売上＝変動費＋
++              限界利益; 限界利益＝固定費＋利益). At most ONE part may carry sub
++              (more -> split the slide); values all-or-none; the lint cross-checks
++              縦計算 (sub sum vs parent, parts sum vs whole) and WARNs on drift." }
++  subEmphasis: { type: integer, required: false, note: "protagonist among the sub
++              items (STRAC: 利益). Mutually exclusive with emphasis — one slide,
++              one protagonist (lint ERROR on both)." }
+   unit:     { type: string, required: false, note: "shown once bottom-left (単位：…)" }
+ capacity: "2-4 parts (CAPS.identity). 1 part is a message; >4 -> group into
+            その他 or use waterfall. Labels are short TERMS — a proportional thin
+@@ -307,7 +316,51 @@ closes the identity (stack bottom = whole bottom, 0.01in); proportional form
+ the stack with the honest sum on the whole; n=1 / n=5 → CAPACITY; a negative
+ part → CAPACITY (waterfall へ誘導); mixed values → all-or-none WARN; a 3% slice
+ with a sentence-length label → OVERFLOW (height gate); run-gate PASS across all
+-6 themes (torture-09).
++6 themes (torture-09). **STRAC nesting verified (2026-07-08)** — the textbook
++売上100＝変動費40＋限界利益60; 限界利益60＝固定費45＋利益15 renders both levels
++at exact proportions (1.272/1.908 and 1.341/0.447 in) with the sub column flush
++to its parent's bounds (Δ≤0.001in); thin slices (the canonical 利益 at 15%) keep
++their honest height and step the TYPE down instead (identityTextSpec — the
++single source the builder draws with and the gate measures with); two parts
++with sub / emphasis+subEmphasis / 縦計算 drift → lint (torture-09).
++
++## `breakeven` — CVP / 損益分岐点図
++
++The other 会計セミナー staple beside STRAC: the 売上高線 and the 総費用線
++(固定費 floor + 変動費 slope) crossing at the 損益分岐点, with 損失/利益 regions.
++**Purely structural — the skeleton carries TERMS, never value labels** (numbers
++belong to `chart` / `waterfall` / `table`); the geometry derives from
++{fixed, variableRate} when both are given (honest), else the engine draws the
++schematic **and auto-stamps ※模式図** (house-bar §4 — a schematic must never
++wear a data face).
++
++```yaml
++id: breakeven
++content:
++  kicker:       { type: string, required: false }
++  title:        { type: string|string[], required: false }
++  fixed:        { type: number, required: false, note: "固定費 (>0). Pair with variableRate." }
++  variableRate: { type: number, required: false, note: "変動費率, 0<v<1. v≥1 has no
++                  限界利益 — the structure cannot break even and the lint hard-errors." }
++  labels:       { type: object, required: false, note: "term overrides — sales/cost/
++                  fixed/bep/loss/profit (default 売上高/総費用/固定費/損益分岐点/損失/利益)" }
++  unit:         { type: string, required: false }
++capacity: "fixed structure (2 lines + floor + BEP). Terms are short; a numeric
++           story (いくらで分岐するか) belongs on a companion chart/table slide."
++geometry: "axes carry no ticks; the x-axis spans 1.6×BEP so the crossing sits at
++           62.5% — a presentation scale, not a data claim; with data the relation
++           f = (1−v)·xBEP is exact"
++floor:    "title band gated; line terms are fixed short slots (right edge / left
++           floor / under the axis)"
++look:     "sales line accent (the protagonist, thicker); cost line muted; fixed
++           floor dashed muted; BEP dot + dashed drop accentDeep; 利益 region label
++           accentDeep, 損失 muted — native shapes + native text"
++```
++
++**Verified (2026-07-08)** — data form (fixed=45, v=0.4) and schematic form both
++render clean across all 6 themes (run-gate PASS); the schematic auto-stamps
++※模式図 and the data form does not (machine-checked); v=1.2 → CAPACITY;
++fixed/variableRate unpaired → WARN (torture-09).
+ 
+ ## `positioning` — 2-3 competitive positions + VS (education register)
+ 
+diff --git a/pptx-creation-plugin/schemas/deck_plan.schema.json b/pptx-creation-plugin/schemas/deck_plan.schema.json
+index 7fb43e8..db2daaf 100644
+--- a/pptx-creation-plugin/schemas/deck_plan.schema.json
++++ b/pptx-creation-plugin/schemas/deck_plan.schema.json
+@@ -999,6 +999,30 @@
+                           "type": "number",
+                           "minimum": 0,
+                           "description": "All-or-none across parts: with values, stack heights are proportional (honest); without, equal split — the engine never invents proportions."
++                        },
++                        "sub": {
++                          "type": "array",
++                          "minItems": 2,
++                          "maxItems": 3,
++                          "items": {
++                            "type": "object",
++                            "required": [
++                              "label"
++                            ],
++                            "properties": {
++                              "label": {
++                                "type": [
++                                  "string",
++                                  "array"
++                                ]
++                              },
++                              "value": {
++                                "type": "number",
++                                "minimum": 0
++                              }
++                            }
++                          },
++                          "description": "One-level nesting (STRAC): this part's own decomposition, stacked beside it to exactly its height (限界利益 -> 固定費＋利益). At most ONE part may carry sub."
+                         }
+                       }
+                     },
+@@ -1014,6 +1038,82 @@
+                     "type": "string",
+                     "description": "Shown once bottom-left (単位：…)."
+                   },
++                  "notes": {
++                    "type": "string"
++                  },
++                  "subEmphasis": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 2,
++                    "description": "Protagonist among the sub items (STRAC: 利益). Mutually exclusive with emphasis — one slide, one protagonist."
++                  }
++                }
++              }
++            }
++          }
++        },
++        {
++          "if": {
++            "properties": {
++              "pattern": {
++                "const": "breakeven"
++              }
++            }
++          },
++          "then": {
++            "properties": {
++              "content": {
++                "properties": {
++                  "kicker": {
++                    "type": "string"
++                  },
++                  "title": {
++                    "type": [
++                      "string",
++                      "array"
++                    ],
++                    "items": {
++                      "type": "string"
++                    }
++                  },
++                  "fixed": {
++                    "type": "number",
++                    "exclusiveMinimum": 0,
++                    "description": "固定費. With variableRate, the crossing derives from the data (honest); without both, the engine draws the schematic and auto-stamps ※模式図."
++                  },
++                  "variableRate": {
++                    "type": "number",
++                    "exclusiveMinimum": 0,
++                    "exclusiveMaximum": 1,
++                    "description": "変動費率 (0<v<1). v≥1 has no 限界利益 — the lint hard-errors."
++                  },
++                  "labels": {
++                    "type": "object",
++                    "properties": {
++                      "sales": {
++                        "type": "string"
++                      },
++                      "cost": {
++                        "type": "string"
++                      },
++                      "fixed": {
++                        "type": "string"
++                      },
++                      "bep": {
++                        "type": "string"
++                      },
++                      "loss": {
++                        "type": "string"
++                      },
++                      "profit": {
++                        "type": "string"
++                      }
++                    },
++                    "description": "Term overrides (default 売上高/総費用/固定費/損益分岐点/損失/利益). TERMS only — the skeleton never carries value labels; numbers belong to chart/waterfall/table."
++                  },
++                  "unit": {
++                    "type": "string"
++                  },
+                   "notes": {
+                     "type": "string"
+                   }
+diff --git a/pptx-creation-plugin/skills/README.md b/pptx-creation-plugin/skills/README.md
+index 7dbc6c5..7676ca7 100644
+--- a/pptx-creation-plugin/skills/README.md
++++ b/pptx-creation-plugin/skills/README.md
+@@ -1,6 +1,6 @@
+ # skills/ — the agent-facing playbooks
+ 
+-Eight skills, one pipeline. Each `skills/<name>/SKILL.md` is the **single
++Nine skills, one pipeline. Each `skills/<name>/SKILL.md` is the **single
+ definition file** (frontmatter `description` = when Claude invokes it; body =
+ the playbook). This README is only a **hub** — it duplicates nothing; when in
+ doubt, the SKILL.md wins.
+@@ -17,6 +17,10 @@ doubt, the SKILL.md wins.
+                               (pick ONE style from the bookshelf — feeds both)
+ ```
+ 
++- **Once per domain (optional):** `domain-canon` — after `design-doc`, for a
++  project that will make decks in a specific field: writes the canonical-forms
++  catalog to `docs/canon/<domain>.md` (deck-strategy reads it at the
++  beat→pattern step). Domain knowledge stays project-side; the plugin stays generic.
+ - **Once per project:** `project-scaffold` (folders, never overwrites) →
+   `design-doc` (the standing `DESIGN.md` — required, template level) →
+   `theme-init` (the project `theme.json`). `design-language` picks the style
+diff --git a/pptx-creation-plugin/skills/deck-strategy/SKILL.md b/pptx-creation-plugin/skills/deck-strategy/SKILL.md
+index 7cad827..4eb0c5c 100644
+--- a/pptx-creation-plugin/skills/deck-strategy/SKILL.md
++++ b/pptx-creation-plugin/skills/deck-strategy/SKILL.md
+@@ -108,7 +108,11 @@ mis-read; everything downstream of the classification is mechanical.
+ ## Step 3 — Map each beat to a pattern
+ 
+ For every beat, pick the pattern whose *job* matches it
+-(`../../references/patterns/catalog.md`). The patterns, by the job they do:
++(`../../references/patterns/catalog.md`). **If the project carries a domain
++canonical-forms catalog (`docs/canon/*.md`, from the `domain-canon` skill), load
++it first** — it maps the domain's recurring concepts (BS, STRAC, 損益分岐点,
++必要保障額 …) to skeletons and their honesty guards, so the beat→pattern step
++starts from the field's established forms instead of re-deriving them. The patterns, by the job they do:
+ 
+ | Beat shape | Pattern |
+ |---|---|
+@@ -159,8 +163,12 @@ that doesn't is worse than text.
+ - `branch`: 1 source + 2–4 branches (labels short; 4 branches leave one line each).
+ - `formula`: 2–4 operands + optional result — labels are short TERMS, not sentences.
+ - `waterfall`: 3–8 items ({label, value, total?}); group small drivers into その他.
+-- `identity`: 1 whole + 2–4 parts ({label, value?}) — values all-or-none
++- `identity`: 1 whole + 2–4 parts ({label, value?, sub?}) — values all-or-none
+   (proportional heights only with full values); non-negative; labels short TERMS.
++  ONE part may nest 2–3 `sub` items (the STRAC form); the lint cross-checks 縦計算.
++- `breakeven`: fixed structure (terms only, no value labels). Give {fixed,
++  variableRate} as a pair for the honest crossing; without them the engine
++  stamps ※模式図. 0<v<1.
+ - `chart` band type: 2–4 segments × 1–5 rows; pie/doughnut: 2–5 slices.
+ - `positioning`: 2–3 options; `system`: 2–5 actors; `relation`: 2–4 per side,
+   ≤8 links; `cycle`/`flow` node labels ≤ ~5 chars per line (the height gate
+diff --git a/pptx-creation-plugin/skills/domain-canon/SKILL.md b/pptx-creation-plugin/skills/domain-canon/SKILL.md
+new file mode 100644
+index 0000000..41d29c5
+--- /dev/null
++++ b/pptx-creation-plugin/skills/domain-canon/SKILL.md
+@@ -0,0 +1,89 @@
++---
++name: domain-canon
++description: >
++  Build a domain's canonical-forms catalog (docs/canon/<domain>.md in the
++  PROJECT repo): map the field's recurring concepts (BS, STRAC, 損益分岐点,
++  必要保障額, funnel …) to the diagram forms practitioners actually use, gated
++  by the structure-word / symbol-erasure / honesty tests, and file engine GAPs
++  as recipe proposals. Run once per new domain (after design-doc), or mid-project
++  when deck-strategy hits a concept with no mapping. The catalog is domain
++  content — it never enters the plugin.
++---
++
++# domain-canon — 特定領域の「図の正準形」をナレッジ化するスキル
++
++**Job:** For a domain the project will make decks in (会計, FP, 保険, 医療, 採用,
++SaaS metrics …), build the **canonical-forms catalog** — the mapping from the
++domain's recurring concepts to the diagram forms its practitioners actually use
++— and write it to the PROJECT repo as `docs/canon/<domain>.md`.
++
++**Why this exists.** 図解の形は原稿から導出できない (visual-psychology.md §3.5):
++the manuscript gives you the *relation* (資産−負債＝純資産); which *shape* renders
++it is field knowledge (the BS box, STRAC, the CVP cross). A model that lacks the
++canonical form fills the gap with the safest literal translation — boxes joined
++by ＝, i.e. 額装. The catalog is the retrieval key that makes the right form
++fire **every time**, not just when the generating model happens to recall it.
++
++**Where the knowledge lives (hard rule).** The catalog is DOMAIN CONTENT, not
++engine machinery — it goes in the *user's* repo (`docs/canon/`), never into the
++plugin (the same split as `design-doc` → project `DESIGN.md`; the plugin stays
++generic, M-6 spirit). The plugin only ever gains **generic skeletons** that a
++catalog line maps to. A worked example catalog lives at
++[`../../../docs/canon/accounting-fp-insurance.md`](../../../docs/canon/accounting-fp-insurance.md).
++
++## When to run
++
++- Scaffolding a project in a new domain (right after `design-doc`).
++- `deck-strategy` hits a beat whose concept has no mapping (mid-project top-up).
++- A domain expert hands you forms to codify ("うちの業界ではこう描く").
++
++## Procedure
++
++1. **Inventory the concepts.** From the project's manuscripts (and the expert):
++   list the domain's *recurring* concepts that will need visual treatment —
++   aim for the 10–25 that cover ~90% of decks, not an encyclopedia.
++2. **Name each concept's canonical form.** Prefer, in order: (a) what the
++   domain's practitioners/textbooks actually draw (name it — STRAC, CVP,
++   デュポン分解); (b) research when unsure (never invent a form and present it
++   as the field's convention); (c) **ask the human** when sources conflict.
++3. **Gate every candidate** — a form enters the catalog only if it passes:
++   - **構造1語テスト**: the structure names in one word (sequence / loop /
++     two-axis / identity / bridge / system / relation / ranking / share …).
++   - **記号消去テスト**: erase ＝ ＋ − → and the relation still reads
++     (visual-psychology §3.5 — 額装 is not a canonical form).
++   - **honesty check**: note what the form may claim only with data
++     (proportional areas need full values; a schematic needs its ※模式図;
++     ranking bars are true-scale). Write it in the catalog's honesty column.
++4. **Map to a skeleton.** Point each form at an engine pattern
++   (`references/patterns/catalog.md`, `references/graphics/diagram-recipes.md`).
++   No fit → **GAP台帳** に記録 (see the example catalog's last section):
++   never hand-draw around the engine (M-7); until implemented, name the
++   fallback (a neighboring pattern, or text).
++5. **Emit `docs/canon/<domain>.md`** in the project repo — a table per
++   sub-domain: 概念｜正準形（実務の呼び名）｜骨格/パターン｜honesty・容量の注意,
++   plus the 採用ガード header and the GAP台帳. Keep rows terse; the recipes
++   themselves live in the plugin's references.
++6. **File the GAPs as engine proposals** in diagram-recipes.md's format
++   (yaml contract + capacity + floor + look + the Verified conditions it must
++   meet) — a proposal ships only through the normal gate (engine + catalog +
++   torture + run-gate, per CLAUDE.md).
++
++## Guards (MUST)
++
++- **発明しない**: a form no practitioner uses is not "canonical" — it is a
++  design experiment and needs the human's explicit sign-off, marked as such.
++- **プラグインを汚さない**: domain rows never enter the plugin's references;
++  only generic skeletons do (via proposals).
++- **honesty は正準形でも免除されない**: the field's habit of, e.g., truncated
++  axes does not override chart-design §4 — the catalog codifies the form,
++  house rules govern the claims.
++- **1概念1行**: if a concept seems to need two forms, it is two concepts
++  (split the row) or the structure test failed (re-classify).
++
++## Output contract
++
++`docs/canon/<domain>.md` with: (1) 採用ガード header linking the three tests,
++(2) mapping tables (概念/正準形/骨格/注意), (3) GAP台帳 with proposal直下の方向,
++(4) a "last reviewed" date — the catalog is a living document; corrections from
++each project's deck-review feed back into it (the same calibration loop as
++DESIGN.md).
+diff --git a/pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json b/pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json
+index d78f47c..832cde3 100644
+--- a/pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json
++++ b/pptx-creation-plugin/tests/adversarial/torture-09-identity-abuse.json
+@@ -1,36 +1,193 @@
+ {
+-  "meta": { "title": "torture: identity abuse", "intent": "seminar" },
++  "meta": {
++    "title": "torture: identity abuse",
++    "intent": "seminar"
++  },
+   "slides": [
+-    { "pattern": "cover", "content": { "titleLines": ["identity 拷問デッキ"] } },
+-    { "pattern": "identity", "content": {
+-      "left": { "label": "全体" },
+-      "parts": [ { "label": "唯一の構成" } ],
+-      "notes": "n=1 -> CAPACITY(ERROR)を発火させる"
+-    } },
+-    { "pattern": "identity", "content": {
+-      "left": { "label": "全体" },
+-      "parts": [ { "label": "一" }, { "label": "二" }, { "label": "三" }, { "label": "四" }, { "label": "五" } ],
+-      "notes": "n=5 -> CAPACITY(ERROR)を発火させる"
+-    } },
+-    { "pattern": "identity", "content": {
+-      "left": { "label": "資産" },
+-      "parts": [ { "label": "負債", "value": 120 }, { "label": "純資産", "value": -20 } ],
+-      "notes": "負の構成(債務超過) -> CAPACITY(ERROR)。waterfallへ誘導"
+-    } },
+-    { "pattern": "identity", "content": {
+-      "left": { "label": "収入" },
+-      "parts": [ { "label": "税", "value": 30 }, { "label": "手取り" } ],
+-      "notes": "値のall-or-none違反 -> CAPACITY(WARN)。比率を発明しない"
+-    } },
+-    { "pattern": "identity", "content": {
+-      "left": { "label": "全体" },
+-      "parts": [
+-        { "label": "圧倒的に小さいのに説明文のように長いラベルを持つ極小スライス", "value": 3 },
+-        { "label": "大", "value": 97 }
+-      ],
+-      "emphasis": 0,
+-      "notes": "3%スライス×長文ラベル -> 高さゲートOVERFLOWを発火させる"
+-    } },
+-    { "pattern": "cta", "content": { "titleLines": ["締め"], "offerHead": "行動", "offerBody": "本文。" } }
++    {
++      "pattern": "cover",
++      "content": {
++        "titleLines": [
++          "identity 拷問デッキ"
++        ]
++      }
++    },
++    {
++      "pattern": "identity",
++      "content": {
++        "left": {
++          "label": "全体"
++        },
++        "parts": [
++          {
++            "label": "唯一の構成"
++          }
++        ],
++        "notes": "n=1 -> CAPACITY(ERROR)を発火させる"
++      }
++    },
++    {
++      "pattern": "identity",
++      "content": {
++        "left": {
++          "label": "全体"
++        },
++        "parts": [
++          {
++            "label": "一"
++          },
++          {
++            "label": "二"
++          },
++          {
++            "label": "三"
++          },
++          {
++            "label": "四"
++          },
++          {
++            "label": "五"
++          }
++        ],
++        "notes": "n=5 -> CAPACITY(ERROR)を発火させる"
++      }
++    },
++    {
++      "pattern": "identity",
++      "content": {
++        "left": {
++          "label": "資産"
++        },
++        "parts": [
++          {
++            "label": "負債",
++            "value": 120
++          },
++          {
++            "label": "純資産",
++            "value": -20
++          }
++        ],
++        "notes": "負の構成(債務超過) -> CAPACITY(ERROR)。waterfallへ誘導"
++      }
++    },
++    {
++      "pattern": "identity",
++      "content": {
++        "left": {
++          "label": "収入"
++        },
++        "parts": [
++          {
++            "label": "税",
++            "value": 30
++          },
++          {
++            "label": "手取り"
++          }
++        ],
++        "notes": "値のall-or-none違反 -> CAPACITY(WARN)。比率を発明しない"
++      }
++    },
++    {
++      "pattern": "identity",
++      "content": {
++        "left": {
++          "label": "全体"
++        },
++        "parts": [
++          {
++            "label": "圧倒的に小さいのに説明文のように長いラベルを持つ極小スライス",
++            "value": 3
++          },
++          {
++            "label": "大",
++            "value": 97
++          }
++        ],
++        "emphasis": 0,
++        "notes": "3%スライス×長文ラベル -> 高さゲートOVERFLOWを発火させる"
++      }
++    },
++    {
++      "pattern": "identity",
++      "content": {
++        "left": {
++          "label": "売上",
++          "value": 100
++        },
++        "parts": [
++          {
++            "label": "変動費",
++            "value": 40,
++            "sub": [
++              {
++                "label": "A",
++                "value": 20
++              },
++              {
++                "label": "B",
++                "value": 20
++              }
++            ]
++          },
++          {
++            "label": "限界利益",
++            "value": 60,
++            "sub": [
++              {
++                "label": "固定費",
++                "value": 45
++              },
++              {
++                "label": "利益",
++                "value": 15
++              }
++            ]
++          }
++        ],
++        "notes": "sub 2箇所 -> CAPACITY(ERROR)。入れ子は1パートまで"
++      }
++    },
++    {
++      "pattern": "identity",
++      "content": {
++        "left": {
++          "label": "売上",
++          "value": 100
++        },
++        "parts": [
++          {
++            "label": "変動費",
++            "value": 40
++          },
++          {
++            "label": "限界利益",
++            "value": 55
++          }
++        ],
++        "emphasis": 1,
++        "subEmphasis": 0,
++        "notes": "縦計算不一致(40+55≠100) -> IDENTITY-SUM(WARN) ＋ emphasis併記 -> EMPHASIS-COUNT(ERROR)"
++      }
++    },
++    {
++      "pattern": "breakeven",
++      "content": {
++        "fixed": 45,
++        "variableRate": 1.2,
++        "notes": "v≥1 -> CAPACITY(ERROR)。限界利益が無い構造"
++      }
++    },
++    {
++      "pattern": "cta",
++      "content": {
++        "titleLines": [
++          "締め"
++        ],
++        "offerHead": "行動",
++        "offerBody": "本文。"
++      }
++    }
+   ]
+ }
+-- 
+2.43.0
+

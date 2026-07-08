@@ -35,11 +35,15 @@ honesty override を**軸別に特化して継承**する（§2）。
 **ガード：「無い構造を見せない」。** 順序が無いのに flow、相関を独立2軸に
 見せる matrix、相関を因果に見せる矢印は嘘であり、**間違ったモデルを教える
 ので退屈より悪い**。分類テスト：**構造を1語で言えるか**
-（sequence / loop / two-axis / **positioning / system / relation**）。
+（sequence / loop / two-axis / **positioning / system / relation /
+identity（恒等式・内訳・構成） / bridge（増減） / crossing（損益分岐）**）。
 言えなければ図解せずテキスト。型の根拠は notes に残し、事実・財務系は
 人が承認してから確定（over-diagram lint が notes の記録を WARN で促す）。
 
 骨格（既存 flow / cycle / matrix に追加）：
+- `identity` — 積み上げ恒等式（全体＝部分。1パートは2段目に分解可＝STRAC形）。
+  **和の内訳で大きさが意味を持つなら formula ではなくこちら**（額装の禁止）。
+- `breakeven` — 損益分岐点図（用語のみ・データ無しは※模式図が自動）。
 - `positioning` — 競争ポジション（2-3 列 + VS）。
 - `system` — エコシステム／全体像（ボックス + **ラベル付き矢印**で流れ、
   戻りの流れは下段レーン）。

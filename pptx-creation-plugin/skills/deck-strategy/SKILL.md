@@ -107,6 +107,16 @@ mis-read; everything downstream of the classification is mechanical.
 
 ## Step 3 — Map each beat to a pattern
 
+**Step 3.0 (MUST, before any mapping): look for a canonical-forms catalog.**
+Search the repo for `docs/canon/*.md` (project root first, then the repo root —
+a deck folder inside a mono-repo still counts). If one exists, its
+概念→骨格 rows OVERRIDE your own judgment for matching concepts: a BS beat goes
+to `identity`, a two-level 分解 to `identity`+`sub`, 損益分岐 to `breakeven`,
+増減 to `waterfall` — because 図解の形は原稿から導出できない
+(visual-psychology §3.5) and the catalog is where the field's forms live.
+Record in the slide's `notes` which catalog row fired. No catalog + a domain
+with recurring visual concepts → suggest running `domain-canon` once.
+
 For every beat, pick the pattern whose *job* matches it
 (`../../references/patterns/catalog.md`). The patterns, by the job they do:
 
@@ -126,7 +136,10 @@ For every beat, pick the pattern whose *job* matches it
 | Ascending stages toward a goal (階段) | `steps` (diagram) |
 | One thing splits into N / N merge into one | `branch` (diagram) |
 | A quantity decomposed into factors (掛け算) | `formula` (diagram) |
+| A whole ＝ its parts, where SIZE/share matters (BS, 内訳, 手取りの分解) | `identity` (diagram) |
+| A two-level composition (STRAC / お金のブロックパズル) | `identity` + `parts[].sub` (diagram) |
 | A level, its drivers, the next level (ブリッジ) | `waterfall` (diagram) |
+| Two lines crossing at the point that decides 損益 (固定費の回収) | `breakeven` (diagram) |
 | 2–3 options/plans side by side + a VS verdict | `positioning` (diagram) |
 | An ecosystem of actors + labeled flows between them | `system` (diagram) |
 | Category ⇔ member correspondence / 分類 | `relation` (diagram; partition→zones) |
@@ -159,6 +172,12 @@ that doesn't is worse than text.
 - `branch`: 1 source + 2–4 branches (labels short; 4 branches leave one line each).
 - `formula`: 2–4 operands + optional result — labels are short TERMS, not sentences.
 - `waterfall`: 3–8 items ({label, value, total?}); group small drivers into その他.
+- `identity`: 1 whole + 2–4 parts ({label, value?, sub?}) — values all-or-none
+  (proportional heights only with full values); non-negative; labels short TERMS.
+  ONE part may nest 2–3 `sub` items (the STRAC form); the lint cross-checks 縦計算.
+- `breakeven`: fixed structure (terms only, no value labels). Give {fixed,
+  variableRate} as a pair for the honest crossing; without them the engine
+  stamps ※模式図. 0<v<1.
 - `chart` band type: 2–4 segments × 1–5 rows; pie/doughnut: 2–5 slices.
 - `positioning`: 2–3 options; `system`: 2–5 actors; `relation`: 2–4 per side,
   ≤8 links; `cycle`/`flow` node labels ≤ ~5 chars per line (the height gate
@@ -234,10 +253,26 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   2–4 branches. If the N items don't share a real source/result, it's a
   `two-column` list, not a branch; comparing the branches against each other is a
   `comparison`.
-- **`formula`** — a quantity that genuinely *decomposes* into factors or summands
-  (売上 = 客数 × 客単価 × 店舗数, ROE デュポン分解, コスト = 固定費 ＋ 変動費).
-  2–4 operands, short terms. If the relation isn't a real equation, it's a
-  `branch` / list — don't fake math.
+- **`formula`** — a quantity that genuinely *decomposes* into factors
+  (売上 = 客数 × 客単価 × 店舗数, ROE デュポン分解). 2–4 operands, short terms.
+  If the relation isn't a real equation, it's a `branch` / list — don't fake math.
+  **The 額装 trap (MUST):** a SUM whose components' magnitudes/内訳 matter
+  (資産＝負債＋純資産, 収入＝税＋手取り) is NOT a formula — equal boxes joined
+  by ＋ fail the symbol-erasure test. It is an **`identity`**: the areas carry
+  the sum. `formula` with `operator:"+"` is only for a TERM relation to
+  memorize where no magnitude is claimed (design-lint nudges this).
+- **`identity`** — a WHOLE and its parts stacked to the same height, where the
+  composition itself is the message (BS: 資産＝負債＋純資産; 手取りの分解;
+  保障の層). 2–4 parts. Erasing the ＝ must still read (symbol-erasure test).
+  Give values (all-or-none) for honest proportional heights; the lint
+  cross-checks 縦計算. **One part may nest 2–3 `sub` items — that is the STRAC
+  form** (売上＝変動費＋限界利益; 限界利益＝固定費＋利益): reach for it whenever
+  a 会計/家計 beat decomposes twice. Protagonist = usually the 残り
+  (純資産/利益/自由なお金) via `emphasis`/`subEmphasis` (never both).
+- **`breakeven`** — the CVP canonical form: 売上高線 × 総費用線 crossing at the
+  損益分岐点, 損失/利益 regions. Fixed structure, TERMS only (numbers live on a
+  companion chart/table slide). Pass {fixed, variableRate} as a pair for the
+  honest crossing; without them the engine stamps ※模式図 automatically.
 - **`waterfall`** — a level, the signed drivers that move it, the next level
   (営業利益ブリッジ, 前期→当期の増減分解). 3–8 items; mark levels `total: true`.
   The deltas must genuinely SUM from one level to the next — if they don't

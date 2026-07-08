@@ -27,7 +27,7 @@ or render anything — you set the intent, then hand off.
 | **結論 / one message** | cover promise; every title ladders to it | deck-strategy §1.5 | **ASK** — a conclusion/question, never a label |
 | **素材 / material** | the actual copy & numbers (note any process / loop / 2-axis structure) | the deck content | ASK for the data; never fabricate figures |
 | **正直ラベル / honesty** | estimate? basis? forecast? metric definition? | house-bar §4, content-integrity | **ASK for any business/financial deck** |
-| **構成 / structure** | pattern order & count (incl. flow/cycle/matrix diagrams) | deck-strategy §2–4, §3b | default: "おまかせ" — deck-strategy frames it and **conservatively** decides any diagram (default text) |
+| **構成 / structure** | pattern order & count (incl. flow/cycle/matrix/identity/breakeven diagrams; docs/canon/*.md pre-maps domain concepts) | deck-strategy §2–4, §3b | default: "おまかせ" — deck-strategy frames it and **conservatively** decides any diagram (default text) |
 | **デザイン / design** | theme / tone | design-language | default: `neutral-business`; or infer/name a shelf language |
 | **制約 / constraints** | slide cap, forbiddens, brand/font, output path | all layers | default: 6–14 slides · no invented numbers · Meiryo/Yu Gothic |
 | **検証 / verification** | how hard to prove it | create-deck / deck-review | default: run the QA loop + review; `external`(≥90) if outward-facing |

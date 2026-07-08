@@ -1,0 +1,266 @@
+From 645c24cbb6b6f88961de92a40b6c9988ab3e063a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 8 Jul 2026 11:05:54 +0000
+Subject: [PATCH 3/3] fix(skills): wire identity/breakeven into the plan-making
+ brain
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Root cause of 'the new skeletons never fire from scratch': the selection
+surfaces never learned them. A regenerated engine changes nothing if
+deck-strategy cannot NAME the forms.
+
+- deck-strategy Step 3 job table: add identity / identity+sub (STRAC) /
+  breakeven rows — the primary beat->pattern surface.
+- deck-strategy Step 3b: fix the 額装 trap the skill itself taught
+  (コスト=固定費+変動費 was listed as a formula example): formula '+' is for
+  TERM relations only; a sum whose magnitudes/内訳 matter is an identity.
+  Add full identity/breakeven gate bullets (symbol-erasure, all-or-none,
+  STRAC nesting, protagonist=残り).
+- deck-strategy Step 3.0 (new, MUST): docs/canon/*.md lookup promoted from a
+  parenthetical to a numbered step; catalog rows OVERRIDE own judgment for
+  matching concepts; fired row recorded in notes; search repo root too
+  (mono-repo deck folders).
+- education-register §2-1: structure-word vocabulary gains identity(恒等式/
+  内訳/構成), bridge, crossing; skeleton list gains identity/breakeven with
+  the formula-vs-identity rule.
+- design-lint: formula operator '+' -> INFO nudge toward identity (machine
+  backstop for the trap); struct words +内訳|分岐.
+- deck-brief 構成 slot + usecases/seminar.md: canon awareness.
+- day1-deck/theme-daikichi.json: brand theme (navy x gold, CONTRAST-lint
+  calibrated: accent=755A0D dark gold under white text, accentSoft=C9A227
+  brand gold, accentOnDark=E4CE7A, warn=C7431D).
+
+run-gate PASS all themes; nudge fire verified on 資産=負債+純資産 formula.
+---
+ day1-deck/theme-daikichi.json                 | 65 +++++++++++++++++++
+ pptx-creation-plugin/bin/lint/design-lint.js  |  7 +-
+ .../principles/education-register.md          |  6 +-
+ .../references/usecases/seminar.md            |  6 ++
+ .../skills/deck-brief/SKILL.md                |  2 +-
+ .../skills/deck-strategy/SKILL.md             | 43 +++++++++---
+ 6 files changed, 117 insertions(+), 12 deletions(-)
+ create mode 100644 day1-deck/theme-daikichi.json
+
+diff --git a/day1-deck/theme-daikichi.json b/day1-deck/theme-daikichi.json
+new file mode 100644
+index 0000000..5d15be4
+--- /dev/null
++++ b/day1-deck/theme-daikichi.json
+@@ -0,0 +1,65 @@
++{
++  "$schema": "../pptx-creation-plugin/schemas/theme.schema.json",
++  "name": "daikichi-navy-gold",
++  "canvas": {
++    "w": 13.333,
++    "h": 7.5,
++    "margin": 0.75
++  },
++  "font": {
++    "family": "Yu Gothic",
++    "heading": "Yu Gothic",
++    "body": "Yu Gothic Medium",
++    "caption": "Yu Gothic"
++  },
++  "colors": {
++    "bg": "FFFFFF",
++    "ink": "2B3345",
++    "muted": "6E7787",
++    "faint": "A6AEBC",
++    "surface": "F3F5F9",
++    "surfaceAccent": "FAF5E4",
++    "line": "D8DDE6",
++    "dark": "1B2A4A",
++    "darkAlt": "24365E",
++    "onDark": "FFFFFF",
++    "onDarkMuted": "AEB9CE",
++    "accent": "755A0D",
++    "accentDeep": "5C4709",
++    "accentSoft": "C9A227",
++    "onAccentMuted": "FAF5E4",
++    "accentOnDark": "E4CE7A",
++    "warn": "C7431D",
++    "warnOnDark": "E8603A"
++  },
++  "sizes": {
++    "cover": 44,
++    "coverSub": 17,
++    "title": 30,
++    "kicker": 12,
++    "message": 32,
++    "stat": 64,
++    "head": 19,
++    "body": 15,
++    "small": 13.5,
++    "cap": 12,
++    "num": 17,
++    "compareLabel": 23,
++    "takeawayHead": 19,
++    "offerHead": 21,
++    "footer": 12.5,
++    "sectionTitle": 36,
++    "sectionIndex": 150,
++    "statCard": 40
++  },
++  "lead": {
++    "title": 1.08,
++    "display": 1.18,
++    "body": 1.6,
++    "caption": 1.5,
++    "tight": 1.4
++  },
++  "brand": {
++    "footerLabel": "大吉会計株式会社"
++  }
++}
+\ No newline at end of file
+diff --git a/pptx-creation-plugin/bin/lint/design-lint.js b/pptx-creation-plugin/bin/lint/design-lint.js
+index 67f7789..e458140 100644
+--- a/pptx-creation-plugin/bin/lint/design-lint.js
++++ b/pptx-creation-plugin/bin/lint/design-lint.js
+@@ -225,6 +225,11 @@ function checkCapacity(slides, F) {
+           F.error(idx, "EMPHASIS-COUNT", "identity: emphasis と subEmphasis の併記＝主役2人（1スライド1強調）。どちらか一方に");
+         break;
+       }
++      case "formula": {
++        if (c.operator === "+")
++          F.info(idx, "CAPACITY", "formula operator '+' — 和の内訳で大きさ・比率が意味を持つ内容（資産=負債+純資産 等）なら identity 骨格へ（等サイズ箱+記号は額装）。用語関係の暗記用ならこのままで可");
++        break;
++      }
+       case "breakeven": {
+         if (typeof c.variableRate === "number" && (c.variableRate <= 0 || c.variableRate >= 1))
+           F.error(idx, "CAPACITY", `breakeven variableRate=${c.variableRate} — 変動費率は0<v<1（v≥1は限界利益が無く、損益分岐しない構造＝図が嘘になる）`);
+@@ -690,7 +695,7 @@ function checkRhythm(slides, F) {
+  *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
+  *     意味の正しさ自体は人の承認領域。 */
+ const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity", "breakeven"];
+-const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
++const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|内訳|分岐|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
+ const PERSONA_PATTERNS = ["message", "two-column"];
+ 
+ function checkRegister(slides, meta, F) {
+diff --git a/pptx-creation-plugin/references/principles/education-register.md b/pptx-creation-plugin/references/principles/education-register.md
+index 3303878..ef67496 100644
+--- a/pptx-creation-plugin/references/principles/education-register.md
++++ b/pptx-creation-plugin/references/principles/education-register.md
+@@ -35,11 +35,15 @@ honesty override を**軸別に特化して継承**する（§2）。
+ **ガード：「無い構造を見せない」。** 順序が無いのに flow、相関を独立2軸に
+ 見せる matrix、相関を因果に見せる矢印は嘘であり、**間違ったモデルを教える
+ ので退屈より悪い**。分類テスト：**構造を1語で言えるか**
+-（sequence / loop / two-axis / **positioning / system / relation**）。
++（sequence / loop / two-axis / **positioning / system / relation /
++identity（恒等式・内訳・構成） / bridge（増減） / crossing（損益分岐）**）。
+ 言えなければ図解せずテキスト。型の根拠は notes に残し、事実・財務系は
+ 人が承認してから確定（over-diagram lint が notes の記録を WARN で促す）。
+ 
+ 骨格（既存 flow / cycle / matrix に追加）：
++- `identity` — 積み上げ恒等式（全体＝部分。1パートは2段目に分解可＝STRAC形）。
++  **和の内訳で大きさが意味を持つなら formula ではなくこちら**（額装の禁止）。
++- `breakeven` — 損益分岐点図（用語のみ・データ無しは※模式図が自動）。
+ - `positioning` — 競争ポジション（2-3 列 + VS）。
+ - `system` — エコシステム／全体像（ボックス + **ラベル付き矢印**で流れ、
+   戻りの流れは下段レーン）。
+diff --git a/pptx-creation-plugin/references/usecases/seminar.md b/pptx-creation-plugin/references/usecases/seminar.md
+index 4f3d5b9..4f3a7e4 100644
+--- a/pptx-creation-plugin/references/usecases/seminar.md
++++ b/pptx-creation-plugin/references/usecases/seminar.md
+@@ -93,6 +93,12 @@ chapters, add `section` dividers between arcs and consider an extra `stat-grid`
+   beat must be; a "3-second" beat carrying a dense diagram (or a 2-minute beat
+   showing one thin line) is a planning bug — fix the plan, not the design.
+ 
++**Domain canonical forms first (会計・FP・保険系のセミナー).** When the repo
++carries `docs/canon/*.md`, the worked-diagram dwell slides come from IT, not
++from improvisation: a BS beat is an `identity`, a 2-level 分解 (STRAC /
++お金のブロックパズル) is `identity`+`sub`, 損益分岐 is `breakeven`, 増減 is a
++`waterfall`. The catalog row and its honesty guard go in the slide's `notes`.
++
+ ## 4. Content cautions (specific to this type)
+ 
+ - **誠実に。押し売りしない.** The audience fears a hard sell — defuse it explicitly.
+diff --git a/pptx-creation-plugin/skills/deck-brief/SKILL.md b/pptx-creation-plugin/skills/deck-brief/SKILL.md
+index 8c79cd9..bae1a1f 100644
+--- a/pptx-creation-plugin/skills/deck-brief/SKILL.md
++++ b/pptx-creation-plugin/skills/deck-brief/SKILL.md
+@@ -27,7 +27,7 @@ or render anything — you set the intent, then hand off.
+ | **結論 / one message** | cover promise; every title ladders to it | deck-strategy §1.5 | **ASK** — a conclusion/question, never a label |
+ | **素材 / material** | the actual copy & numbers (note any process / loop / 2-axis structure) | the deck content | ASK for the data; never fabricate figures |
+ | **正直ラベル / honesty** | estimate? basis? forecast? metric definition? | house-bar §4, content-integrity | **ASK for any business/financial deck** |
+-| **構成 / structure** | pattern order & count (incl. flow/cycle/matrix diagrams) | deck-strategy §2–4, §3b | default: "おまかせ" — deck-strategy frames it and **conservatively** decides any diagram (default text) |
++| **構成 / structure** | pattern order & count (incl. flow/cycle/matrix/identity/breakeven diagrams; docs/canon/*.md pre-maps domain concepts) | deck-strategy §2–4, §3b | default: "おまかせ" — deck-strategy frames it and **conservatively** decides any diagram (default text) |
+ | **デザイン / design** | theme / tone | design-language | default: `neutral-business`; or infer/name a shelf language |
+ | **制約 / constraints** | slide cap, forbiddens, brand/font, output path | all layers | default: 6–14 slides · no invented numbers · Meiryo/Yu Gothic |
+ | **検証 / verification** | how hard to prove it | create-deck / deck-review | default: run the QA loop + review; `external`(≥90) if outward-facing |
+diff --git a/pptx-creation-plugin/skills/deck-strategy/SKILL.md b/pptx-creation-plugin/skills/deck-strategy/SKILL.md
+index 4eb0c5c..f4f7bd5 100644
+--- a/pptx-creation-plugin/skills/deck-strategy/SKILL.md
++++ b/pptx-creation-plugin/skills/deck-strategy/SKILL.md
+@@ -107,12 +107,18 @@ mis-read; everything downstream of the classification is mechanical.
+ 
+ ## Step 3 — Map each beat to a pattern
+ 
++**Step 3.0 (MUST, before any mapping): look for a canonical-forms catalog.**
++Search the repo for `docs/canon/*.md` (project root first, then the repo root —
++a deck folder inside a mono-repo still counts). If one exists, its
++概念→骨格 rows OVERRIDE your own judgment for matching concepts: a BS beat goes
++to `identity`, a two-level 分解 to `identity`+`sub`, 損益分岐 to `breakeven`,
++増減 to `waterfall` — because 図解の形は原稿から導出できない
++(visual-psychology §3.5) and the catalog is where the field's forms live.
++Record in the slide's `notes` which catalog row fired. No catalog + a domain
++with recurring visual concepts → suggest running `domain-canon` once.
++
+ For every beat, pick the pattern whose *job* matches it
+-(`../../references/patterns/catalog.md`). **If the project carries a domain
+-canonical-forms catalog (`docs/canon/*.md`, from the `domain-canon` skill), load
+-it first** — it maps the domain's recurring concepts (BS, STRAC, 損益分岐点,
+-必要保障額 …) to skeletons and their honesty guards, so the beat→pattern step
+-starts from the field's established forms instead of re-deriving them. The patterns, by the job they do:
++(`../../references/patterns/catalog.md`). The patterns, by the job they do:
+ 
+ | Beat shape | Pattern |
+ |---|---|
+@@ -130,7 +136,10 @@ starts from the field's established forms instead of re-deriving them. The patte
+ | Ascending stages toward a goal (階段) | `steps` (diagram) |
+ | One thing splits into N / N merge into one | `branch` (diagram) |
+ | A quantity decomposed into factors (掛け算) | `formula` (diagram) |
++| A whole ＝ its parts, where SIZE/share matters (BS, 内訳, 手取りの分解) | `identity` (diagram) |
++| A two-level composition (STRAC / お金のブロックパズル) | `identity` + `parts[].sub` (diagram) |
+ | A level, its drivers, the next level (ブリッジ) | `waterfall` (diagram) |
++| Two lines crossing at the point that decides 損益 (固定費の回収) | `breakeven` (diagram) |
+ | 2–3 options/plans side by side + a VS verdict | `positioning` (diagram) |
+ | An ecosystem of actors + labeled flows between them | `system` (diagram) |
+ | Category ⇔ member correspondence / 分類 | `relation` (diagram; partition→zones) |
+@@ -244,10 +253,26 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
+   2–4 branches. If the N items don't share a real source/result, it's a
+   `two-column` list, not a branch; comparing the branches against each other is a
+   `comparison`.
+-- **`formula`** — a quantity that genuinely *decomposes* into factors or summands
+-  (売上 = 客数 × 客単価 × 店舗数, ROE デュポン分解, コスト = 固定費 ＋ 変動費).
+-  2–4 operands, short terms. If the relation isn't a real equation, it's a
+-  `branch` / list — don't fake math.
++- **`formula`** — a quantity that genuinely *decomposes* into factors
++  (売上 = 客数 × 客単価 × 店舗数, ROE デュポン分解). 2–4 operands, short terms.
++  If the relation isn't a real equation, it's a `branch` / list — don't fake math.
++  **The 額装 trap (MUST):** a SUM whose components' magnitudes/内訳 matter
++  (資産＝負債＋純資産, 収入＝税＋手取り) is NOT a formula — equal boxes joined
++  by ＋ fail the symbol-erasure test. It is an **`identity`**: the areas carry
++  the sum. `formula` with `operator:"+"` is only for a TERM relation to
++  memorize where no magnitude is claimed (design-lint nudges this).
++- **`identity`** — a WHOLE and its parts stacked to the same height, where the
++  composition itself is the message (BS: 資産＝負債＋純資産; 手取りの分解;
++  保障の層). 2–4 parts. Erasing the ＝ must still read (symbol-erasure test).
++  Give values (all-or-none) for honest proportional heights; the lint
++  cross-checks 縦計算. **One part may nest 2–3 `sub` items — that is the STRAC
++  form** (売上＝変動費＋限界利益; 限界利益＝固定費＋利益): reach for it whenever
++  a 会計/家計 beat decomposes twice. Protagonist = usually the 残り
++  (純資産/利益/自由なお金) via `emphasis`/`subEmphasis` (never both).
++- **`breakeven`** — the CVP canonical form: 売上高線 × 総費用線 crossing at the
++  損益分岐点, 損失/利益 regions. Fixed structure, TERMS only (numbers live on a
++  companion chart/table slide). Pass {fixed, variableRate} as a pair for the
++  honest crossing; without them the engine stamps ※模式図 automatically.
+ - **`waterfall`** — a level, the signed drivers that move it, the next level
+   (営業利益ブリッジ, 前期→当期の増減分解). 3–8 items; mark levels `total: true`.
+   The deltas must genuinely SUM from one level to the next — if they don't
+-- 
+2.43.0
+
