@@ -2035,9 +2035,31 @@
                     "minItems": 2,
                     "maxItems": 5,
                     "items": {
-                      "type": [
-                        "string",
-                        "array"
+                      "oneOf": [
+                        {
+                          "type": [
+                            "string",
+                            "array"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "label"
+                          ],
+                          "properties": {
+                            "label": {
+                              "type": [
+                                "string",
+                                "array"
+                              ]
+                            },
+                            "icon": {
+                              "type": "string",
+                              "description": "ROLE MARKER only (M-8): a registry name (person/people/company/bank/document/coin/house/car/shield/heart/calendar/target/chart) or the project's own SVG path (assets/icons/x.svg). Colorized with the theme ink token."
+                            }
+                          }
+                        }
                       ]
                     },
                     "description": "2-5 ecosystem actors on one row (structure word: system)."

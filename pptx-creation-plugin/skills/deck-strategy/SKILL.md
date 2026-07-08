@@ -284,7 +284,13 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   many-to-many keeps correspondence lines. 2–4 per side.
 - **`positioning` / `system` / `before-after`** — see their blocks in
   diagram-recipes.md / catalog.md; same conservative gate: name the structure
-  in one word or keep it as text.
+  in one word or keep it as text. `system` nodes may carry a ROLE-MARKER icon
+  (`{label, icon}` — registry names or the project's own SVG path;
+  `../../references/graphics/icon-catalog.md` is the selection rule: actors and
+  objects only, never decoration, registry/path only).
+- **Worked translations:** before mapping a hard beat, scan
+  `../../references/graphics/text-to-diagram-examples.md` — 12 sentence→skeleton
+  translations incl. the 額装 anti-pattern and the formula/identity boundary.
 - **`dialogue` / `testimonial`** are persuasion devices, not diagrams: use them
   only in learner/marketing registers (financial/board = lint ERROR), always
   with `mark` (※例). The avatar is neutral — meaning rides in the words,

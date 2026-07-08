@@ -207,6 +207,17 @@ node bin/validate.js
 
 ## Pattern catalog (26 patterns)
 
+> **Color is deterministic, never random.** Five-way palette quick-pick at
+> project start (`theme-init` Step 0): 紺 `palette-navy` / 赤 `palette-red` /
+> 青 `palette-blue` / 緑 `palette-green` / オリジナル (guided custom). All
+> presets are CONTRAST-lint calibrated; the choice lands in the project's
+> theme.json, which every build reads.
+>
+> **Icons are a governed registry, not clipart** — 13 mono role-marker
+> pictograms (person/bank/document/shield …) theme-colorized at build;
+> `system` nodes take `{label, icon}`; projects plug their own SVGs by path.
+> Rules: `references/graphics/icon-catalog.md`.
+
 **Content patterns** — `cover` · `message` · `two-column` · `comparison` ·
 `chart` · `stat-grid` · `card-grid` · `table` · `section` · `cta` ·
 `before-after` (誤解→訂正).
