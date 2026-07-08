@@ -4,34 +4,103 @@
   "title": "Deck plan",
   "description": "The engine's input: an ordered list of slides, each naming a pattern from references/patterns/catalog.md plus that pattern's content slots. deck-strategy produces this; bin/generate.js consumes it. Accepts either a bare slides array or an object with deck-level meta.",
   "oneOf": [
-    { "$ref": "#/definitions/slideArray" },
+    {
+      "$ref": "#/definitions/slideArray"
+    },
     {
       "type": "object",
       "additionalProperties": false,
-      "required": ["slides"],
+      "required": [
+        "slides"
+      ],
       "properties": {
-        "meta": { "$ref": "#/definitions/meta" },
-        "slides": { "$ref": "#/definitions/slideArray" }
+        "meta": {
+          "$ref": "#/definitions/meta"
+        },
+        "slides": {
+          "$ref": "#/definitions/slideArray"
+        }
       }
     }
   ],
   "definitions": {
     "speaker": {
       "type": "object",
-      "required": ["quote"],
+      "required": [
+        "quote"
+      ],
       "additionalProperties": false,
       "description": "One dialogue speaker = neutral static avatar bust (誰が言うか) + seam-free bubble whose tail points at ITS avatar + native quote (意味は言葉と記号が運ぶ — ポーズでは運ばない).",
       "properties": {
-        "quote": { "type": "string" },
-        "role": { "type": "string", "description": "話者ラベル（上司/部下/◯◯さま等）— shown under the avatar." },
-        "side": { "type": "string", "enum": ["left", "right"], "description": "Avatar side; default alternates per row." },
-        "avatar": { "type": "string", "description": "Supplied bust path (SVG master or transparent PNG). Absent -> in-engine neutral circle-mask bust." },
-        "avatarImage": { "type": "string" }, "bubbleImage": { "type": "string" }, "symbolImage": { "type": "string" },
-        "hair": { "type": "string", "enum": ["short", "long", "bun", "side"], "description": "In-engine bust hair contour — speaker distinction only, never meaning." },
-        "symbol": { "type": "string", "enum": ["worry", "idea", "sweat", "question", "up", "down"] },
-        "recolor": { "type": "boolean" },
-        "crop": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "number" }, "description": "顔アップ切出し window [fx,fy,fw,fh] as fractions of the supplied SVG viewBox — deterministic circle-mask head crop (加工可の範囲)." },
-        "tailSide": { "type": "string", "enum": ["left", "right"], "description": "Explicit bubble-tail override — normally derived from side; a mismatch fires the BUBBLE-TAIL lint." }
+        "quote": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "description": "話者ラベル（上司/部下/◯◯さま等）— shown under the avatar."
+        },
+        "side": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Avatar side; default alternates per row."
+        },
+        "avatar": {
+          "type": "string",
+          "description": "Supplied bust path (SVG master or transparent PNG). Absent -> in-engine neutral circle-mask bust."
+        },
+        "avatarImage": {
+          "type": "string"
+        },
+        "bubbleImage": {
+          "type": "string"
+        },
+        "symbolImage": {
+          "type": "string"
+        },
+        "hair": {
+          "type": "string",
+          "enum": [
+            "short",
+            "long",
+            "bun",
+            "side"
+          ],
+          "description": "In-engine bust hair contour — speaker distinction only, never meaning."
+        },
+        "symbol": {
+          "type": "string",
+          "enum": [
+            "worry",
+            "idea",
+            "sweat",
+            "question",
+            "up",
+            "down"
+          ]
+        },
+        "recolor": {
+          "type": "boolean"
+        },
+        "crop": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number"
+          },
+          "description": "顔アップ切出し window [fx,fy,fw,fh] as fractions of the supplied SVG viewBox — deterministic circle-mask head crop (加工可の範囲)."
+        },
+        "tailSide": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Explicit bubble-tail override — normally derived from side; a mismatch fires the BUBBLE-TAIL lint."
+        }
       }
     },
     "meta": {
@@ -39,16 +108,31 @@
       "description": "Deck-level metadata and chrome.",
       "additionalProperties": false,
       "properties": {
-        "title":  { "type": "string", "description": "PPTX title metadata." },
-        "author": { "type": "string", "description": "PPTX author metadata." },
+        "title": {
+          "type": "string",
+          "description": "PPTX title metadata."
+        },
+        "author": {
+          "type": "string",
+          "description": "PPTX author metadata."
+        },
         "personStyle": {
           "type": "string",
-          "enum": ["silhouette", "illustration"],
+          "enum": [
+            "silhouette",
+            "illustration"
+          ],
           "description": "1デッキ1様式 (deck-wide person style, decided by REGISTER): silhouette = 黒シルエット (抑制・graphic — formal/factual/numbers-first), illustration = カラーイラスト (親しみ・共感 — seminar/marketing). ALL persons in the deck (persona figures AND dialogue/testimonial avatars) follow this ONE style; STYLE-UNIFORM lint ERRORs on a mismatch. Unset = legacy behaviour (but a deck mixing BOTH styles still ERRORs — mixture is banned regardless)."
         },
         "intent": {
           "type": "string",
-          "enum": ["financial", "board", "seminar", "education", "marketing"],
+          "enum": [
+            "financial",
+            "board",
+            "seminar",
+            "education",
+            "marketing"
+          ],
           "description": "Register gate (references/principles/education-register.md): financial/board = 抑制＝信頼 (persona/speech bubbles are a register-gate ERROR); seminar/education = 学習・定着 (persona allowed under the 捏造ガード, imaginability transform ON). Shared floors (honesty / CUD / number atoms / no AI images) never flip."
         },
         "footerLabel": {
@@ -65,53 +149,188 @@
     "slideArray": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/definitions/slide" }
+      "items": {
+        "$ref": "#/definitions/slide"
+      }
     },
     "persona": {
       "type": "object",
       "description": "Education-register human device (education-register.md §3): a figure + seamless speech bubble + NATIVE quote + ※例 marking. Asset-independent slot. PRODUCTION figures = user-supplied licensed/open-license pro vectors (`figure`, kept under assets/generated/figures/ with LICENSE.md); the in-engine figure is an abstract pictogram and draws ONLY with the explicit opt-in `style:\"pictogram\"` (composition/coordinates identical either way). Neither set -> bubble+quote render without a person (lint WARNs the policy). financial/board intent = register-gate ERROR. The quote is 例示 — never attribute it to a real named person; `mark` (persona-mark lint WARNs when missing) states the fiction: ※学習用の架空の例.",
       "additionalProperties": false,
-      "required": ["quote"],
+      "required": [
+        "quote"
+      ],
       "properties": {
-        "quote": { "type": "string", "description": "Speech-bubble line (native text; goes through the bake floor — kinsoku + number atoms). Keep it short (<=4 lines at the bubble width)." },
-        "pose": { "type": "string", "enum": ["concern", "present"], "description": "concern = worried hook (ハの字 brows, flat mouth, no gesture); present = solution/summary (smile, one hand raised)." },
-        "variant": { "type": "object", "additionalProperties": false, "properties": {
-          "hair": { "type": "string", "enum": ["short", "side", "long"] },
-          "jacket": { "type": "string", "enum": ["accent", "deep", "muted"] },
-          "tie": { "type": "boolean" }
-        }, "description": "Individual variation of the in-engine SVG figure." },
-        "tailSide": { "type": "string", "enum": ["bottom", "left"], "description": "Bubble tail side (points at the figure). Default: bottom when the figure is right (message), left when the figure is left (two-column)." },
-        "x": { "type": "number" }, "y": { "type": "number" }, "w": { "type": "number", "description": "Figure box override (inches); defaults per host pattern." }, "h": { "type": "number", "description": "Figure box height override (inches). make-markers fills this from a supplied asset's own pixel aspect so figures are never stretched." },
-        "mark": { "type": "string", "description": "※例 marking, e.g. ※学習用の架空の例 — REQUIRED in practice for fictional personas/figures (lint WARNs when absent)." },
-        "recolor": { "type": "boolean", "description": "Opt-in brand-token recolor for a supplied SVG figure: the source's signature-blue family is mapped onto the theme accent scale (line/grey/white and semantic warm colours keep their supplied values). Default false = supplied colours untouched." },
-        "figure": { "type": "string", "description": "USER-LICENSED PNG path (drop-in mode). The engine never scrapes or AI-generates; rights are the user's responsibility." },
-        "style": { "type": "string", "enum": ["silhouette", "pictogram"], "description": "Explicit opt-in for an in-engine figure. \"silhouette\" = full-body business silhouette (顔なし・実比率 ~7.4頭身, ink-token solid — the pro-deck idiom); \"pictogram\" = the flat abstract bust (トイレ標識水準 — deliberately not a realistic person; the hand-drawn trial confirmed pro human quality needs supplied assets). Without this and without `figure`, no person is drawn." },
-        "symbol": { "type": "string", "enum": ["worry", "idea", "sweat", "question", "up", "down"], "description": "Scene-symbol overlay near the figure's head (悩み雲/電球/汗/？/↑/↓) — a separate code-drawn layer that composes over ANY figure source." },
-        "figureImage": { "type": "string", "description": "Generated/resolved figure raster (make-markers fills this)." },
-        "bubbleImage": { "type": "string", "description": "Generated bubble raster (make-markers fills this)." },
-        "symbolImage": { "type": "string", "description": "Generated scene-symbol raster (make-markers fills this)." }
+        "quote": {
+          "type": "string",
+          "description": "Speech-bubble line (native text; goes through the bake floor — kinsoku + number atoms). Keep it short (<=4 lines at the bubble width)."
+        },
+        "pose": {
+          "type": "string",
+          "enum": [
+            "concern",
+            "present"
+          ],
+          "description": "concern = worried hook (ハの字 brows, flat mouth, no gesture); present = solution/summary (smile, one hand raised)."
+        },
+        "variant": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hair": {
+              "type": "string",
+              "enum": [
+                "short",
+                "side",
+                "long"
+              ]
+            },
+            "jacket": {
+              "type": "string",
+              "enum": [
+                "accent",
+                "deep",
+                "muted"
+              ]
+            },
+            "tie": {
+              "type": "boolean"
+            }
+          },
+          "description": "Individual variation of the in-engine SVG figure."
+        },
+        "tailSide": {
+          "type": "string",
+          "enum": [
+            "bottom",
+            "left"
+          ],
+          "description": "Bubble tail side (points at the figure). Default: bottom when the figure is right (message), left when the figure is left (two-column)."
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "w": {
+          "type": "number",
+          "description": "Figure box override (inches); defaults per host pattern."
+        },
+        "h": {
+          "type": "number",
+          "description": "Figure box height override (inches). make-markers fills this from a supplied asset's own pixel aspect so figures are never stretched."
+        },
+        "mark": {
+          "type": "string",
+          "description": "※例 marking, e.g. ※学習用の架空の例 — REQUIRED in practice for fictional personas/figures (lint WARNs when absent)."
+        },
+        "recolor": {
+          "type": "boolean",
+          "description": "Opt-in brand-token recolor for a supplied SVG figure: the source's signature-blue family is mapped onto the theme accent scale (line/grey/white and semantic warm colours keep their supplied values). Default false = supplied colours untouched."
+        },
+        "figure": {
+          "type": "string",
+          "description": "USER-LICENSED PNG path (drop-in mode). The engine never scrapes or AI-generates; rights are the user's responsibility."
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "silhouette",
+            "pictogram"
+          ],
+          "description": "Explicit opt-in for an in-engine figure. \"silhouette\" = full-body business silhouette (顔なし・実比率 ~7.4頭身, ink-token solid — the pro-deck idiom); \"pictogram\" = the flat abstract bust (トイレ標識水準 — deliberately not a realistic person; the hand-drawn trial confirmed pro human quality needs supplied assets). Without this and without `figure`, no person is drawn."
+        },
+        "symbol": {
+          "type": "string",
+          "enum": [
+            "worry",
+            "idea",
+            "sweat",
+            "question",
+            "up",
+            "down"
+          ],
+          "description": "Scene-symbol overlay near the figure's head (悩み雲/電球/汗/？/↑/↓) — a separate code-drawn layer that composes over ANY figure source."
+        },
+        "figureImage": {
+          "type": "string",
+          "description": "Generated/resolved figure raster (make-markers fills this)."
+        },
+        "bubbleImage": {
+          "type": "string",
+          "description": "Generated bubble raster (make-markers fills this)."
+        },
+        "symbolImage": {
+          "type": "string",
+          "description": "Generated scene-symbol raster (make-markers fills this)."
+        }
       }
     },
     "marker": {
       "type": "object",
       "description": "Optional emphasis MARKER (one per slide, rides the protagonist element; design-lint enforces). badge = the DEFAULT device (native pill + native FACT label); underline = stronger intentional geometry (solid bar under the number); arrow-note = arrow + a note that must ADD information (duplicating card text is a lint ERROR); circle = hand-drawn wobble, gated behind theme layout.marker.handDrawn (off-register for business/financial — no shipped theme opts in). Text must be a data-supported FACT (過去最高/初/3期連続) — hype adjectives are lint-blocked (誠実ガード).",
       "additionalProperties": false,
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "type": "string", "enum": ["badge", "underline", "arrow-note", "circle"] },
-        "text": { "type": "string", "description": "badge (<=8 chars) / arrow-note (<=14 chars) label. Facts only." },
-        "image": { "type": "string", "description": "circle only: path to the rasterized transparent PNG (2x). build.sh's make-markers step fills this." }
+        "type": {
+          "type": "string",
+          "enum": [
+            "badge",
+            "underline",
+            "arrow-note",
+            "circle"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "description": "badge (<=8 chars) / arrow-note (<=14 chars) label. Facts only."
+        },
+        "image": {
+          "type": "string",
+          "description": "circle only: path to the rasterized transparent PNG (2x). build.sh's make-markers step fills this."
+        }
       }
     },
     "slide": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["pattern", "content"],
+      "required": [
+        "pattern",
+        "content"
+      ],
       "properties": {
         "pattern": {
           "type": "string",
           "description": "Pattern id. Must exist in the engine registry.",
-          "enum": ["cover", "message", "two-column", "comparison", "chart", "stat-grid", "table", "section", "cta", "flow", "cycle", "matrix", "timeline", "steps", "branch", "formula", "card-grid", "waterfall", "positioning", "system", "relation", "before-after", "dialogue", "testimonial"]
+          "enum": [
+            "cover",
+            "message",
+            "two-column",
+            "comparison",
+            "chart",
+            "stat-grid",
+            "table",
+            "section",
+            "cta",
+            "flow",
+            "cycle",
+            "matrix",
+            "timeline",
+            "steps",
+            "branch",
+            "formula",
+            "card-grid",
+            "waterfall",
+            "positioning",
+            "system",
+            "relation",
+            "before-after",
+            "dialogue",
+            "testimonial"
+          ]
         },
         "peak": {
           "type": "boolean",
@@ -121,427 +340,1947 @@
           "type": "object",
           "description": "Pattern-specific slots (see catalog.md). All patterns accept an optional 'notes' (speaker notes). Validated per-pattern below.",
           "properties": {
-            "notes": { "type": "string" }
+            "notes": {
+              "type": "string"
+            }
           }
         }
       },
       "allOf": [
         {
-          "if": { "properties": { "pattern": { "const": "cover" } } },
-          "then": { "properties": { "content": {
-            "required": ["titleLines"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "titleLines": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 2 },
-              "subtitle": { "type": "string" },
-              "footer": { "type": "string" },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "cover"
+              }
             }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "message" } } },
-          "then": { "properties": { "content": {
-            "required": ["messageLines"],
+          },
+          "then": {
             "properties": {
-              "kicker": { "type": "string" },
-              "messageLines": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 2 },
-              "statBig": { "type": "string" },
-              "statCaption": { "type": ["string", "array"], "items": { "type": "string" }, "description": "Sub-caption under the big stat. A string auto-wraps; an array of strings is rendered as author-controlled lines (manual kinsoku control until the line-break engine lands)." },
-              "marker": { "$ref": "#/definitions/marker" },
-              "persona": { "$ref": "#/definitions/persona" },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "two-column" } } },
-          "then": { "properties": { "content": {
-            "required": ["title", "items"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "lead": { "type": "string" },
-              "items": {
-                "type": "array", "minItems": 1, "maxItems": 4,
-                "items": {
-                  "type": "object",
-                  "required": ["n", "head", "body"],
-                  "additionalProperties": false,
-                  "properties": {
-                    "n": { "type": ["integer", "string"] },
-                    "head": { "type": "string" },
-                    "body": { "type": "string" }
+              "content": {
+                "required": [
+                  "titleLines"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "titleLines": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 2
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "footer": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
                   }
                 }
-              },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Protagonist row (0-based): its number circle + head step up to accentDeep. One per slide." },
-              "persona": { "$ref": "#/definitions/persona" },
-              "notes": { "type": "string" }
+              }
             }
-          } } }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "comparison" } } },
-          "then": { "properties": { "content": {
-            "required": ["title", "left", "right"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "left": { "$ref": "#/definitions/comparisonColumn" },
-              "right": { "$ref": "#/definitions/comparisonColumn" },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 1, "description": "Which side carries the accent tint (0=left, 1=right). Default 1 — the house rule stays 'advocated side on the RIGHT'; use 0 only when the narrative genuinely leads left." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "message"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "messageLines"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "messageLines": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "text"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            },
+                            "tone": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "muted",
+                                "accent",
+                                "warn"
+                              ]
+                            },
+                            "size": {
+                              "type": "string",
+                              "enum": [
+                                "s",
+                                "m",
+                                "l"
+                              ],
+                              "description": "声量: s=quiet lead-in, m=statement, l=payload (山場はサイズで語る — max ONE l line)"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "description": "Statement lines. Plain strings keep the legacy uniform rendering; objects add per-line tone/size (the 3-voice hierarchy: 前置き→決め台詞→補足)."
+                  },
+                  "statBig": {
+                    "type": "string"
+                  },
+                  "statCaption": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Sub-caption under the big stat. A string auto-wraps; an array of strings is rendered as author-controlled lines (manual kinsoku control until the line-break engine lands)."
+                  },
+                  "marker": {
+                    "$ref": "#/definitions/marker"
+                  },
+                  "persona": {
+                    "$ref": "#/definitions/persona"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "dark": {
+                    "type": "boolean",
+                    "description": "Dark statement (感情を刻むページは紺): navy ground, onDark/one-accent text. Use ONLY on emotional turning points (dark budget <=~30% incl cover/sections/cta; never two adjacent in the body without intent)."
+                  },
+                  "statTone": {
+                    "type": "string",
+                    "enum": [
+                      "accent",
+                      "warn"
+                    ],
+                    "description": "型D meaning-colour of the big number: accent=成果・答え・可能性 / warn=損害・痛み・覚悟 (never 'brand colour because important'; warn is honesty-gated)."
+                  },
+                  "diamond": {
+                    "type": "boolean",
+                    "description": "Dark closings only: small accent diamond (the motif as a quiet full stop) between statement and statCaption."
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "flow" } } },
-          "then": { "properties": { "content": {
-            "required": ["steps"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "steps": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 3, "maxItems": 6, "description": "3-6 step labels (native text); the engine draws the arrow-connected nodes." },
-              "direction": { "type": "string", "enum": ["horizontal", "vertical"] },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 5, "description": "Protagonist step (0-based): accent-filled node, onDark label, one size step up. One per slide." },
-              "marker": { "$ref": "#/definitions/marker", "description": "badge / arrow-note on the protagonist node (requires emphasis; no circle)." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "two-column"
+              }
             }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "cycle" } } },
-          "then": { "properties": { "content": {
-            "required": ["steps"],
+          },
+          "then": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "steps": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 3, "maxItems": 6, "description": "3-6 node labels (native text) placed on a ring; the engine draws the cyclic arrows." },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 5, "description": "Protagonist node (0-based): accent-filled node, onDark label, one size step up. One per slide." },
-              "marker": { "$ref": "#/definitions/marker", "description": "badge / arrow-note on the protagonist node (requires emphasis; no circle)." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "matrix" } } },
-          "then": { "properties": { "content": {
-            "required": ["quadrants"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "axisX": { "type": "array", "items": { "type": ["string", "array"] }, "maxItems": 2, "description": "X-axis end labels [left, right], shown top." },
-              "axisY": { "type": "array", "items": { "type": ["string", "array"] }, "maxItems": 2, "description": "Y-axis end labels [top, bottom], shown left." },
-              "emphasizeIndex": { "type": "integer", "minimum": 0, "maximum": 3, "description": "LEGACY alias of emphasis (identical treatment). Do not set both." },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Protagonist quadrant (0=TL,1=TR,2=BL,3=BR): surfaceAccent tint + accentDeep head. One per slide." },
-              "quadrants": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "object", "properties": { "head": { "type": "string" }, "body": { "type": ["string", "array"] } } }, "description": "Exactly 4 quadrants (TL, TR, BL, BR), each {head?, body?}." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "waterfall" } } },
-          "then": { "properties": { "content": {
-            "required": ["items"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "items": { "type": "array", "minItems": 3, "maxItems": 8, "items": { "type": "object", "required": ["label", "value"], "properties": { "label": { "type": ["string", "array"], "description": "Category label under the bar (short; the band is height-gated)." }, "value": { "type": "number", "description": "total:true -> the absolute LEVEL; otherwise the signed delta (negatives render as ▲)." }, "total": { "type": "boolean", "description": "Anchor bar drawn from zero (start / subtotal / end)." } } }, "description": "3-8 bridge items: levels (total:true) and signed drivers between them." },
-              "unit": { "type": "string", "description": "Shown once bottom-left (単位：…)." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "card-grid" } } },
-          "then": { "properties": { "content": {
-            "required": ["cards"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "cards": { "type": "array", "minItems": 4, "maxItems": 6, "items": { "type": "object", "required": ["head"], "properties": { "head": { "type": ["string", "array"], "description": "Short term (one line — a wrapping head is a hard overflow)." }, "body": { "type": ["string", "array"], "description": "One short explanation (<=3 lines)." } } }, "description": "4-6 head+body cards laid out in two rows." },
-              "emphasizeIndex": { "type": "integer", "minimum": 0, "maximum": 5, "description": "LEGACY alias of emphasis (identical treatment). Do not set both." },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 5, "description": "Protagonist card (row-major): surfaceAccent tint + accentDeep head. One per slide." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "formula" } } },
-          "then": { "properties": { "content": {
-            "required": ["operands"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "result": { "type": ["string", "array"], "description": "Optional result box (tinted), drawn first with an = between it and the operands." },
-              "operands": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 2, "maxItems": 4, "description": "2-4 factor/summand labels joined by the operator glyph." },
-              "operator": { "type": "string", "enum": ["×", "+"], "description": "Glyph drawn between operands (default ×)." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "branch" } } },
-          "then": { "properties": { "content": {
-            "required": ["source", "branches"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "source": { "type": ["string", "array"], "description": "The single anchor node (tinted): the source in diverge, the result in converge." },
-              "branches": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 2, "maxItems": 4, "description": "2-4 branch labels; the engine stacks them and fans the arrows." },
-              "direction": { "type": "string", "enum": ["diverge", "converge"], "description": "diverge (default): 1 source -> N branches. converge: N branches -> 1 result." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "steps" } } },
-          "then": { "properties": { "content": {
-            "required": ["steps"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "steps": { "type": "array", "items": { "type": ["string", "array"] }, "minItems": 3, "maxItems": 5, "description": "3-5 ascending stage labels (native text); the engine draws the staircase blocks, tinting the last (goal) block." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "timeline" } } },
-          "then": { "properties": { "content": {
-            "required": ["milestones"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "milestones": { "type": "array", "minItems": 3, "maxItems": 7, "items": { "type": "object", "required": ["date", "label"], "properties": { "date": { "type": ["string", "array"], "description": "Short date/year (e.g. 2014.10) — one line; the height gate rejects a wrapping date." }, "label": { "type": ["string", "array"], "description": "What happened — short; baked (kinsoku) and height-gated per milestone." } } }, "description": "3-7 dated milestones drawn on the horizontal spine, alternating above/below." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "chart" } } },
-          "then": { "properties": { "content": {
-            "required": ["title", "series", "takeawayHead", "takeaway"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "series": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "required": ["name", "labels", "values"],
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": { "type": "string" },
-                      "labels": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
-                      "values": { "type": "array", "items": { "type": "number" }, "minItems": 2 }
+              "content": {
+                "required": [
+                  "title",
+                  "items"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
                     }
                   },
-                  {
+                  "lead": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "n",
+                        "head",
+                        "body"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "n": {
+                          "type": [
+                            "integer",
+                            "string"
+                          ]
+                        },
+                        "head": {
+                          "type": "string"
+                        },
+                        "body": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Protagonist row (0-based): its number circle + head step up to accentDeep. One per slide."
+                  },
+                  "persona": {
+                    "$ref": "#/definitions/persona"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "comparison"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "title",
+                  "left",
+                  "right"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "left": {
+                    "$ref": "#/definitions/comparisonColumn"
+                  },
+                  "right": {
+                    "$ref": "#/definitions/comparisonColumn"
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Which side carries the accent tint (0=left, 1=right). Default 1 — the house rule stays 'advocated side on the RIGHT'; use 0 only when the narrative genuinely leads left."
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "closing": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "text"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            },
+                            "tone": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "muted",
+                                "accent",
+                                "warn"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "結びの1行帯 (closing band, <=2 lines, centered bold at a fixed height): line 1 = the page's 種明かし (head size), line 2 = a smaller aside. tone: base=ink, accent=answer, warn=痛み(honesty-gated), muted."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "flow"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "steps"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "minItems": 3,
+                    "maxItems": 6,
+                    "description": "3-6 step labels (native text); the engine draws the arrow-connected nodes."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "horizontal",
+                      "vertical"
+                    ]
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5,
+                    "description": "Protagonist step (0-based): accent-filled node, onDark label, one size step up. One per slide."
+                  },
+                  "marker": {
+                    "$ref": "#/definitions/marker",
+                    "description": "badge / arrow-note on the protagonist node (requires emphasis; no circle)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "cycle"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "steps"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "minItems": 3,
+                    "maxItems": 6,
+                    "description": "3-6 node labels (native text) placed on a ring; the engine draws the cyclic arrows."
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5,
+                    "description": "Protagonist node (0-based): accent-filled node, onDark label, one size step up. One per slide."
+                  },
+                  "marker": {
+                    "$ref": "#/definitions/marker",
+                    "description": "badge / arrow-note on the protagonist node (requires emphasis; no circle)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "matrix"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "quadrants"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "axisX": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "X-axis end labels [left, right], shown top."
+                  },
+                  "axisY": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "Y-axis end labels [top, bottom], shown left."
+                  },
+                  "emphasizeIndex": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "LEGACY alias of emphasis (identical treatment). Do not set both."
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Protagonist quadrant (0=TL,1=TR,2=BL,3=BR): surfaceAccent tint + accentDeep head. One per slide."
+                  },
+                  "quadrants": {
+                    "type": "array",
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "head": {
+                          "type": "string"
+                        },
+                        "body": {
+                          "type": [
+                            "string",
+                            "array"
+                          ]
+                        }
+                      }
+                    },
+                    "description": "Exactly 4 quadrants (TL, TR, BL, BR), each {head?, body?}."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "waterfall"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "items": {
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 8,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "label",
+                        "value"
+                      ],
+                      "properties": {
+                        "label": {
+                          "type": [
+                            "string",
+                            "array"
+                          ],
+                          "description": "Category label under the bar (short; the band is height-gated)."
+                        },
+                        "value": {
+                          "type": "number",
+                          "description": "total:true -> the absolute LEVEL; otherwise the signed delta (negatives render as ▲)."
+                        },
+                        "total": {
+                          "type": "boolean",
+                          "description": "Anchor bar drawn from zero (start / subtotal / end)."
+                        }
+                      }
+                    },
+                    "description": "3-8 bridge items: levels (total:true) and signed drivers between them."
+                  },
+                  "unit": {
+                    "type": "string",
+                    "description": "Shown once bottom-left (単位：…)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "card-grid"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "cards"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "cards": {
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 6,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "head"
+                      ],
+                      "properties": {
+                        "head": {
+                          "type": [
+                            "string",
+                            "array"
+                          ],
+                          "description": "Short term (one line — a wrapping head is a hard overflow)."
+                        },
+                        "body": {
+                          "type": [
+                            "string",
+                            "array"
+                          ],
+                          "description": "One short explanation (<=3 lines)."
+                        },
+                        "label": {
+                          "type": "string",
+                          "description": "Optional in-card eyebrow (STEP 1 / a numeral): accent-deep, small caps; latin labels get charSpacing 3. The ordering symbol without a number circle."
+                        }
+                      }
+                    },
+                    "description": "3-6 head+body cards: 3 = one tall 1x3 row (STEP/約束 form), 4-6 = two rows."
+                  },
+                  "emphasizeIndex": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5,
+                    "description": "LEGACY alias of emphasis (identical treatment). Do not set both."
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5,
+                    "description": "Protagonist card (row-major): surfaceAccent tint + accentDeep head. One per slide."
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "closing": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "text"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            },
+                            "tone": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "muted",
+                                "accent",
+                                "warn"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "結びの1行帯 (closing band, <=2 lines, centered bold at a fixed height): line 1 = the page's 種明かし (head size), line 2 = a smaller aside. tone: base=ink, accent=answer, warn=痛み(honesty-gated), muted."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "formula"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "operands"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "result": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "description": "Optional result box (tinted), drawn first with an = between it and the operands."
+                  },
+                  "operands": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "description": "2-4 factor/summand labels joined by the operator glyph."
+                  },
+                  "operator": {
+                    "type": "string",
+                    "enum": [
+                      "×",
+                      "+"
+                    ],
+                    "description": "Glyph drawn between operands (default ×)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "closing": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "text"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            },
+                            "tone": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "muted",
+                                "accent",
+                                "warn"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "結びの1行帯 (closing band, <=2 lines, centered bold at a fixed height): line 1 = the page's 種明かし (head size), line 2 = a smaller aside. tone: base=ink, accent=answer, warn=痛み(honesty-gated), muted."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "branch"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "source",
+                  "branches"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "source": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "description": "The single anchor node (tinted): the source in diverge, the result in converge."
+                  },
+                  "branches": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "description": "2-4 branch labels; the engine stacks them and fans the arrows."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "diverge",
+                      "converge"
+                    ],
+                    "description": "diverge (default): 1 source -> N branches. converge: N branches -> 1 result."
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "closing": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "text"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            },
+                            "tone": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "muted",
+                                "accent",
+                                "warn"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "結びの1行帯 (closing band, <=2 lines, centered bold at a fixed height): line 1 = the page's 種明かし (head size), line 2 = a smaller aside. tone: base=ink, accent=answer, warn=痛み(honesty-gated), muted."
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "steps"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "steps"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "minItems": 3,
+                    "maxItems": 5,
+                    "description": "3-5 ascending stage labels (native text); the engine draws the staircase blocks, tinting the last (goal) block."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "timeline"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "milestones"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "milestones": {
+                    "type": "array",
+                    "minItems": 3,
+                    "maxItems": 7,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "date",
+                        "label"
+                      ],
+                      "properties": {
+                        "date": {
+                          "type": [
+                            "string",
+                            "array"
+                          ],
+                          "description": "Short date/year (e.g. 2014.10) — one line; the height gate rejects a wrapping date."
+                        },
+                        "label": {
+                          "type": [
+                            "string",
+                            "array"
+                          ],
+                          "description": "What happened — short; baked (kinsoku) and height-gated per milestone."
+                        }
+                      }
+                    },
+                    "description": "3-7 dated milestones drawn on the horizontal spine, alternating above/below."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "chart"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "title",
+                  "series",
+                  "takeawayHead",
+                  "takeaway"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "series": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "name",
+                          "labels",
+                          "values"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "labels": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 2
+                          },
+                          "values": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 2
+                          }
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 4,
+                        "description": "band (帯グラフ) only: 2-4 segments; first segment's labels are the 1-5 category rows.",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "name",
+                            "values"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "labels": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1,
+                              "maxItems": 5
+                            },
+                            "values": {
+                              "type": "array",
+                              "items": {
+                                "type": "number"
+                              },
+                              "minItems": 1
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "takeawayHead": {
+                    "type": "string"
+                  },
+                  "takeaway": {
+                    "type": "string"
+                  },
+                  "chartType": {
+                    "type": "string",
+                    "enum": [
+                      "column",
+                      "bar",
+                      "line",
+                      "pie",
+                      "doughnut",
+                      "band"
+                    ],
+                    "description": "column (default) = categories/few periods; bar = ranking with long labels; line = continuous trend; pie/doughnut = parts of ONE whole, max 5 slices; band = 100% stacked composition (series becomes an ARRAY of 2-4 segments)."
+                  },
+                  "unit": {
+                    "type": "string",
+                    "description": "Shown once top-left (単位：…), never on every bar."
+                  },
+                  "valueFormat": {
+                    "type": "string",
+                    "description": "Explicit data-label format code (overrides auto #,##0 / #,##0.0)."
+                  },
+                  "emphasizeIndex": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Colour ONE bar/slice accentDeep and mute the rest."
+                  },
+                  "targetLine": {
+                    "type": "object",
+                    "required": [
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "number"
+                      },
+                      "label": {
+                        "type": "string"
+                      }
+                    },
+                    "description": "Dashed reference line over the columns (前年 / 目標)."
+                  },
+                  "marker": {
+                    "$ref": "#/definitions/marker",
+                    "description": "badge / arrow-note on the takeaway card (no circle)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "pattern": {
+                "const": "stat-grid"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "title",
+                  "stats"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "stats": {
                     "type": "array",
                     "minItems": 2,
                     "maxItems": 4,
-                    "description": "band (帯グラフ) only: 2-4 segments; first segment's labels are the 1-5 category rows.",
                     "items": {
                       "type": "object",
-                      "required": ["name", "values"],
+                      "required": [
+                        "value",
+                        "label"
+                      ],
                       "additionalProperties": false,
                       "properties": {
-                        "name": { "type": "string" },
-                        "labels": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 },
-                        "values": { "type": "array", "items": { "type": "number" }, "minItems": 1 }
+                        "value": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "sub": {
+                          "type": "string"
+                        }
                       }
                     }
-                  }
-                ]
-              },
-              "takeawayHead": { "type": "string" },
-              "takeaway": { "type": "string" },
-              "chartType": { "type": "string", "enum": ["column", "bar", "line", "pie", "doughnut", "band"], "description": "column (default) = categories/few periods; bar = ranking with long labels; line = continuous trend; pie/doughnut = parts of ONE whole, max 5 slices; band = 100% stacked composition (series becomes an ARRAY of 2-4 segments)." },
-              "unit": { "type": "string", "description": "Shown once top-left (単位：…), never on every bar." },
-              "valueFormat": { "type": "string", "description": "Explicit data-label format code (overrides auto #,##0 / #,##0.0)." },
-              "emphasizeIndex": { "type": "integer", "minimum": 0, "description": "Colour ONE bar/slice accentDeep and mute the rest." },
-              "targetLine": { "type": "object", "required": ["value"], "properties": { "value": { "type": "number" }, "label": { "type": "string" } }, "description": "Dashed reference line over the columns (前年 / 目標)." },
-              "marker": { "$ref": "#/definitions/marker", "description": "badge / arrow-note on the takeaway card (no circle)." },
-              "notes": { "type": "string" }
-            }
-          } } }
-        },
-        {
-          "if": { "properties": { "pattern": { "const": "stat-grid" } } },
-          "then": { "properties": { "content": {
-            "required": ["title", "stats"],
-            "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "stats": {
-                "type": "array", "minItems": 2, "maxItems": 4,
-                "items": {
-                  "type": "object",
-                  "required": ["value", "label"],
-                  "additionalProperties": false,
-                  "properties": {
-                    "value": { "type": ["string", "number"] },
-                    "label": { "type": "string" },
-                    "sub": { "type": "string" }
+                  },
+                  "emphasizeIndex": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "LEGACY stat-grid emphasis: tint + accentDeep value (no size/width step). Prefer emphasis; do not set both."
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "description": "Protagonist KPI card (0-based) — AREA emphasis: card ~1.45x wide (others share the rest), the NUMBER jumps ×1.7 (×1.8 on peak) with the unit small beside it, accentDeep on tint. One per slide."
+                  },
+                  "marker": {
+                    "$ref": "#/definitions/marker"
+                  },
+                  "notes": {
+                    "type": "string"
                   }
                 }
-              },
-              "emphasizeIndex": { "type": "integer", "minimum": 0, "description": "LEGACY stat-grid emphasis: tint + accentDeep value (no size/width step). Prefer emphasis; do not set both." },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 3, "description": "Protagonist KPI card (0-based) — AREA emphasis: card ~1.45x wide (others share the rest), the NUMBER jumps ×1.7 (×1.8 on peak) with the unit small beside it, accentDeep on tint. One per slide." },
-              "marker": { "$ref": "#/definitions/marker" },
-              "notes": { "type": "string" }
+              }
             }
-          } } }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "table" } } },
-          "then": { "properties": { "content": {
-            "required": ["title", "columns", "rows"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "columns": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 6 },
-              "rows": {
-                "type": "array", "minItems": 1,
-                "items": { "type": "array", "items": { "type": ["string", "number"] } }
-              },
-              "colAlign": { "type": "array", "items": { "type": "string", "enum": ["left", "right", "center"] } },
-              "colW": { "type": "array", "items": { "type": "number" } },
-              "note": { "type": "string" },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "table"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "title",
+                  "columns",
+                  "rows"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "columns": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 6
+                  },
+                  "rows": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": [
+                          "string",
+                          "number"
+                        ]
+                      }
+                    }
+                  },
+                  "colAlign": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "left",
+                        "right",
+                        "center"
+                      ]
+                    }
+                  },
+                  "colW": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "closing": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "text"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "text": {
+                              "type": "string"
+                            },
+                            "tone": {
+                              "type": "string",
+                              "enum": [
+                                "base",
+                                "muted",
+                                "accent",
+                                "warn"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "maxItems": 2,
+                    "description": "結びの1行帯 (closing band, <=2 lines, centered bold at a fixed height): line 1 = the page's 種明かし (head size), line 2 = a smaller aside. tone: base=ink, accent=answer, warn=痛み(honesty-gated), muted."
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "section" } } },
-          "then": { "properties": { "content": {
-            "required": ["title"],
+          "if": {
             "properties": {
-              "index": { "type": ["string", "number"] },
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "subtitle": { "type": "string" },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "section"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "title"
+                ],
+                "properties": {
+                  "index": {
+                    "type": [
+                      "string",
+                      "number"
+                    ]
+                  },
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "subtitle": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "positioning" } } },
-          "then": { "properties": { "content": {
-            "required": ["positions"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "positions": { "type": "array", "minItems": 2, "maxItems": 3, "items": { "type": "object", "required": ["head"], "properties": { "head": { "type": ["string", "array"] }, "body": { "type": ["string", "array"] } } }, "description": "2-3 competitive positions side-by-side with VS between (structure word: positioning)." },
-              "emphasis": { "type": "integer", "minimum": 0, "maximum": 2, "description": "Protagonist position (usually 自社): surfaceAccent tint + accentDeep head." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "positioning"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "positions"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "positions": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "head"
+                      ],
+                      "properties": {
+                        "head": {
+                          "type": [
+                            "string",
+                            "array"
+                          ]
+                        },
+                        "body": {
+                          "type": [
+                            "string",
+                            "array"
+                          ]
+                        }
+                      }
+                    },
+                    "description": "2-3 competitive positions side-by-side with VS between (structure word: positioning)."
+                  },
+                  "emphasis": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2,
+                    "description": "Protagonist position (usually 自社): surfaceAccent tint + accentDeep head."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "system" } } },
-          "then": { "properties": { "content": {
-            "required": ["nodes"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "nodes": { "type": "array", "minItems": 2, "maxItems": 5, "items": { "type": ["string", "array"] }, "description": "2-5 ecosystem actors on one row (structure word: system)." },
-              "links": { "type": "array", "maxItems": 6, "items": { "type": "object", "required": ["from", "to"], "properties": { "from": { "type": "integer", "minimum": 0 }, "to": { "type": "integer", "minimum": 0 }, "label": { "type": ["string", "array"], "description": "What flows (モノ/カネ/情報) — labeled arrows are the point of this skeleton." } } }, "description": "Adjacent forward links run between the nodes (label above); return/long-range links run in the lane below (label under)." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "system"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "nodes"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "nodes": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 5,
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    },
+                    "description": "2-5 ecosystem actors on one row (structure word: system)."
+                  },
+                  "links": {
+                    "type": "array",
+                    "maxItems": 6,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "properties": {
+                        "from": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "to": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "label": {
+                          "type": [
+                            "string",
+                            "array"
+                          ],
+                          "description": "What flows (モノ/カネ/情報) — labeled arrows are the point of this skeleton."
+                        }
+                      }
+                    },
+                    "description": "Adjacent forward links run between the nodes (label above); return/long-range links run in the lane below (label under)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "relation" } } },
-          "then": { "properties": { "content": {
-            "required": ["left", "right", "links"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "left": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "type": ["string", "array"] } },
-              "right": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "type": ["string", "array"] } },
-              "links": { "type": "array", "minItems": 1, "maxItems": 8, "items": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 0 } }, "description": "[leftIndex, rightIndex] correspondence pairs — lines, not arrows (no fake causality)." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "relation"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "left",
+                  "right",
+                  "links"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "left": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    }
+                  },
+                  "right": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "items": {
+                      "type": [
+                        "string",
+                        "array"
+                      ]
+                    }
+                  },
+                  "links": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "items": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "description": "[leftIndex, rightIndex] correspondence pairs — lines, not arrows (no fake causality)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "before-after" } } },
-          "then": { "properties": { "content": {
-            "required": ["before", "after"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "before": { "type": "object", "required": ["label"], "properties": { "label": { "type": ["string", "array"] }, "body": { "type": ["string", "array"] } }, "description": "The common misunderstanding (muted panel)." },
-              "after": { "type": "object", "required": ["label"], "properties": { "label": { "type": ["string", "array"] }, "body": { "type": ["string", "array"] } }, "description": "The correction (tinted panel — the fixed protagonist). Must describe the SAME thing as before (no distortion)." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "before-after"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "before",
+                  "after"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "before": {
+                    "type": "object",
+                    "required": [
+                      "label"
+                    ],
+                    "properties": {
+                      "label": {
+                        "type": [
+                          "string",
+                          "array"
+                        ]
+                      },
+                      "body": {
+                        "type": [
+                          "string",
+                          "array"
+                        ]
+                      }
+                    },
+                    "description": "The common misunderstanding (muted panel)."
+                  },
+                  "after": {
+                    "type": "object",
+                    "required": [
+                      "label"
+                    ],
+                    "properties": {
+                      "label": {
+                        "type": [
+                          "string",
+                          "array"
+                        ]
+                      },
+                      "body": {
+                        "type": [
+                          "string",
+                          "array"
+                        ]
+                      }
+                    },
+                    "description": "The correction (tinted panel — the fixed protagonist). Must describe the SAME thing as before (no distortion)."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "dialogue" } } },
-          "then": { "properties": { "content": {
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "speakers": { "type": "array", "minItems": 2, "maxItems": 4, "items": { "$ref": "#/definitions/speaker" }, "description": "Plain conversation: speakers alternate left/right down the page (side auto; override per speaker)." },
-              "columns": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "object", "required": ["verdict", "speakers"], "properties": {
-                "verdict": { "type": "string", "enum": ["good", "bad"], "description": "○良い例 / ×悪い例 — the SYMBOL+LABEL carry the meaning (never colour alone, CUD floor)." },
-                "label": { "type": "string" },
-                "speakers": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "$ref": "#/definitions/speaker" } }
-              } }, "description": "○×比較 form: exactly two verdict columns (good/bad) of 1-2 speakers each." },
-              "mark": { "type": "string", "description": "※例 marking for the fictional conversation (one per slide) — PERSONA-MARK WARNs when absent." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "dialogue"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "speakers": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 4,
+                    "items": {
+                      "$ref": "#/definitions/speaker"
+                    },
+                    "description": "Plain conversation: speakers alternate left/right down the page (side auto; override per speaker)."
+                  },
+                  "columns": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "verdict",
+                        "speakers"
+                      ],
+                      "properties": {
+                        "verdict": {
+                          "type": "string",
+                          "enum": [
+                            "good",
+                            "bad"
+                          ],
+                          "description": "○良い例 / ×悪い例 — the SYMBOL+LABEL carry the meaning (never colour alone, CUD floor)."
+                        },
+                        "label": {
+                          "type": "string"
+                        },
+                        "speakers": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 2,
+                          "items": {
+                            "$ref": "#/definitions/speaker"
+                          }
+                        }
+                      }
+                    },
+                    "description": "○×比較 form: exactly two verdict columns (good/bad) of 1-2 speakers each."
+                  },
+                  "mark": {
+                    "type": "string",
+                    "description": "※例 marking for the fictional conversation (one per slide) — PERSONA-MARK WARNs when absent."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "testimonial" } } },
-          "then": { "properties": { "content": {
-            "required": ["items"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "title": { "type": ["string", "array"], "items": { "type": "string" } },
-              "layout": { "type": "string", "enum": ["grid", "stack"], "description": "grid = 2xN cells (default); stack = full-width rows." },
-              "items": { "type": "array", "minItems": 2, "maxItems": 6, "items": { "type": "object", "required": ["name", "body"], "properties": {
-                "name": { "type": "string", "description": "話者ラベル（「◯◯さま」等）— fictional unless the user supplies approved real voices (捏造ガード)." },
-                "body": { "type": "string" },
-                "avatar": { "type": "string" }, "avatarImage": { "type": "string" },
-                "crop": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "number" } },
-                "hair": { "type": "string", "enum": ["short", "long", "bun", "side"] },
-                "recolor": { "type": "boolean" }
-              } } },
-              "mark": { "type": "string", "description": "※例 marking — REQUIRED in practice for sample voices; real testimonials need user approval + source management." },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "testimonial"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "array"
+                    ],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "layout": {
+                    "type": "string",
+                    "enum": [
+                      "grid",
+                      "stack"
+                    ],
+                    "description": "grid = 2xN cells (default); stack = full-width rows."
+                  },
+                  "items": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 6,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "body"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "話者ラベル（「◯◯さま」等）— fictional unless the user supplies approved real voices (捏造ガード)."
+                        },
+                        "body": {
+                          "type": "string"
+                        },
+                        "avatar": {
+                          "type": "string"
+                        },
+                        "avatarImage": {
+                          "type": "string"
+                        },
+                        "crop": {
+                          "type": "array",
+                          "minItems": 4,
+                          "maxItems": 4,
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "hair": {
+                          "type": "string",
+                          "enum": [
+                            "short",
+                            "long",
+                            "bun",
+                            "side"
+                          ]
+                        },
+                        "recolor": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "mark": {
+                    "type": "string",
+                    "description": "※例 marking — REQUIRED in practice for sample voices; real testimonials need user approval + source management."
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "pattern": { "const": "cta" } } },
-          "then": { "properties": { "content": {
-            "required": ["titleLines", "offerHead", "offerBody"],
+          "if": {
             "properties": {
-              "kicker": { "type": "string" },
-              "titleLines": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 2 },
-              "offerHead": { "type": "string" },
-              "offerBody": { "type": "string" },
-              "contact": { "type": "string" },
-              "notes": { "type": "string" }
+              "pattern": {
+                "const": "cta"
+              }
             }
-          } } }
+          },
+          "then": {
+            "properties": {
+              "content": {
+                "required": [
+                  "titleLines",
+                  "offerHead",
+                  "offerBody"
+                ],
+                "properties": {
+                  "kicker": {
+                    "type": "string"
+                  },
+                  "titleLines": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 2
+                  },
+                  "offerHead": {
+                    "type": "string"
+                  },
+                  "offerBody": {
+                    "type": "string"
+                  },
+                  "contact": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         }
       ]
     },
     "comparisonColumn": {
       "type": "object",
-      "required": ["label", "role", "points"],
+      "required": [
+        "label",
+        "role",
+        "points"
+      ],
       "additionalProperties": false,
       "properties": {
-        "label": { "type": "string" },
-        "role": { "type": "string" },
-        "points": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 5 }
+        "label": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "maxItems": 5
+        }
       }
     }
   }

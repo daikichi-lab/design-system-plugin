@@ -1,0 +1,38 @@
+{
+  "meta": { "title": "torture: statement/closing/dark abuse", "intent": "seminar" },
+  "slides": [
+    { "pattern": "cover", "content": { "titleLines": ["ダーク濫用の拷問デッキ"] } },
+    { "pattern": "message", "content": {
+      "dark": true,
+      "messageLines": [
+        { "text": "決め台詞がふたつあるという矛盾。", "size": "l", "tone": "accent" },
+        { "text": "こちらも山場のつもりの一行。", "size": "l", "tone": "warn" },
+        { "text": "さらに前置きも長々と続いてブロックの高さ見積もりを必ず超過させる。", "size": "m" },
+        { "text": "補足行まで足して四行にする。", "size": "m" }
+      ],
+      "statBig": "999億円",
+      "statTone": "warn",
+      "notes": "STMT-LINES(ERROR)+STMT-HEIGHT(ERROR)を発火させる"
+    } },
+    { "pattern": "message", "content": {
+      "dark": true,
+      "messageLines": [{ "text": "ダーク連続の2枚目。", "tone": "warn" }],
+      "notes": "DARK-RUN(WARN)を発火させる"
+    } },
+    { "pattern": "card-grid", "content": {
+      "title": "このタイトルは全角十九文字の上限を超える長さである",
+      "cards": [
+        { "label": "STEP 1", "head": "一枚目", "body": "本文。" },
+        { "label": "STEP 2", "head": "二枚目", "body": "本文。" },
+        { "label": "STEP 3", "head": "三枚目", "body": "本文。" }
+      ],
+      "closing": [
+        { "text": "この結びの一行は帯に収まる字数上限の三十八文字をわざと大幅に超えて書き続けている拷問行である。", "tone": "warn" },
+        "二行目も四十八文字の上限をわざと超えるほどに長く長く書き続けて結び帯の静的検査を必ず発火させる拷問の行。"
+      ],
+      "notes": "TITLE-LEN(WARN)+CLOSING-LEN(ERROR)を発火させる"
+    } },
+    { "pattern": "message", "content": { "dark": true, "messageLines": [{ "text": "朱の乱用行。", "tone": "warn" }], "notes": "WARN-TONE比率用" } },
+    { "pattern": "cta", "content": { "titleLines": ["締め"], "offerHead": "行動", "offerBody": "本文。" } }
+  ]
+}

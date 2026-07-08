@@ -4,11 +4,22 @@
   "title": "PPTX deck theme",
   "description": "Brand-level visual identity (colors, fonts, sizes, canvas). Per-project repos own a theme.json that conforms to this schema. The plugin ships exactly one neutral default. A theme carries ONLY look-and-feel — never chapter structure, slide order, or wording.",
   "type": "object",
-  "required": ["name", "canvas", "font", "colors", "sizes"],
+  "required": [
+    "name",
+    "canvas",
+    "font",
+    "colors",
+    "sizes"
+  ],
   "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
-    "$comment": { "type": "string", "description": "Optional free-text note (ignored by the engine)." },
+    "$schema": {
+      "type": "string"
+    },
+    "$comment": {
+      "type": "string",
+      "description": "Optional free-text note (ignored by the engine)."
+    },
     "name": {
       "type": "string",
       "description": "Human-readable theme id, e.g. 'neutral-business' or 'acme-corp'."
@@ -16,11 +27,23 @@
     "canvas": {
       "type": "object",
       "description": "Slide geometry in inches. 13.333x7.5 = 16:9 widescreen.",
-      "required": ["w", "h", "margin"],
+      "required": [
+        "w",
+        "h",
+        "margin"
+      ],
       "additionalProperties": false,
       "properties": {
-        "w": { "type": "number", "exclusiveMinimum": 0, "description": "Slide width (inches)." },
-        "h": { "type": "number", "exclusiveMinimum": 0, "description": "Slide height (inches)." },
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Slide width (inches)."
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Slide height (inches)."
+        },
         "margin": {
           "type": "number",
           "exclusiveMinimum": 0,
@@ -31,82 +54,203 @@
     "font": {
       "type": "object",
       "description": "Typeface tokens. One family is managed as a single token (house rule). Default Meiryo; Yu Gothic / Noto Sans JP also valid for Japanese.",
-      "required": ["family"],
+      "required": [
+        "family"
+      ],
       "additionalProperties": false,
       "properties": {
-        "family": { "type": "string", "minLength": 1, "description": "Base/fallback face. Used for any weight role left unset." },
-        "heading": { "type": "string", "minLength": 1, "description": "Heading face, rendered bold (e.g. 'Yu Gothic'). Falls back to family." },
-        "body": { "type": "string", "minLength": 1, "description": "Body-copy face (e.g. 'Yu Gothic Medium' — medium reads better than regular for JP body). Falls back to family." },
-        "caption": { "type": "string", "minLength": 1, "description": "Caption / footer / muted face (e.g. 'Yu Gothic' regular). Falls back to family." }
+        "family": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Base/fallback face. Used for any weight role left unset."
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Heading face, rendered bold (e.g. 'Yu Gothic'). Falls back to family."
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Body-copy face (e.g. 'Yu Gothic Medium' — medium reads better than regular for JP body). Falls back to family."
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Caption / footer / muted face (e.g. 'Yu Gothic' regular). Falls back to family."
+        }
       }
     },
     "colors": {
       "type": "object",
       "description": "Palette. All values are 6-digit hex WITHOUT a leading '#'. House rule: one dominant color (60-70%) + one restrained accent.",
       "required": [
-        "bg", "ink", "muted", "faint", "surface", "surfaceAccent", "line",
-        "dark", "darkAlt", "onDark", "onDarkMuted",
-        "accent", "accentDeep", "accentSoft", "onAccentMuted"
+        "bg",
+        "ink",
+        "muted",
+        "faint",
+        "surface",
+        "surfaceAccent",
+        "line",
+        "dark",
+        "darkAlt",
+        "onDark",
+        "onDarkMuted",
+        "accent",
+        "accentDeep",
+        "accentSoft",
+        "onAccentMuted"
       ],
       "additionalProperties": false,
       "patternProperties": {
-        "^(bg|ink|muted|faint|surface|surfaceAccent|line|dark|darkAlt|onDark|onDarkMuted|accent|accentDeep|accentSoft|onAccentMuted)$": {
+        "^(bg|ink|muted|faint|surface|surfaceAccent|line|dark|darkAlt|onDark|onDarkMuted|accent|accentDeep|accentSoft|accentOnDark|warn|warnOnDark|onAccentMuted)$": {
           "type": "string",
           "pattern": "^[0-9A-Fa-f]{6}$",
           "description": "6-digit hex, no '#'."
         }
       },
       "properties": {
-        "bg": { "description": "Light slide background (body slides)." },
-        "ink": { "description": "Primary text on light." },
-        "muted": { "description": "Secondary text on light." },
-        "faint": { "description": "Captions / footer on light." },
-        "surface": { "description": "Neutral card tint." },
-        "surfaceAccent": { "description": "Accent-tinted card (emphasis)." },
-        "line": { "description": "Hairline / divider." },
-        "dark": { "description": "Dark slide background (cover, CTA — sandwich)." },
-        "darkAlt": { "description": "Depth motif shape on dark (oval, not a stripe)." },
-        "onDark": { "description": "Primary text on dark." },
-        "onDarkMuted": { "description": "Secondary text on dark." },
-        "accent": { "description": "Single sharp accent." },
-        "accentDeep": { "description": "Darker accent for text on accent-tinted surfaces." },
-        "accentSoft": { "description": "Softer accent (e.g. kicker on dark)." },
-        "onAccentMuted": { "description": "Muted text on a solid accent fill." }
+        "bg": {
+          "description": "Light slide background (body slides)."
+        },
+        "ink": {
+          "description": "Primary text on light."
+        },
+        "muted": {
+          "description": "Secondary text on light."
+        },
+        "faint": {
+          "description": "Captions / footer on light."
+        },
+        "surface": {
+          "description": "Neutral card tint."
+        },
+        "surfaceAccent": {
+          "description": "Accent-tinted card (emphasis)."
+        },
+        "line": {
+          "description": "Hairline / divider."
+        },
+        "dark": {
+          "description": "Dark slide background (cover, CTA — sandwich)."
+        },
+        "darkAlt": {
+          "description": "Depth motif shape on dark (oval, not a stripe)."
+        },
+        "onDark": {
+          "description": "Primary text on dark."
+        },
+        "onDarkMuted": {
+          "description": "Secondary text on dark."
+        },
+        "accent": {
+          "description": "Single sharp accent."
+        },
+        "accentDeep": {
+          "description": "Darker accent for text on accent-tinted surfaces."
+        },
+        "accentSoft": {
+          "description": "Softer accent (e.g. kicker on dark)."
+        },
+        "onAccentMuted": {
+          "description": "Muted text on a solid accent fill."
+        },
+        "accentOnDark": {
+          "description": "Optional. Accent tuned for DARK grounds (a mid accent sinks on navy). Falls back to accentSoft."
+        },
+        "warn": {
+          "description": "Optional. Pain/negation colour (損害・✕・覚悟) — 1用途限定, never decoration; <=15% of slides. Falls back to accentDeep."
+        },
+        "warnOnDark": {
+          "description": "Optional. warn tuned for dark grounds. Falls back to accentSoft."
+        }
       }
     },
     "sizes": {
       "type": "object",
       "description": "Type scale in points. Builders reference these tokens; they never hardcode point sizes.",
       "required": [
-        "cover", "coverSub", "title", "kicker", "message", "stat",
-        "head", "body", "small", "cap", "num", "compareLabel", "takeawayHead", "offerHead", "footer"
+        "cover",
+        "coverSub",
+        "title",
+        "kicker",
+        "message",
+        "stat",
+        "head",
+        "body",
+        "small",
+        "cap",
+        "num",
+        "compareLabel",
+        "takeawayHead",
+        "offerHead",
+        "footer"
       ],
       "additionalProperties": false,
       "patternProperties": {
-        "^(cover|coverSub|title|kicker|message|stat|head|body|small|cap|num|compareLabel|takeawayHead|offerHead|footer|sectionTitle|sectionIndex|statCard)$": {
+        "^(cover|coverSub|title|kicker|message|messageL|stat|head|body|small|cap|num|compareLabel|takeawayHead|offerHead|footer|sectionTitle|sectionIndex|statCard)$": {
           "type": "number",
           "exclusiveMinimum": 0
         }
       },
       "properties": {
-        "cover": { "description": "Cover title." },
-        "coverSub": { "description": "Cover subtitle." },
-        "title": { "description": "Body / section title." },
-        "kicker": { "description": "Kicker eyebrow label." },
-        "message": { "description": "Centered single-message statement; also CTA title." },
-        "stat": { "description": "Big stat number." },
-        "head": { "description": "Item / row heading." },
-        "body": { "description": "Body copy." },
-        "small": { "description": "Small text / sub-copy." },
-        "cap": { "description": "Footer / caption." },
-        "num": { "description": "Digit inside a number circle." },
-        "compareLabel": { "description": "Comparison column label." },
-        "takeawayHead": { "description": "Chart takeaway heading." },
-        "offerHead": { "description": "CTA offer heading." },
-        "footer": { "description": "Cover footer / CTA contact line." },
-        "sectionTitle": { "description": "Optional. Section-divider title (pattern 'section'). Engine falls back to 36 if absent." },
-        "sectionIndex": { "description": "Optional. Section-divider watermark index number (pattern 'section'). Engine falls back to 150 if absent." },
-        "statCard": { "description": "Optional. Big value in a KPI card (pattern 'stat-grid'). Engine falls back to 40 if absent." }
+        "cover": {
+          "description": "Cover title."
+        },
+        "coverSub": {
+          "description": "Cover subtitle."
+        },
+        "title": {
+          "description": "Body / section title."
+        },
+        "kicker": {
+          "description": "Kicker eyebrow label."
+        },
+        "message": {
+          "description": "Centered single-message statement; also CTA title."
+        },
+        "stat": {
+          "description": "Big stat number."
+        },
+        "head": {
+          "description": "Item / row heading."
+        },
+        "body": {
+          "description": "Body copy."
+        },
+        "small": {
+          "description": "Small text / sub-copy."
+        },
+        "cap": {
+          "description": "Footer / caption."
+        },
+        "num": {
+          "description": "Digit inside a number circle."
+        },
+        "compareLabel": {
+          "description": "Comparison column label."
+        },
+        "takeawayHead": {
+          "description": "Chart takeaway heading."
+        },
+        "offerHead": {
+          "description": "CTA offer heading."
+        },
+        "footer": {
+          "description": "Cover footer / CTA contact line."
+        },
+        "sectionTitle": {
+          "description": "Optional. Section-divider title (pattern 'section'). Engine falls back to 36 if absent."
+        },
+        "sectionIndex": {
+          "description": "Optional. Section-divider watermark index number (pattern 'section'). Engine falls back to 150 if absent."
+        },
+        "statCard": {
+          "description": "Optional. Big value in a KPI card (pattern 'stat-grid'). Engine falls back to 40 if absent."
+        },
+        "messageL": {
+          "description": "Optional. Statement payload line (size:\"l\" — 山場はサイズで語る). Engine falls back to message×1.3 if absent."
+        }
       }
     },
     "lead": {
@@ -114,11 +258,31 @@
       "description": "Line-spacing multipliers by role (optional; engine falls back to sensible defaults). JP body wants air (1.5-1.7); headings want to be tight (1.05-1.12). §3 typography floor.",
       "additionalProperties": false,
       "properties": {
-        "title":   { "type": "number", "exclusiveMinimum": 0, "description": "Headings — tight (~1.08)." },
-        "display": { "type": "number", "exclusiveMinimum": 0, "description": "Centered message statement (~1.18)." },
-        "body":    { "type": "number", "exclusiveMinimum": 0, "description": "Body paragraphs — airy JP leading (~1.6)." },
-        "caption": { "type": "number", "exclusiveMinimum": 0, "description": "Captions / muted multi-line (~1.5)." },
-        "tight":   { "type": "number", "exclusiveMinimum": 0, "description": "Compact multi-line: bullets, sub-rows, offer body (~1.4)." }
+        "title": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Headings — tight (~1.08)."
+        },
+        "display": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Centered message statement (~1.18)."
+        },
+        "body": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Body paragraphs — airy JP leading (~1.6)."
+        },
+        "caption": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Captions / muted multi-line (~1.5)."
+        },
+        "tight": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Compact multi-line: bullets, sub-rows, offer body (~1.4)."
+        }
       }
     },
     "layout": {
@@ -131,13 +295,53 @@
           "additionalProperties": false,
           "description": "Card shape. Sharp + flat reads swiss/minimal; rounded + soft-shadow is the default.",
           "properties": {
-            "radius": { "type": "number", "minimum": 0, "description": "Corner radius (inches). ~0.09 rounded (default), ~0.02 sharp." },
-            "shadow": { "type": "boolean", "description": "Drop shadow. true (default) or false (flat)." }
+            "radius": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Corner radius (inches). ~0.09 rounded (default), ~0.02 sharp."
+            },
+            "shadow": {
+              "type": "boolean",
+              "description": "Drop shadow. true (default) or false (flat)."
+            }
           }
         },
-        "kicker": { "enum": ["dot", "bar", "none"], "description": "Eyebrow marker: accent dot (default), a short rule, or none." },
-        "coverMotif": { "enum": ["oval", "none"], "description": "Cover depth shape: off-canvas oval (default) or none (austere)." },
-        "sectionIndex": { "enum": ["right", "left", "none"], "description": "Section-divider ghost number side: right (default), left, or none." }
+        "kicker": {
+          "enum": [
+            "dot",
+            "bar",
+            "none",
+            "diamond"
+          ],
+          "description": "Eyebrow marker: accent dot (default), a short rule, or none."
+        },
+        "coverMotif": {
+          "enum": [
+            "oval",
+            "none"
+          ],
+          "description": "Cover depth shape: off-canvas oval (default) or none (austere)."
+        },
+        "sectionIndex": {
+          "enum": [
+            "right",
+            "left",
+            "none"
+          ],
+          "description": "Section-divider ghost number side: right (default), left, or none."
+        },
+        "sectionStyle": {
+          "type": "string",
+          "enum": [
+            "watermark",
+            "chapter"
+          ],
+          "description": "Section-divider form: watermark (ghost numeral, default) | chapter (no numeral; CHAPTER-N kicker + centered title — story-seminar register)."
+        },
+        "coverQuoteAccent": {
+          "type": "boolean",
+          "description": "Cover title “…” spans render in accent (the sanctioned inline emphasis)."
+        }
       }
     },
     "brand": {

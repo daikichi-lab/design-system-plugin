@@ -93,7 +93,13 @@ The frame decides the **order of beats**. Each beat is one idea you must land.
 audience should pass through (約束 → 期待 → 共感 → どん底 → 気づき → 安心 →
 高揚 …) and mark the **転換点** — the beats where the room's state must flip.
 Turning points take the dark statement treatment (情報を処理させるページは白、
-感情を刻むページは紺) and are the candidates for the one `peak`. **This
+感情を刻むページは紺) and are the candidates for the one `peak`. The mechanism:
+`message` with `"dark": true` + per-line `{text, tone, size}` (quiet lead-in →
+ONE `size:"l"` payload, usually `tone:"accent"` → muted aside); the big number
+takes `statTone` by MEANING (warn=痛み / accent=成果). Budget: dark faces ≤
+~30% of the deck, no adjacent darks in the body (DARK-BUDGET / DARK-RUN lints;
+deliberate runs like どん底2連 must be justified in `notes`). Light body slides
+land their 種明かし in the `closing` band instead — same height every page. **This
 classification is the one step no lint can check** — the turning-point list is
 manuscript comprehension. Record it (each turning point's slide gets a `notes`
 line saying why it flips the room) so the human approving the plan can catch a

@@ -61,6 +61,11 @@ stripe.** (See the `comparison` and `chart` patterns: the emphasized card is
 - Depth comes from **large, soft, partly off-canvas shapes** (the cover/CTA
   oval), tinted cards, and restrained shadow — never from lines or bands.
 - Reuse one motif across the deck so it feels designed, not assembled.
+- **Register note — chapter watermarks.** The section divider's giant ghost
+  numeral reads as an AI-tell in story/seminar registers (巨大透かし数字 = AI
+  章扉の典型); those decks set `theme.layout.sectionStyle: "chapter"` (kicker
+  "CHAPTER N" + centered title, no numeral). The watermark stays legitimate in
+  editorial/data-driven languages — it is a *language choice*, not a default.
 
 ## 4. Content integrity (especially financial / external decks)
 

@@ -253,7 +253,7 @@ function checkCapacity(slides, F) {
       case "card-grid": {
         const n = len(c.cards);
         if (n > 6) F.error(idx, "CAPACITY", `card-grid has ${n} cards (max 6; split into two slides)`);
-        else if (n < 4) F.error(idx, "CAPACITY", `card-grid has ${n} cards (min 4; fewer cards read better as two-column / stat-grid)`);
+        else if (n < 3) F.error(idx, "CAPACITY", `card-grid has ${n} cards (min 3; fewer cards read better as two-column / stat-grid)`);
         break;
       }
       case "flow": {
@@ -365,7 +365,7 @@ function checkCapacity(slides, F) {
       }
       case "message": {
         const n = len(c.messageLines);
-        if (n > 2) F.error(idx, "CAPACITY", `message messageLines has ${n} (max 2 lines)`);
+        if (n > 4) F.error(idx, "CAPACITY", `message messageLines has ${n} (max 4 lines — 前置き/決め台詞/補足の3段+予備)`);
         break;
       }
       case "section": {
@@ -849,6 +849,85 @@ function printReport(planPath, list) {
   );
 }
 
+/* ---------------- statement & closing discipline ----------------
+ * The dark-statement / closing-band / warn-tone layer (story-seminar upgrade).
+ * Mechanical halves only — the MEANING of a warn tone (is this genuinely
+ * 痛み・代償・覚悟?) stays deck-review's human half.
+ *   DARK-BUDGET  dark faces (cover + section + cta + message.dark) > ~30% = WARN
+ *   DARK-RUN     two adjacent dark faces inside the body = WARN (章扉→直後1枚
+ *                is the sanctioned exception — cover/cta bookends don't count)
+ *   WARN-TONE    warn-tone pages > 15% of the deck = WARN (朱は絞るほど効く)
+ *   STMT-LINES   >1 size:"l" payload line per statement = ERROR (山場は1行)
+ *   STMT-HEIGHT  static height estimate of rich messageLines > block = ERROR
+ *   CLOSING-LEN  closing line too long for the band (静的字数上限) = ERROR
+ *   TITLE-LEN    one-line body title > 19 全角 = WARN (結びの1行へ逃がす)
+ */
+function isDarkFace(sl) {
+  if (!sl) return false;
+  if (sl.pattern === "cover" || sl.pattern === "section" || sl.pattern === "cta") return true;
+  return sl.pattern === "message" && !!(sl.content && sl.content.dark);
+}
+function usesWarnTone(c) {
+  if (!c) return false;
+  if (c.statTone === "warn") return true;
+  const hasWarn = (arr) => Array.isArray(arr) && arr.some((l) => l && typeof l === "object" && l.tone === "warn");
+  return hasWarn(c.messageLines) || hasWarn(Array.isArray(c.closing) ? c.closing : null);
+}
+function checkStatements(slides, F) {
+  const n = slides.length || 1;
+  const darks = slides.filter(isDarkFace).length;
+  if (darks / n > 0.32) F.warn(-1, "DARK-BUDGET",
+    `${darks}/${n} dark faces (${Math.round((100 * darks) / n)}% > ~30%) — dark carves emotion only while scarce; re-select the turning points`);
+  for (let i = 1; i < slides.length - 1; i++) {
+    if (isDarkFace(slides[i]) && isDarkFace(slides[i + 1]) && slides[i + 1].pattern !== "cta") {
+      if (slides[i].pattern === "section") continue; // 章扉→直後1枚 is sanctioned
+      F.warn(i + 2, "DARK-RUN",
+        "two dark faces adjacent in the body — the darkening loses its signal; return to light between statements (deliberate runs: justify in notes)");
+    }
+  }
+  const warns = slides.filter((sl) => usesWarnTone(sl.content)).length;
+  if (warns / n > 0.15) F.warn(-1, "WARN-TONE",
+    `${warns}/${n} slides use the warn tone (>15%) — 朱は痛み・代償・覚悟の1用途限定; 絞るほど効く`);
+  slides.forEach((sl, i) => {
+    const idx = i + 1;
+    const c = sl.content || {};
+    if (sl.pattern === "message" && Array.isArray(c.messageLines)) {
+      const rich = c.messageLines.some((l) => typeof l === "object") || !!c.dark || c.messageLines.length > 2;
+      const lLines = c.messageLines.filter((l) => l && typeof l === "object" && l.size === "l").length;
+      if (lLines > 1) F.error(idx, "STMT-LINES",
+        `${lLines} size:"l" payload lines — 山場はサイズで語るからこそ1行だけ (make the rest "m"/"s")`);
+      if (rich) {
+        // static height estimate vs the statement block (display leading)
+        const pt = (l) => (l && typeof l === "object" && l.size === "l") ? 1.3 : (l && typeof l === "object" && l.size === "s") ? 0.62 : 1.0;
+        const units = c.messageLines.reduce((a, l) => a + pt(l), 0);
+        const maxUnits = c.statBig ? 2.1 : 3.4; // ~block height in message-size line units
+        if (units > maxUnits) F.error(idx, "STMT-HEIGHT",
+          `statement block is ~${units.toFixed(1)} line-units (max ~${maxUnits}) — cut a line or drop the statBig`);
+      }
+    }
+    if (c.closing && sl.pattern === "comparison") {
+      const mx = Math.max((c.left && c.left.points || []).length, (c.right && c.right.points || []).length);
+      if (mx > 3) F.error(idx, "CLOSING-LEN",
+        `comparison with a closing fits 3 points/card (got ${mx}) — the shrunken card can't hold 4 rows above the band`);
+    }
+    if (c.closing) {
+      const lines = (Array.isArray(c.closing) ? c.closing : [c.closing])
+        .map((l) => (typeof l === "string" ? l : (l && l.text) || ""));
+      if (lines.length > 2) F.error(idx, "CLOSING-LEN", "closing carries >2 lines (band fits 2)");
+      lines.forEach((t, li) => {
+        const cap = li === 0 ? 38 : 48;
+        if (t.length > cap) F.error(idx, "CLOSING-LEN",
+          `closing line ${li + 1} is ${t.length} chars (max ~${cap} for the band) — shorten the 種明かし`);
+      });
+    }
+    const LIGHT_TITLED = ["two-column", "comparison", "chart", "stat-grid", "table", "card-grid", "flow", "cycle", "matrix", "timeline", "steps", "branch", "formula", "waterfall", "positioning", "system", "relation", "before-after"];
+    if (LIGHT_TITLED.includes(sl.pattern) && typeof c.title === "string" && c.title.length > 19) {
+      F.warn(idx, "TITLE-LEN",
+        `title is ${c.title.length} chars (>19 全角 wraps at title size) — shorten the claim; move the rest to the closing band / body`);
+    }
+  });
+}
+
 /* ---------------- run ---------------- */
 function run(args) {
   // loadTheme / loadPlan throw clean Error messages on bad paths/JSON; main()
@@ -866,6 +945,7 @@ function run(args) {
   checkContrast(T, F);
   checkMargin(T, F);
   checkAiTells(slides, F);
+  checkStatements(slides, F);
 
   const cnt = counts(F.list);
   const pass = cnt.errors === 0;

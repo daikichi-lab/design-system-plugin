@@ -58,6 +58,11 @@ const COLOR_MAP = {
   dark: "dark", darkAlt: "darkAlt", onDark: "onDark", onDarkMuted: "onDarkMut",
   accent: "accent", accentDeep: "accentDp", accentSoft: "accentSft",
   onAccentMuted: "onAccentMut",
+  // Optional semantic extensions (loadTheme falls back when a theme omits them):
+  //   accentOnDark — the accent tuned for DARK grounds (a mid accent sinks on navy)
+  //   warn         — the pain/negation colour (損害・✕・覚悟; 1用途限定, never decoration)
+  //   warnOnDark   — warn tuned for dark grounds
+  accentOnDark: "accentOnDk", warn: "warn", warnOnDark: "warnOnDk",
 };
 
 // Leading defaults (line-spacing multipliers) — used when a theme omits `lead`.
@@ -96,6 +101,11 @@ const LAYOUT_DEFAULTS = {
   stroke: { hairline: 0.75 },
   connector: { width: 2.5 },
   kicker: "dot", coverMotif: "oval", sectionIndex: "right", marker: { handDrawn: false },
+  // sectionStyle "chapter": no watermark numeral; kicker (default "CHAPTER N")
+  // top-left; title + subtitle centered — the story-seminar chapter break.
+  // coverQuoteAccent: “…” spans in the cover title render in the accent colour
+  // (the ONE sanctioned inline-emphasis device — 強調は“ ”＋accent の2手段).
+  sectionStyle: "watermark", coverQuoteAccent: false,
 };
 
 function loadTheme(themePath) {
@@ -109,6 +119,12 @@ function loadTheme(themePath) {
   for (const [src, dst] of Object.entries(COLOR_MAP)) {
     if (j.colors && typeof j.colors[src] === "string") c[dst] = j.colors[src];
   }
+  // Semantic-extension fallbacks: themes that predate these tokens keep their
+  // exact current rendering (warn falls back into the accent family — the
+  // engine never invents a colour outside the theme).
+  if (!c.accentOnDk) c.accentOnDk = c.accentSft;
+  if (!c.warn) c.warn = c.accentDp || c.accent;
+  if (!c.warnOnDk) c.warnOnDk = c.accentSft;
   // Weight-led font hierarchy: a theme may name a face per role; any role left
   // unset falls back to `family` (so single-family themes keep working).
   const fam = (j.font && j.font.family) || "Meiryo";
@@ -325,6 +341,12 @@ function kicker(slide, T, text, y, { x = T.m, onDark = false } = {}) {
     slide.addShape("ellipse", { x, y: y + 0.055, w: 0.13, h: 0.13,
       fill: { color: T.c.accent }, line: { type: "none" } });
     tx = x + 0.26;
+  } else if (style === "diamond") {
+    // 金の小さな菱形 — the signature motif (square rotated 45°), same position
+    // every page: a signature, not decoration.
+    slide.addShape("rect", { x, y: y + 0.045, w: 0.14, h: 0.14, rotate: 45,
+      fill: { color: T.c.accent }, line: { type: "none" } });
+    tx = x + 0.28;
   } else if (style === "bar") {
     slide.addShape("rect", { x, y: y + 0.1, w: 0.26, h: 0.05,
       fill: { color: T.c.accent }, line: { type: "none" } });
@@ -336,12 +358,56 @@ function kicker(slide, T, text, y, { x = T.m, onDark = false } = {}) {
 }
 
 // Title/heading: heading-weight, tight leading, slight negative tracking for large JP.
-function title(slide, T, lines, y, { x = T.m, w = T.W - 2 * T.m, onDark = false, size = T.s.title } = {}) {
-  const arr = (Array.isArray(lines) ? lines : [lines]).map((t, i, a) => ({
-    text: t, options: { breakLine: i < a.length - 1 } }));
+function title(slide, T, lines, y, { x = T.m, w = T.W - 2 * T.m, onDark = false, size = T.s.title, align = "left", quoteAccent = false } = {}) {
+  const base = onDark ? T.c.onDark : T.c.ink;
+  const arr = [];
+  (Array.isArray(lines) ? lines : [lines]).forEach((t, i, a) => {
+    const brk = i < a.length - 1;
+    // “…” spans → accent runs (cover-only knob; the sanctioned inline emphasis)
+    if (quoteAccent && /“[^”]+”/.test(t)) {
+      const parts = String(t).split(/(“[^”]+”)/);
+      parts.forEach((p, pi) => {
+        if (!p) return;
+        const isQ = /^“[^”]+”$/.test(p);
+        const last = pi === parts.length - 1 || parts.slice(pi + 1).every((q) => !q);
+        arr.push({ text: p, options: { color: isQ ? (onDark ? T.c.accentOnDk : T.c.accent) : base, breakLine: brk && last } });
+      });
+    } else {
+      arr.push({ text: t, options: { breakLine: brk } });
+    }
+  });
   slide.addText(arr, { x, y, w, h: 0.62 * (Array.isArray(lines) ? lines.length : 1) + 0.3, margin: 0,
     fontFace: T.font.heading, fontSize: size, bold: true, lineSpacingMultiple: T.lead.title, charSpacing: -0.2,
-    color: onDark ? T.c.onDark : T.c.ink, align: "left", valign: "top" });
+    color: base, align, valign: "top" });
+}
+
+// Tone → colour resolution for statement lines / closing lines / stat callouts.
+// 明度=重要度、色相=意味の方向: base=内容, muted=補足, accent=答え・到達,
+// warn=痛み・代償・覚悟 (1用途限定 — the honesty guard applies; never decoration).
+function toneColor(T, tone, dark) {
+  switch (tone) {
+    case "accent": return dark ? T.c.accentOnDk : T.c.accent;
+    case "warn":   return dark ? T.c.warnOnDk : T.c.warn;
+    case "muted":  return dark ? T.c.onDarkMut : T.c.muted;
+    default:       return dark ? T.c.onDark : T.c.ink;
+  }
+}
+
+// 結びの1行帯 — the closing band (y ≈ H−1.65..H−1.1): every light body slide
+// that carries a closing puts its 種明かし at the SAME height, centered, bold.
+// ≤2 lines; line 1 = head size, line 2 = body size. This is the fifth band of
+// the vertical grid (whitespace.md §5) — the eye lands here on every page.
+function closingLine(slide, T, closing, ctx) {
+  if (!closing) return;
+  const lines = (Array.isArray(closing) ? closing : [closing]).slice(0, 2)
+    .map((l) => (typeof l === "string" ? { text: l, tone: "base" } : l));
+  const runs = lines.map((l, i) => ({ text: l.text, options: {
+    color: toneColor(T, l.tone || "base", false),
+    fontSize: i === 0 ? T.s.takeawayHead : T.s.body,
+    breakLine: i < lines.length - 1 } }));
+  slide.addText(runs, { x: T.m, y: T.H - 1.62, w: T.W - 2 * T.m, h: 0.98, margin: 0,
+    fontFace: T.font.heading, bold: true, color: T.c.ink, align: "center", valign: "top",
+    lineSpacingMultiple: T.lead.tight });
 }
 
 function numCircle(slide, T, n, x, y, d = 0.46, { fill } = {}) {
@@ -357,14 +423,15 @@ function card(slide, T, x, y, w, h, { fill = T.c.surface } = {}) {
   slide.addShape("roundRect", opt);
 }
 
-function footer(slide, T, brand, page, showPage) {
+function footer(slide, T, brand, page, showPage, dark = false) {
+  const col = dark ? T.c.onDarkMut : T.c.faint;
   if (brand) {
     slide.addText(brand, { x: T.m, y: T.H - 0.42, w: 3, h: 0.3, margin: 0,
-      fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.faint, align: "left", valign: "middle" });
+      fontFace: T.font.caption, fontSize: T.s.cap, color: col, align: "left", valign: "middle" });
   }
   if (showPage) {
     slide.addText(String(page), { x: T.W - T.m - 1, y: T.H - 0.42, w: 1, h: 0.3, margin: 0,
-      fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.faint, align: "right", valign: "middle" });
+      fontFace: T.font.caption, fontSize: T.s.cap, color: col, align: "right", valign: "middle" });
   }
 }
 
@@ -389,7 +456,7 @@ function slideCover(pres, d, T) {
       fill: { color: T.c.darkAlt }, line: { type: "none" } });
   }
   kicker(s, T, d.kicker, 1.55, { onDark: true });
-  title(s, T, d.titleLines, 2.2, { onDark: true, size: T.s.cover, w: 10 });
+  title(s, T, d.titleLines, 2.2, { onDark: true, size: T.s.cover, w: 10, quoteAccent: !!T.layout.coverQuoteAccent });
   if (d.subtitle) s.addText(richText(d.subtitle), { x: T.m, y: 4.7, w: 9.5, h: 0.9, margin: 0,
     fontFace: T.font.body, fontSize: T.s.coverSub, color: T.c.onDarkMut, align: "left", valign: "top",
     lineSpacingMultiple: T.lead.caption });
@@ -400,12 +467,14 @@ function slideCover(pres, d, T) {
 
 function slideMessage(pres, d, T, ctx) {
   const s = pres.addSlide();
+  const dark = !!d.dark;
+  // dark statement (感情を刻むページは紺): the emotional turning-point face.
   // peak (the deck's ONE climax slide): the contrast ceiling opens one step —
   // a faint surfaceAccent ground + the stat one size step up. Existing tokens
   // only; non-peak slides keep the flat bg (byte-identical when peak is unset).
-  s.background = { color: ctx.peak ? T.c.surfaceA : T.c.bg };
+  s.background = { color: dark ? T.c.dark : (ctx.peak ? T.c.surfaceA : T.c.bg) };
   bgLayer(s, T, d);
-  kicker(s, T, d.kicker, T.m);
+  kicker(s, T, d.kicker, T.m, { onDark: dark });
   // centered single statement (display leading, tight tracking). When a
   // persona occupies the right flank, the statement column narrows to the
   // left ~2/3 so bubble and message never collide (deterministic, no lint
@@ -413,16 +482,41 @@ function slideMessage(pres, d, T, ctx) {
   const hasPersona = !!(d.persona && d.persona.quote) && !(ctx.intent === "financial" || ctx.intent === "board");
   const msgW = hasPersona ? 7.6 : T.W - 2.0;
   const msgX = hasPersona ? T.m : 1.0;
-  const msg = d.messageLines.map((t, i, a) => ({ text: t, options: { breakLine: i < a.length - 1 } }));
-  s.addText(msg, { x: msgX, y: 2.0, w: msgW, h: 1.7, margin: 0,
-    fontFace: T.font.heading, fontSize: T.s.message, bold: true, color: T.c.ink, align: "center", valign: "middle",
-    lineSpacingMultiple: T.lead.display, charSpacing: -0.2 });
-  // big stat callout (peak: one step larger, accentDeep — the deck's summit number)
+  const richLines = d.messageLines.some((l) => typeof l === "object") || dark || d.messageLines.length > 2;
+  if (!richLines) {
+    // legacy path — plain ≤2-line light statement, byte-identical to before
+    const msg = d.messageLines.map((t, i, a) => ({ text: t, options: { breakLine: i < a.length - 1 } }));
+    s.addText(msg, { x: msgX, y: 2.0, w: msgW, h: 1.7, margin: 0,
+      fontFace: T.font.heading, fontSize: T.s.message, bold: true, color: T.c.ink, align: "center", valign: "middle",
+      lineSpacingMultiple: T.lead.display, charSpacing: -0.2 });
+  } else {
+    // statement lines with per-line tone & size (声量の階層): the quiet lead-in,
+    // the payload line (accent/L — 山場はサイズで語る), the muted aside. Sizes:
+    // s = head, m = message, l = messageL token (fallback message×1.3, capped by
+    // the stat size so the number stays the biggest thing on a 型D page).
+    const sizePt = (sz) => sz === "l" ? (T.s.messageL || Math.min(Math.round(T.s.message * 1.3), T.s.stat - 8))
+      : sz === "s" ? T.s.head : T.s.message;
+    const lines = d.messageLines.map((l) => (typeof l === "string" ? { text: l } : l));
+    const runs = lines.map((l, i) => ({ text: l.text, options: {
+      color: toneColor(T, l.tone || "base", dark),
+      fontSize: sizePt(l.size || "m"),
+      breakLine: i < lines.length - 1 } }));
+    const blockH = d.statBig ? 1.9 : 3.1;
+    s.addText(runs, { x: msgX, y: d.statBig ? 1.65 : 1.85, w: msgW, h: blockH, margin: 0,
+      fontFace: T.font.heading, bold: true, color: dark ? T.c.onDark : T.c.ink, align: "center", valign: "middle",
+      lineSpacingMultiple: T.lead.display, charSpacing: -0.2 });
+  }
+  // big stat callout (型D: the number IS the page's protagonist — bigger than
+  // the title, centered; its colour carries its MEANING: warn = 損害・痛み・覚悟,
+  // accent = 成果・答え・可能性. peak: one step larger / accentDeep as before.)
   if (d.statBig) {
     const statPt = ctx.peak ? emphSizePt(T.s.stat, false) : T.s.stat;
+    const statCol = d.statTone === "warn" ? (dark ? T.c.warnOnDk : T.c.warn)
+      : dark ? T.c.accentOnDk
+      : ctx.peak ? T.c.accentDp : T.c.accent;
     s.addText(d.statBig, { x: msgX, y: 3.95, w: msgW, h: 1.15, margin: 0,
       fontFace: T.font.heading, fontSize: statPt, bold: true,
-      color: ctx.peak ? T.c.accentDp : T.c.accent, align: "center", valign: "middle" });
+      color: statCol, align: "center", valign: "middle" });
     // optional marker on the statBig (message's protagonist IS the number)
     const mk = d.marker;
     if (mk) {
@@ -435,10 +529,16 @@ function slideMessage(pres, d, T, ctx) {
   }
   // optional persona (education register): figure bottom-right, bubble above
   personaDevice(s, T, d.persona, "message", ctx);
+  // optional diamond separator (dark closings: the motif as a quiet full stop
+  // between the statement and the contact/caption line — signature, not 装飾)
+  if (d.diamond && dark) {
+    s.addShape("rect", { x: T.W / 2 - 0.08, y: 5.02, w: 0.16, h: 0.16, rotate: 45,
+      fill: { color: T.c.accent }, line: { type: "none" } });
+  }
   if (d.statCaption) s.addText(richText(d.statCaption), { x: hasPersona ? msgX + 0.8 : 2.6, y: 5.25, w: hasPersona ? msgW - 1.6 : T.W - 5.2, h: 0.8, margin: 0,
-    fontFace: T.font.caption, fontSize: T.s.small, color: T.c.muted, align: "center", valign: "top",
+    fontFace: T.font.caption, fontSize: T.s.small, color: dark ? T.c.onDarkMut : T.c.muted, align: "center", valign: "top",
     lineSpacingMultiple: T.lead.caption });
-  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
+  footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage, dark);
   return s;
 }
 
@@ -480,7 +580,7 @@ function slideComparison(pres, d, T, ctx) {
   bgLayer(s, T, d);
   kicker(s, T, d.kicker, T.m);
   title(s, T, d.title, 1.15);
-  const top = 2.5, h = 3.95, gap = 0.5;
+  const top = 2.5, h = d.closing ? 3.3 : 3.95, gap = 0.5;
   const w = (T.W - 2 * T.m - gap) / 2;
   const lx = T.m, rx = T.m + w + gap;
   // ONE side carries the accent (tint+shadow, no stripes). emphasis picks the
@@ -503,6 +603,7 @@ function slideComparison(pres, d, T, ctx) {
   };
   drawCol(lx, d.left, emphSide === 0);
   drawCol(rx, d.right, emphSide === 1);
+  closingLine(s, T, d.closing, ctx);
   footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
   return s;
 }
@@ -670,6 +771,17 @@ function slideSection(pres, d, T) {
   const s = pres.addSlide();
   s.background = { color: T.c.dark };
   bgLayer(s, T, d);
+  // "chapter" style (story-seminar register): NO watermark numeral — the chapter
+  // is announced by the kicker alone ("CHAPTER N"), title + subtitle centered.
+  // (The watermark ghost numeral reads as an AI-tell in this design language.)
+  if (T.layout.sectionStyle === "chapter") {
+    kicker(s, T, d.kicker || (d.index != null ? `CHAPTER ${d.index}` : undefined), T.m, { onDark: true });
+    title(s, T, d.title, 2.85, { onDark: true, size: T.s.sectionTitle || 36, align: "center" });
+    if (d.subtitle) s.addText(richText(d.subtitle), { x: T.m, y: 4.1, w: T.W - 2 * T.m, h: 0.6, margin: 0,
+      fontFace: T.font.body, fontSize: T.s.coverSub, color: T.c.onDarkMut, align: "center", valign: "top",
+      lineSpacingMultiple: T.lead.tight });
+    return s;
+  }
   // motif: large faint index number as a watermark (depth via a soft shape, not a
   // stripe). A theme may set sectionIndex:"none" to drop it for an austere chapter
   // break (minimal/editorial), or "left" for a big left-anchored numeral.
@@ -793,12 +905,15 @@ function slideStatGrid(pres, d, T, ctx) {
  * card. emphasizeIndex tints one card (house emphasis: tint, never a stripe). */
 const CARD_GRID = { top: 2.45, rowGap: 0.3, colGap: 0.4, cardH: 1.825, pad: 0.3, headH: 0.44, bodyTop: 0.66 };
 
-function cardGridCell(T, n, i) {
+function cardGridCell(T, n, i, opts = {}) {
   const g = CARD_GRID;
-  const cols = Math.ceil(n / 2);
+  // 3 cards = a single 1×3 row of tall cards (STEP/約束 form); 4-6 keep the 2-row grid.
+  const singleRow = n === 3;
+  const cols = singleRow ? 3 : Math.ceil(n / 2);
   const w = (T.W - 2 * T.m - (cols - 1) * g.colGap) / cols;
-  const row = Math.floor(i / cols), col = i % cols;
-  return { x: T.m + col * (w + g.colGap), y: g.top + row * (g.cardH + g.rowGap), w, h: g.cardH };
+  const row = singleRow ? 0 : Math.floor(i / cols), col = singleRow ? i : i % cols;
+  const cardH = singleRow ? (opts.closing ? 2.55 : 3.2) : (opts.closing ? g.cardH - 0.22 : g.cardH);
+  return { x: T.m + col * (w + g.colGap), y: g.top + row * (cardH + g.rowGap), w, h: cardH };
 }
 
 function slideCardGrid(pres, d, T, ctx) {
@@ -809,20 +924,34 @@ function slideCardGrid(pres, d, T, ctx) {
   title(s, T, d.title, 1.15);
   const cards = d.cards || [];
   const g = CARD_GRID;
+  const hasClosing = !!d.closing;
   // emphasis (canonical) / emphasizeIndex (legacy alias) — identical treatment:
   // tint + accentDeep head, never a stripe.
   const eIdx = emphIndex(d);
   cards.forEach((cd, i) => {
-    const cell = cardGridCell(T, cards.length, i);
+    const cell = cardGridCell(T, cards.length, i, { closing: hasClosing });
     const emph = eIdx === i;
     card(s, T, cell.x, cell.y, cell.w, cell.h, { fill: emph ? T.c.surfaceA : T.c.surface });
-    if (cd.head) s.addText(richText(cd.head), { x: cell.x + g.pad, y: cell.y + 0.16, w: cell.w - 2 * g.pad, h: g.headH,
+    // optional per-card label (STEP 1 / a big numeral): the accent-deep eyebrow
+    // inside the card — the ordering symbol without a number circle. Latin
+    // labels get open tracking (charSpacing 3 — 英字のみ; 和文には使わない).
+    const hasLabel = cd.label != null && String(cd.label) !== "";
+    let textTop = cell.y + 0.16;
+    if (hasLabel) {
+      const latin = /^[\x20-\x7E]+$/.test(String(cd.label));
+      s.addText(String(cd.label), { x: cell.x + g.pad, y: cell.y + 0.18, w: cell.w - 2 * g.pad, h: 0.3,
+        margin: 0, fontFace: T.font.heading, fontSize: T.s.kicker, bold: true,
+        charSpacing: latin ? 3 : 0, color: T.c.accentDp, align: "left", valign: "middle" });
+      textTop = cell.y + 0.56;
+    }
+    if (cd.head) s.addText(richText(cd.head), { x: cell.x + g.pad, y: textTop, w: cell.w - 2 * g.pad, h: g.headH,
       margin: 0, fontFace: T.font.heading, fontSize: T.s.head, bold: true,
       color: emph ? T.c.accentDp : T.c.ink, align: "left", valign: "top", lineSpacingMultiple: T.lead.tight });
-    if (cd.body) s.addText(richText(cd.body), { x: cell.x + g.pad, y: cell.y + g.bodyTop, w: cell.w - 2 * g.pad,
-      h: cell.h - g.bodyTop - 0.16, margin: 0, fontFace: T.font.body, fontSize: T.s.small, color: T.c.muted,
+    if (cd.body) s.addText(richText(cd.body), { x: cell.x + g.pad, y: textTop + g.bodyTop - 0.16, w: cell.w - 2 * g.pad,
+      h: cell.y + cell.h - (textTop + g.bodyTop - 0.16) - 0.16, margin: 0, fontFace: T.font.body, fontSize: T.s.small, color: T.c.muted,
       align: "left", valign: "top", lineSpacingMultiple: T.lead.tight });
   });
+  closingLine(s, T, d.closing, ctx);
   footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
   return s;
 }
@@ -871,6 +1000,7 @@ function slideTable(pres, d, T, ctx) {
 
   if (d.note) s.addText(d.note, { x: T.m, y: 6.62, w: T.W - 2 * T.m, h: 0.32, margin: 0,
     fontFace: T.font.caption, fontSize: T.s.cap, color: T.c.faint, align: "left", valign: "middle" });
+  if (!d.note) closingLine(s, T, d.closing, ctx);
   footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
   return s;
 }
@@ -1133,6 +1263,7 @@ function slideBranch(pres, d, T, ctx) {
       fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.ink,
       align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
   });
+  closingLine(s, T, d.closing, ctx);
   footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
   return s;
 }
@@ -1171,6 +1302,7 @@ function slideFormula(pres, d, T, ctx) {
       fontFace: T.font.heading, fontSize: T.s.title, bold: true, color: T.c.accent,
       align: "center", valign: "middle" });
   });
+  closingLine(s, T, d.closing, ctx);
   footer(s, T, ctx.brand, ctx.pageNum, ctx.showPage);
   return s;
 }

@@ -38,6 +38,14 @@ A deck plan is the engine's input. Either form is accepted:
 Every slide content object may include `"notes": "string"` → speaker notes.
 Schema: `schemas/deck_plan.schema.json`.
 
+**Theme knobs added by the story-seminar upgrade** (`theme.layout`):
+`kicker:"diamond"` (金の菱形 — the signature motif), `sectionStyle:"chapter"`
+(no watermark numeral; "CHAPTER N" kicker + centered title/subtitle),
+`coverQuoteAccent:true` (“…” spans in the cover title render in accent — the
+ONE sanctioned inline-emphasis device). Optional theme colours:
+`accentOnDark` (accent tuned for navy grounds), `warn`/`warnOnDark`
+(痛み・代償・覚悟 — 1用途限定), and `sizes.messageL` (the statement payload size).
+
 **Sandwich rule:** open with a dark pattern (`cover`), close with a dark
 pattern (`cta`); keep the body light. Don't put two dark slides adjacent in
 the body, and keep the deck's total dark share (cover + cta + `section`
@@ -194,6 +202,22 @@ params:
   footer:       brand + page number
 capacity: "messageLines <= 2 lines; statBig is short (<= ~6 chars). This is a breathing-room slide — do not crowd."
 ```
+
+### Dark statement form (`dark: true`) — 感情を刻むページは紺
+
+`message` doubles as the **emotional turning-point face**: `"dark": true` flips
+to the navy ground (kicker/footer onDark). `messageLines` then accepts objects
+`{text, tone, size}` — the 3-voice hierarchy: a quiet lead-in (`m`), THE payload
+(`size:"l"`, usually `tone:"accent"` — 山場はサイズで語る, max ONE per slide,
+lint-enforced), a small aside (`s`, often `muted`). `statTone: "warn"` colours
+the big number by MEANING (損害・痛み・覚悟 — 型D: the number is the page's
+protagonist, bigger than any title, centered; never "brand colour because
+important"). `diamond: true` draws the motif as a quiet full stop above
+`statCaption` (dark closings). Discipline (design-lint): dark faces (cover +
+sections + cta + dark messages) ≤ ~30% of the deck (DARK-BUDGET), no two
+adjacent in the body without a notes-justified intent (DARK-RUN), warn tone on
+≤15% of slides (WARN-TONE). Plain-string `messageLines` keep the light legacy
+rendering byte-for-byte.
 
 ## Pattern: `two-column`
 
@@ -407,6 +431,23 @@ capacity: "4-6 cards. <4 -> two-column / stat-grid; >6 -> split into two slides.
 **Verified (2026-07-05):** n=6 (2×3, emphasized card) / n=5 (3+2) / n=4 (2×2)
 render clean; n=3 / n=7 → CAPACITY; a 2-line head → OVERFLOW 168%; a 4-line body
 → OVERFLOW 104%; run-gate PASS across all 6 themes.
+
+### card-grid extensions — 3-card row, in-card labels, closing band
+
+`cards` now accepts **3 cards** (one tall 1×3 row — the STEP/約束 form; 4–6 keep
+the 2-row grid) and an optional per-card `label` ("STEP 1" / a numeral): the
+accent-deep eyebrow inside the card — the ordering symbol without a number
+circle (latin labels get charSpacing 3; 和文には字間を使わない).
+
+**`closing` (card-grid / comparison / table / formula / branch)** — the 結びの
+1行帯: ≤2 lines, centered bold at a fixed height (H−1.62); line 1 = the page's
+種明かし at takeawayHead size, line 2 = a smaller aside. Tones: base / accent /
+warn (honesty-gated) / muted. The band is the fifth fixed vertical zone — the
+eye lands at the same place on every page. Cards shrink to make room when a
+closing is present; comparison fits **3 points/card** with a closing (lint
+CLOSING-LEN enforces both the row cap and per-line length ~38/48 chars);
+`branch` is vertically deep — prefer its title/notes over a closing (COLLISION
+gate fires otherwise). `table` renders `note` OR `closing`, not both.
 
 ## Pattern: `before-after` (education register)
 

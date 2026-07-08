@@ -346,25 +346,33 @@ function heightBoxes(slide, T) {
       break;
     }
     case "card-grid": {
-      // DUPLICATES generate.js CARD_GRID (top 2.45, rowGap 0.3, cardH 1.825,
-      // head y+0.16 h 0.44, body y+0.66 .. cardBottom-0.16). Head band is short
+      // DUPLICATES generate.js cardGridCell (top 2.45, rowGap 0.3; 3 cards =
+      // one tall 1x3 row, 4-6 = the 2-row grid of cardH 1.825; a closing shaves
+      // the card height; a label pushes head/body down 0.4). Head band is short
       // on purpose: a 2-line head is a hard OVERFLOW (heads are terms).
       const cards = c.cards || [];
-      const cols = Math.ceil(Math.max(cards.length, 1) / 2);
+      const n = Math.max(cards.length, 1);
+      const singleRow = n === 3;
+      const cols = singleRow ? 3 : Math.ceil(n / 2);
+      const cardH = singleRow ? (c.closing ? 2.55 : 3.2) : (c.closing ? 1.825 - 0.22 : 1.825);
       cards.forEach((cd, i) => {
         if (!cd) return;
-        const row = Math.floor(i / cols);
-        const cy = 2.45 + row * (1.825 + 0.3);
+        const row = singleRow ? 0 : Math.floor(i / cols);
+        const cy = 2.45 + row * (cardH + 0.3);
+        const labelOff = (cd.label != null && String(cd.label) !== "") ? 0.4 : 0;
         if (cd.head) out.push({ id: `card-grid head ${i + 1}`, path: `cards[${i}].head`,
-          topY: cy + 0.16, bottomY: cy + 0.16 + 0.44, sizePt: s.head, leading: lead.tight });
+          topY: cy + 0.16 + labelOff, bottomY: cy + 0.16 + labelOff + 0.44, sizePt: s.head, leading: lead.tight });
         if (cd.body) out.push({ id: `card-grid body ${i + 1}`, path: `cards[${i}].body`,
-          topY: cy + 0.66, bottomY: cy + 1.825 - 0.16, sizePt: s.small, leading: lead.tight });
+          topY: cy + 0.66 + labelOff, bottomY: cy + cardH - 0.16, sizePt: s.small, leading: lead.tight });
       });
       break;
     }
     default:
       break;
   }
+  // NOTE: `closing` lines are AUTHOR-CONTROLLED single lines (same contract as
+  // messageLines / cover titleLines) — not floor-measured; design-lint enforces
+  // a static length cap and the visual QA loop catches the rest.
   return out;
 }
 
@@ -597,9 +605,9 @@ function wrappingFields(slide, T) {
       break;
     }
     case "card-grid": {
-      // width mirrors generate.js cardGridCell: cols = ceil(n/2), pad 0.3/side.
+      // width mirrors generate.js cardGridCell: 3 cards = 1x3, else ceil(n/2) cols.
       const cards = c.cards || [], n = Math.max(cards.length, 1);
-      const cols = Math.ceil(n / 2);
+      const cols = n === 3 ? 3 : Math.ceil(n / 2);
       const cardW = ((W - 2 * m) - (cols - 1) * 0.4) / cols;
       cards.forEach((cd, i) => {
         if (!cd) return;
