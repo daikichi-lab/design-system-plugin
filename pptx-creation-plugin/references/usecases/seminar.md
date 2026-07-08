@@ -93,6 +93,12 @@ chapters, add `section` dividers between arcs and consider an extra `stat-grid`
   beat must be; a "3-second" beat carrying a dense diagram (or a 2-minute beat
   showing one thin line) is a planning bug — fix the plan, not the design.
 
+**Domain canonical forms first (会計・FP・保険系のセミナー).** When the repo
+carries `docs/canon/*.md`, the worked-diagram dwell slides come from IT, not
+from improvisation: a BS beat is an `identity`, a 2-level 分解 (STRAC /
+お金のブロックパズル) is `identity`+`sub`, 損益分岐 is `breakeven`, 増減 is a
+`waterfall`. The catalog row and its honesty guard go in the slide's `notes`.
+
 ## 4. Content cautions (specific to this type)
 
 - **誠実に。押し売りしない.** The audience fears a hard sell — defuse it explicitly.

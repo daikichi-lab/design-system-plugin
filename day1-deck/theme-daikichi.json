@@ -1,0 +1,65 @@
+{
+  "$schema": "../pptx-creation-plugin/schemas/theme.schema.json",
+  "name": "daikichi-navy-gold",
+  "canvas": {
+    "w": 13.333,
+    "h": 7.5,
+    "margin": 0.75
+  },
+  "font": {
+    "family": "Yu Gothic",
+    "heading": "Yu Gothic",
+    "body": "Yu Gothic Medium",
+    "caption": "Yu Gothic"
+  },
+  "colors": {
+    "bg": "FFFFFF",
+    "ink": "2B3345",
+    "muted": "6E7787",
+    "faint": "A6AEBC",
+    "surface": "F3F5F9",
+    "surfaceAccent": "FAF5E4",
+    "line": "D8DDE6",
+    "dark": "1B2A4A",
+    "darkAlt": "24365E",
+    "onDark": "FFFFFF",
+    "onDarkMuted": "AEB9CE",
+    "accent": "755A0D",
+    "accentDeep": "5C4709",
+    "accentSoft": "C9A227",
+    "onAccentMuted": "FAF5E4",
+    "accentOnDark": "E4CE7A",
+    "warn": "C7431D",
+    "warnOnDark": "E8603A"
+  },
+  "sizes": {
+    "cover": 44,
+    "coverSub": 17,
+    "title": 30,
+    "kicker": 12,
+    "message": 32,
+    "stat": 64,
+    "head": 19,
+    "body": 15,
+    "small": 13.5,
+    "cap": 12,
+    "num": 17,
+    "compareLabel": 23,
+    "takeawayHead": 19,
+    "offerHead": 21,
+    "footer": 12.5,
+    "sectionTitle": 36,
+    "sectionIndex": 150,
+    "statCard": 40
+  },
+  "lead": {
+    "title": 1.08,
+    "display": 1.18,
+    "body": 1.6,
+    "caption": 1.5,
+    "tight": 1.4
+  },
+  "brand": {
+    "footerLabel": "大吉会計株式会社"
+  }
+}

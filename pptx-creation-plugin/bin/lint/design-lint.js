@@ -225,6 +225,11 @@ function checkCapacity(slides, F) {
           F.error(idx, "EMPHASIS-COUNT", "identity: emphasis と subEmphasis の併記＝主役2人（1スライド1強調）。どちらか一方に");
         break;
       }
+      case "formula": {
+        if (c.operator === "+")
+          F.info(idx, "CAPACITY", "formula operator '+' — 和の内訳で大きさ・比率が意味を持つ内容（資産=負債+純資産 等）なら identity 骨格へ（等サイズ箱+記号は額装）。用語関係の暗記用ならこのままで可");
+        break;
+      }
       case "breakeven": {
         if (typeof c.variableRate === "number" && (c.variableRate <= 0 || c.variableRate >= 1))
           F.error(idx, "CAPACITY", `breakeven variableRate=${c.variableRate} — 変動費率は0<v<1（v≥1は限界利益が無く、損益分岐しない構造＝図が嘘になる）`);
@@ -690,7 +695,7 @@ function checkRhythm(slides, F) {
  *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
  *     意味の正しさ自体は人の承認領域。 */
 const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity", "breakeven"];
-const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
+const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|内訳|分岐|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
 const PERSONA_PATTERNS = ["message", "two-column"];
 
 function checkRegister(slides, meta, F) {
