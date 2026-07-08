@@ -108,7 +108,11 @@ mis-read; everything downstream of the classification is mechanical.
 ## Step 3 — Map each beat to a pattern
 
 For every beat, pick the pattern whose *job* matches it
-(`../../references/patterns/catalog.md`). The patterns, by the job they do:
+(`../../references/patterns/catalog.md`). **If the project carries a domain
+canonical-forms catalog (`docs/canon/*.md`, from the `domain-canon` skill), load
+it first** — it maps the domain's recurring concepts (BS, STRAC, 損益分岐点,
+必要保障額 …) to skeletons and their honesty guards, so the beat→pattern step
+starts from the field's established forms instead of re-deriving them. The patterns, by the job they do:
 
 | Beat shape | Pattern |
 |---|---|
@@ -159,8 +163,12 @@ that doesn't is worse than text.
 - `branch`: 1 source + 2–4 branches (labels short; 4 branches leave one line each).
 - `formula`: 2–4 operands + optional result — labels are short TERMS, not sentences.
 - `waterfall`: 3–8 items ({label, value, total?}); group small drivers into その他.
-- `identity`: 1 whole + 2–4 parts ({label, value?}) — values all-or-none
+- `identity`: 1 whole + 2–4 parts ({label, value?, sub?}) — values all-or-none
   (proportional heights only with full values); non-negative; labels short TERMS.
+  ONE part may nest 2–3 `sub` items (the STRAC form); the lint cross-checks 縦計算.
+- `breakeven`: fixed structure (terms only, no value labels). Give {fixed,
+  variableRate} as a pair for the honest crossing; without them the engine
+  stamps ※模式図. 0<v<1.
 - `chart` band type: 2–4 segments × 1–5 rows; pie/doughnut: 2–5 slices.
 - `positioning`: 2–3 options; `system`: 2–5 actors; `relation`: 2–4 per side,
   ≤8 links; `cycle`/`flow` node labels ≤ ~5 chars per line (the height gate

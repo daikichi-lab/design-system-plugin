@@ -196,6 +196,40 @@ function checkCapacity(slides, F) {
           F.error(idx, "CAPACITY", "identity part values must be non-negative — 負の構成（債務超過・赤字）は identity では嘘になる：waterfall で増減として描く");
         if (nums.length > 0 && nums.length !== vals.length)
           F.warn(idx, "CAPACITY", "identity values are all-or-none — 一部だけ数値を持つと比例せず等分描画になる（エンジンは比率を発明しない）。全てに値を入れるか、全て外す");
+        // 縦計算の検算 (数字の誠実性): whole vs parts が両方数値なら合っていること
+        if (c.left && typeof c.left.value === "number" && nums.length === vals.length && nums.length > 0) {
+          const sum = nums.reduce((a, b) => a + b, 0);
+          if (Math.abs(sum - c.left.value) > Math.max(Math.abs(c.left.value) * 0.005, 1e-9))
+            F.warn(idx, "IDENTITY-SUM", `parts sum ${sum} ≠ whole ${c.left.value} — 縦計算が合わない恒等式は専門家の信頼を一瞬で毀損する（丸めなら notes に注記）`);
+        }
+        // STRAC nesting: ONE part may decompose; sub は 2-3・非負・all-or-none・縦計算
+        const withSub = (Array.isArray(c.parts) ? c.parts : []).map((p, pi) => [p, pi]).filter(([p]) => p && Array.isArray(p.sub) && p.sub.length);
+        if (withSub.length > 1)
+          F.error(idx, "CAPACITY", `identity: ${withSub.length} parts carry sub — 入れ子は1パートまで（STRAC形）。それ以上の分解は2枚に割る`);
+        withSub.forEach(([p, pi]) => {
+          const m = p.sub.length;
+          if (m < CAPS.identitySub[0] || m > CAPS.identitySub[1])
+            F.error(idx, "CAPACITY", `identity parts[${pi}].sub has ${m} items (must be ${CAPS.identitySub[0]}-${CAPS.identitySub[1]})`);
+          const svals = p.sub.map((q) => q && q.value);
+          const snums = svals.filter((v) => typeof v === "number");
+          if (snums.some((v) => v < 0)) F.error(idx, "CAPACITY", `identity parts[${pi}].sub values must be non-negative`);
+          if (snums.length > 0 && snums.length !== svals.length)
+            F.warn(idx, "CAPACITY", `identity parts[${pi}].sub values are all-or-none（エンジンは比率を発明しない）`);
+          if (typeof p.value === "number" && snums.length === svals.length && snums.length > 0) {
+            const ssum = snums.reduce((a, b) => a + b, 0);
+            if (Math.abs(ssum - p.value) > Math.max(Math.abs(p.value) * 0.005, 1e-9))
+              F.warn(idx, "IDENTITY-SUM", `parts[${pi}].sub sum ${ssum} ≠ parent ${p.value} — 縦計算が合わない`);
+          }
+        });
+        if (Number.isInteger(c.emphasis) && Number.isInteger(c.subEmphasis))
+          F.error(idx, "EMPHASIS-COUNT", "identity: emphasis と subEmphasis の併記＝主役2人（1スライド1強調）。どちらか一方に");
+        break;
+      }
+      case "breakeven": {
+        if (typeof c.variableRate === "number" && (c.variableRate <= 0 || c.variableRate >= 1))
+          F.error(idx, "CAPACITY", `breakeven variableRate=${c.variableRate} — 変動費率は0<v<1（v≥1は限界利益が無く、損益分岐しない構造＝図が嘘になる）`);
+        if ((typeof c.fixed === "number") !== (typeof c.variableRate === "number"))
+          F.warn(idx, "CAPACITY", "breakeven fixed/variableRate は対で — 片方だけでは実データ比にならず模式図（※模式図が自動打刻）になる");
         break;
       }
             case "dialogue": {
@@ -655,7 +689,7 @@ function checkRhythm(slides, F) {
  *     record the one-word structure test (順序/ループ/2軸/ポジション/システム/
  *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
  *     意味の正しさ自体は人の承認領域。 */
-const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity"];
+const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity", "breakeven"];
 const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
 const PERSONA_PATTERNS = ["message", "two-column"];
 
