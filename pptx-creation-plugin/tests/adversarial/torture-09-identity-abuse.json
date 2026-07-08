@@ -180,6 +180,26 @@
       }
     },
     {
+      "pattern": "system",
+      "content": {
+        "nodes": [
+          {
+            "label": "経営者",
+            "icon": "sparkles"
+          },
+          "FP"
+        ],
+        "links": [
+          {
+            "from": 0,
+            "to": 1,
+            "label": "相談"
+          }
+        ],
+        "notes": "レジストリ外アイコン -> ICON(ERROR)。全体像=システム"
+      }
+    },
+    {
       "pattern": "cta",
       "content": {
         "titleLines": [

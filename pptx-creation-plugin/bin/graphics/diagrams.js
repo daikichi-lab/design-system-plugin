@@ -606,6 +606,16 @@ function posBodyBox(cd) { return { x: cd.x + POS_PAD, y: cd.y + 0.26 + POS_HEAD_
  * a lane BELOW the nodes with the label underneath — two lanes, so labels can
  * never collide. Non-adjacent links also use the below-lane. */
 const SYS_NODE_H = 1.15, SYS_LABEL_H = 0.3, SYS_LANE_GAP = 0.55;
+const SYS_ICON = 0.30, SYS_ICON_TOP = 0.10;
+// sysNodeSpec — single source for a system node's text box with/without a role
+// icon (the builder draws with it, the height gate measures with it).
+function sysNodeSpec(node, hasIcon) {
+  if (!hasIcon) return { tb: nodeTextBox(node), icon: null };
+  return {
+    icon: { x: node.x + node.w / 2 - SYS_ICON / 2, y: node.y + SYS_ICON_TOP, wh: SYS_ICON },
+    tb: { x: node.x + NODE_PAD, y: node.y + SYS_ICON_TOP + SYS_ICON + 0.04,
+          w: node.w - 2 * NODE_PAD, h: node.h - (SYS_ICON_TOP + SYS_ICON + 0.04) - 0.10 } };
+}
 function systemLayout(T, n, links) {
   const area = diagramArea(T);
   const gap = 1.5; // wide enough that a label CHIP still leaves visible arrow stubs
@@ -919,7 +929,7 @@ function quadBodyBox(q, hasHead) {
 }
 
 module.exports = {
-  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, breakevenLayout,
+  diagramArea, flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, breakevenLayout, sysNodeSpec,
   nodeTextBox, quadHeadBox, quadBodyBox, MATRIX_TX, NODE_PAD, CAPS,
   EMPH_SCALE, PEAK_EMPH_SCALE, emphSizePt,
   STAT_GRID, EMPH_CARD_SCALE, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, statGridLayout, splitValueUnit, estTextWidthIn,

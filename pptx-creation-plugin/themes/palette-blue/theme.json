@@ -1,0 +1,65 @@
+{
+  "$schema": "../../schemas/theme.schema.json",
+  "name": "palette-blue",
+  "canvas": {
+    "w": 13.333,
+    "h": 7.5,
+    "margin": 0.75
+  },
+  "font": {
+    "family": "Yu Gothic",
+    "heading": "Yu Gothic",
+    "body": "Yu Gothic Medium",
+    "caption": "Yu Gothic"
+  },
+  "colors": {
+    "ink": "1F2A38",
+    "muted": "586572",
+    "faint": "8D9AA8",
+    "surface": "F2F6FA",
+    "surfaceAccent": "E7F0FA",
+    "line": "D6DFE8",
+    "dark": "14283F",
+    "darkAlt": "1D3856",
+    "onDark": "FFFFFF",
+    "onDarkMuted": "A9BDD2",
+    "accent": "0F5FA8",
+    "accentDeep": "0B4173",
+    "accentSoft": "7FB3E0",
+    "accentOnDark": "8CC4F0",
+    "onAccentMuted": "E7F0FA",
+    "warn": "C7431D",
+    "warnOnDark": "E8603A",
+    "bg": "FFFFFF"
+  },
+  "sizes": {
+    "cover": 44,
+    "coverSub": 17,
+    "title": 30,
+    "kicker": 12,
+    "message": 32,
+    "stat": 64,
+    "head": 19,
+    "body": 15,
+    "small": 13.5,
+    "cap": 12,
+    "num": 17,
+    "compareLabel": 23,
+    "takeawayHead": 19,
+    "offerHead": 21,
+    "footer": 12.5,
+    "sectionTitle": 36,
+    "sectionIndex": 150,
+    "statCard": 40
+  },
+  "lead": {
+    "title": 1.08,
+    "display": 1.18,
+    "body": 1.6,
+    "caption": 1.5,
+    "tight": 1.4
+  },
+  "brand": {
+    "footerLabel": ""
+  }
+}

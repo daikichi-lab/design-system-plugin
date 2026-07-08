@@ -25,7 +25,8 @@
 const fs = require("fs");
 const path = require("path");
 const pptxgen = require("pptxgenjs");
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, breakevenLayout, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
+const { ICON_NAMES, iconDataUri } = require("./graphics/icons.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, breakevenLayout, sysNodeSpec, nodeTextBox, quadHeadBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, emphColumnLayout, splitValueUnit, estTextWidthIn, fitValue, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO, BYSTANDER_FLOOR, EMPH_FLOOR, dialogueLayout, testimonialLayout } = require("./graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
 function parseArgs(argv) {
@@ -1558,8 +1559,21 @@ function slideSystem(pres, d, T, ctx) {
   nodes.forEach((nd, i) => {
     const node = L.nodes[i]; if (!node) return;
     s.addShape("roundRect", { x: node.x, y: node.y, w: node.w, h: node.h, ...nodeShape(T) });
-    const tb = nodeTextBox(node);
-    s.addText(richText(nd), { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
+    // node accepts a string OR {label, icon} — the icon is a ROLE MARKER
+    // (registry name -> theme-ink pictogram; a path keeps the project's own SVG)
+    const isObj = nd && typeof nd === "object" && !Array.isArray(nd);
+    const iconRef = isObj ? nd.icon : null;
+    const spec = sysNodeSpec(node, !!iconRef);
+    if (iconRef && spec.icon) {
+      if (ICON_NAMES.includes(iconRef))
+        s.addImage({ data: iconDataUri(iconRef, T.c.ink), x: spec.icon.x, y: spec.icon.y, w: spec.icon.wh, h: spec.icon.wh });
+      else if (require("fs").existsSync(iconRef))
+        s.addImage({ path: iconRef, x: spec.icon.x, y: spec.icon.y, w: spec.icon.wh, h: spec.icon.wh });
+      // unknown name / missing file: draw nothing — design-lint already ERRORs
+      // (ICON); the engine must not throw on adversarial input (run-gate).
+    }
+    const tb = spec.tb;
+    s.addText(richText(isObj ? nd.label : nd), { x: tb.x, y: tb.y, w: tb.w, h: tb.h, margin: 0,
       fontFace: T.font.heading, fontSize: T.s.head, bold: true, color: T.c.ink,
       align: "center", valign: "middle", lineSpacingMultiple: T.lead.tight });
   });

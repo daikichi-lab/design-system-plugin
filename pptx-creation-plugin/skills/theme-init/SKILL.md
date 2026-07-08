@@ -3,6 +3,26 @@ name: theme-init
 description: Use in a PROJECT repo to create its theme.json (brand colors, fonts, sizes). Derives a palette from a logo/existing material or adjusts the neutral default by dialogue, conforms to theme.schema.json, and renders a 1-slide preview (cover + one body) to verify. Handles VISUAL identity only — never chapter structure or slide order.
 ---
 
+## Step 0 — Palette quick-pick（5択・決定論）
+
+色はランダム性を持たせない。プロジェクト開始時に人間が**5択から明示的に選ぶ**：
+
+| 選択 | テーマ | 性格 |
+|---|---|---|
+| 紺 | `themes/palette-navy` | 金融・士業の堅実（濃紺×鋼青） |
+| 赤 | `themes/palette-red` | 熱量・危機感（深紅×臙脂） |
+| 青 | `themes/palette-blue` | 企業・テック（紺青×空色） |
+| 緑 | `themes/palette-green` | 安心・持続（深緑×若葉） |
+| オリジナル | 本スキルの通常手順で構築 | ブランド実色から起こす（例：day1-deckの紺×金） |
+
+選ばれたら該当 theme.json を**プロジェクトの `theme.json` にコピー**し、選択名と
+理由を DESIGN.md（無ければ作成時に）へ1行記録する。以後の全ビルドはこの
+ファイルを読む＝再現は構造的に決定論になる。4プリセットは CONTRAST lint
+（4.5:1 契約）較正済み。**「オリジナル」を選んだ場合のみ**以下の通常手順に進む
+（明るいブランド色は accent に直接据えられない——白文字が載る塗りのため。
+明色は accentSoft/accentOnDark に置き、accent は同系の濃色を導出する）。
+
+
 # theme-init
 
 Stand up one `theme.json` for a **project** repo. A theme is the deck's visual

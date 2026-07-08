@@ -30,6 +30,7 @@ const { loadPlan, loadTheme } = require("../generate.js");
 const { heightBoxes, boxVerdict } = require("../layout-html/geometry.js");
 // Diagram element-count caps (single source of truth in diagrams.js) + the
 // stat-grid AREA-emphasis geometry for the protagonist-value width gate.
+const { ICON_NAMES } = require("../graphics/icons.js");
 const { CAPS, resolveStatGrid, splitValueUnit, estTextWidthIn, fitLabelPt, VALUE_JUMP, VALUE_JUMP_PEAK, UNIT_RATIO } = require("../graphics/diagrams.js");
 
 /* ---------------- CLI ---------------- */
@@ -225,6 +226,17 @@ function checkCapacity(slides, F) {
           F.error(idx, "EMPHASIS-COUNT", "identity: emphasis と subEmphasis の併記＝主役2人（1スライド1強調）。どちらか一方に");
         break;
       }
+      case "system": {
+        (Array.isArray(c.nodes) ? c.nodes : []).forEach((nd, ni) => {
+          if (nd && typeof nd === "object" && !Array.isArray(nd) && nd.icon) {
+            const ic = nd.icon;
+            const isPath = typeof ic === "string" && /[\/\\]|\.(svg|png)$/i.test(ic);
+            if (!isPath && !ICON_NAMES.includes(ic))
+              F.error(idx, "ICON", `nodes[${ni}].icon "${ic}" is not in the registry (${ICON_NAMES.join("/")}) nor a file path — クリップアートへの漂流を防ぐため、アイコンはレジストリ名か自前SVGのパスのみ`);
+          }
+        });
+        break;
+      }
       case "formula": {
         if (c.operator === "+")
           F.info(idx, "CAPACITY", "formula operator '+' — 和の内訳で大きさ・比率が意味を持つ内容（資産=負債+純資産 等）なら identity 骨格へ（等サイズ箱+記号は額装）。用語関係の暗記用ならこのままで可");
@@ -345,6 +357,17 @@ function checkCapacity(slides, F) {
         const [min, max] = CAPS.branch;
         if (n > max) F.error(idx, "CAPACITY", `branch has ${n} branches (max ${max}; group them, or use two-column)`);
         else if (n < min) F.error(idx, "CAPACITY", `branch has ${n} branches (min ${min}; 1-to-1 is a flow, not a branch)`);
+        break;
+      }
+      case "system": {
+        (Array.isArray(c.nodes) ? c.nodes : []).forEach((nd, ni) => {
+          if (nd && typeof nd === "object" && !Array.isArray(nd) && nd.icon) {
+            const ic = nd.icon;
+            const isPath = typeof ic === "string" && /[\/\\]|\.(svg|png)$/i.test(ic);
+            if (!isPath && !ICON_NAMES.includes(ic))
+              F.error(idx, "ICON", `nodes[${ni}].icon "${ic}" is not in the registry (${ICON_NAMES.join("/")}) nor a file path — クリップアートへの漂流を防ぐため、アイコンはレジストリ名か自前SVGのパスのみ`);
+          }
+        });
         break;
       }
       case "formula": {

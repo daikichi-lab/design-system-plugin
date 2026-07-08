@@ -24,7 +24,7 @@ const BULLET_INDENT_IN = 14 / 72; // pptxgenjs bullet indent (14pt)
 // Diagram skeletons compute their node geometry here too, so the floor
 // (kinsoku / orphan / height gate) applies to the SAME node text boxes the
 // engine draws labels into.
-const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
+const { flowLayout, cycleLayout, matrixLayout, timelineLayout, stepsLayout, branchLayout, formulaLayout, waterfallLayout, identityLayout, identityTextSpec, sysNodeSpec, nodeTextBox, quadBodyBox, emphSizePt, resolveStatGrid, personaLayout, positioningLayout, posHeadBox, posBodyBox, systemLayout, relationLayout, relationZones, relationIsPartition, dialogueLayout, testimonialLayout } = require("../graphics/diagrams.js");
 
 function effectiveWidth(rawIn, { bullet = false } = {}) {
   return rawIn * EFFECTIVE_FACTOR - (bullet ? BULLET_INDENT_IN : 0);
@@ -311,8 +311,10 @@ function heightBoxes(slide, T) {
       const L = systemLayout(T, (c.nodes || []).length, c.links);
       (c.nodes || []).forEach((nd, i) => {
         const node = L.nodes[i]; if (!node) return;
-        const ntb = nodeTextBox(node);
-        out.push({ id: `system node ${i + 1}`, path: `nodes[${i}]`, topY: ntb.y, bottomY: ntb.y + ntb.h, sizePt: s.head, leading: lead.tight });
+        const isObj = nd && typeof nd === "object" && !Array.isArray(nd);
+        const sp = sysNodeSpec(node, !!(isObj && nd.icon));
+        out.push({ id: `system node ${i + 1}`, path: isObj ? `nodes[${i}].label` : `nodes[${i}]`,
+          topY: sp.tb.y, bottomY: sp.tb.y + sp.tb.h, sizePt: s.head, leading: lead.tight });
       });
       (c.links || []).forEach((lk, k) => {
         if (!lk || !lk.label) return;
