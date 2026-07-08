@@ -1,7 +1,7 @@
 {
   "name": "pptx-creation",
   "description": "Reusable plugin to plan, compose, generate, and review high-quality PowerPoint decks. Strategy, slide-pattern recipes, theme schema, and review live here; per-project content and themes live in each project repo.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "author": {
     "name": "Shiojiri Fuga"
   }
