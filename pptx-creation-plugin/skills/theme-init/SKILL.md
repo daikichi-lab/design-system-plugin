@@ -13,7 +13,7 @@ description: Use in a PROJECT repo to create its theme.json (brand colors, fonts
 | 赤 | `themes/palette-red` | 熱量・危機感（深紅×臙脂） |
 | 青 | `themes/palette-blue` | 企業・テック（紺青×空色） |
 | 緑 | `themes/palette-green` | 安心・持続（深緑×若葉） |
-| オリジナル | 本スキルの通常手順で構築 | ブランド実色から起こす（例：day1-deckの紺×金） |
+| オリジナル | 本スキルの通常手順で構築 | ブランド実色から起こす（例：紺×金など、プロジェクトの実ブランド色） |
 
 選ばれたら該当 theme.json を**プロジェクトの `theme.json` にコピー**し、選択名と
 理由を DESIGN.md（無ければ作成時に）へ1行記録する。以後の全ビルドはこの
