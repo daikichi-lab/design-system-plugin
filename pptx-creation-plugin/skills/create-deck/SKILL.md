@@ -89,6 +89,25 @@ PNG **sized by the same layout the engine draws with**) →
 - If the engine throws (`Unknown pattern …`, a schema-shaped content gap), fix the
   **plan**, not the engine, and re-run.
 
+### 2b. 2案トーナメント（notes に 【候補】 があるスライドだけ）
+
+deck-strategy は確信の持てない少数のビートに限り、notes に
+`【候補】骨格A vs 骨格B — 理由` を残して2案を宣言してくる（Step 3b・限定発動）。
+その場合のみ:
+
+1. 当該スライドだけ差し替えた一時プランを2つ作り、両案をレンダする
+   （全デッキを2回作らない — 変えるのはそのスライドの `pattern`＋content の写像だけ）。
+2. **0.5秒テストで選ぶ**（文字をグレー線に置換しても項目数・答え・各項目の○✕が
+   伝わるか — slide-design-principles.md §7）。同点なら記号消去テスト
+   （visual-psychology.md §3.5）で追加判定。
+3. 勝った案で本プランを確定し、notes の 【候補】 を
+   `【確定】骨格X — 選定理由（0.5秒テストの根拠1行）` に書き換える。負けた案と
+   理由もレビューで監査できるよう1行残す。
+
+【候補】が無いデッキではこの節は何もしない（発動ゼロが正常）。トーナメントを
+全スライドに広げない — 対象はデッキあたり数枚まで（deck-strategy 側の発動条件が
+上限を作る）。
+
 ---
 
 ## 3. The mandatory QA loop (M-2 — generating is NOT done)

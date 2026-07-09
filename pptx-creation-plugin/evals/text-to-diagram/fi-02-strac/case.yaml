@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1",
+  "name": "fi-02-strac",
+  "description": "gold=identity — text-to-diagram-examples.md 行2（STRAC＝identity+sub）",
+  "tags": [
+    "formula-identity"
+  ],
+  "runs": 1,
+  "execution": {
+    "prompt": "あなたは pptx-creation プラグインのスライド構成プランナーです。次の原稿の一文に最適な「構図」を1つ判定してください。\n\n判定基準は、プラグインの deck-strategy スキル（特に Step 3b の保守ゲート：構造を1語で言えなければ図解しない）と、その参照文書 references/graphics/text-to-diagram-examples.md・references/graphics/diagram-recipes.md に従うこと。必要ならスキル・参照文書を読んでよいが、デッキプランは作らない。\n\n文脈: 経営者向け会計セミナー。お金のブロックパズル（STRAC）の説明。\n原稿の文: 「売上は変動費と粗利に分かれ、粗利から固定費を引いた残りが利益です」\n\n出力は次の3行のみ（前置き・後書きは書かない）:\n構造: <構造1語>\n骨格: <パターンID>\n理由: <1行>\n\nパターンIDは次から必ず1つだけ選ぶ（チャートは必ずサブタイプ付きの形で書く）: identity / formula / flow / steps / timeline / cycle / comparison / before-after / positioning / matrix / branch / waterfall / breakeven / system / relation / chart-bar / chart-line / chart-column / chart-band / chart-pie / stat-grid / card-grid / table / message / dialogue / testimonial",
+    "max_turns": 10,
+    "timeout_seconds": 300,
+    "allowed_tools": [
+      "Skill",
+      "Read",
+      "Grep",
+      "Glob"
+    ]
+  },
+  "graders": [
+    {
+      "type": "regex",
+      "name": "correct-skeleton",
+      "pattern": "骨格[:：]\\s*[`\"'「]?(?:identity)",
+      "match": "contains",
+      "weight": 2
+    },
+    {
+      "type": "regex",
+      "name": "not-trap",
+      "pattern": "骨格[:：]\\s*[`\"'「]?(?:formula)",
+      "match": "not_contains",
+      "weight": 1
+    },
+    {
+      "type": "regex",
+      "name": "struct-word",
+      "pattern": "構造[:：].*(?:等式|内訳|構成)",
+      "match": "contains",
+      "weight": 1
+    }
+  ],
+  "expected_outcome": "構造1語=等式 / 骨格=identity"
+}

@@ -412,6 +412,65 @@ capacity: "2-4 per side, <=8 links"
 - **Faces are machine-dependent** (soffice substitutes), but the skeleton is native
   shapes = real pixels, so break/overflow/placement QA is reliable off-machine.
 
+## PROPOSED (起票のみ・未実装) — GAP台帳からのエンジン提案 2件
+
+> どちらも実デッキでヒット実績のあるGAP（docs/canon/accounting-fp-insurance.md
+> GAP台帳参照）。実装は sanctioned path（CLAUDE.md の7手順）全通しが条件。
+> 着手順は text-to-diagram eval のカテゴリ別スコアで「在庫不足が効いている軸」を
+> 確認してから決める（改善指示 T4 注記）。実装までの代替: document-mock → `table`
+> ＋closing帯（縦計算を合わせる）、coverage → `waterfall`（年代を段階に）か
+> `timeline`＋本文。
+
+### 提案1: `document-mock` — 書類風ミニチュア（「これ読めますか」演出）
+
+```yaml
+id: document-mock            # PROPOSED — not in the engine registry yet
+content:
+  kicker:  { type: string, required: false }
+  title:   { type: string|string[], required: false }
+  docType: { type: string, required: false, note: "'pl' (default) | 'bs' — 見出し行と
+             縦計算規則のプリセット" }
+  rows:    { type: array, required: true, note: "4-8 of {label, value, level?} —
+             白地・細罫・グレー数字の書類面に組む。level(0/1)で科目の字下げ" }
+  stamp:   { type: string, required: false, note: "既定 '※数字は架空の例' — 架空数値の
+             明示打刻（外せない: 打刻なしはlint ERROR）" }
+capacity: "4-8行（PLの5段階利益が上限の目安）。それ以上は table へ"
+floor:    "行ラベルは baked（kinsoku）＋行高ゲート。数値列は右揃えの number atom"
+honesty:  "縦計算をエンジンが強制: docType のプリセット規則（pl: 売上−原価＝粗利、
+           粗利−販管費＝営業利益 / bs: 資産＝負債＋純資産）で検算し、不一致は
+           design-lint ERROR（IDENTITY-SUM と同系）。ダミーでも辻褄を合わせる"
+look:     "白地 (bg より白い surface)・0.5pt 細罫・数字はグレー (muted)——“読めなくて
+           いい書類”の顔。カード影は elevation.base。装飾罫・透かしは作らない
+           （AI-tell 家系に入れない）"
+verified: "（実装時に満たす条件）n=4/6/8 クリーン、縦計算不一致→ERROR、stamp欠落→
+           ERROR、2行ラベル→OVERFLOW、run-gate 全テーマPASS、未使用時 XML byte-identical"
+```
+
+### 提案2: `coverage` — 逓減保障の三角形/面（必要保障額×収入保障）
+
+```yaml
+id: coverage                 # PROPOSED — not in the engine registry yet
+content:
+  kicker:   { type: string, required: false }
+  title:    { type: string|string[], required: false }
+  start:    { type: number, required: true, note: "現在の必要保障額（縦軸起点）" }
+  end:      { type: number, required: false, note: "既定 0 — 末子独立/定年時点の必要額" }
+  untilLabel:{ type: string, required: true, note: "横軸の終点ラベル（例: 末子独立）——
+             軸は年齢/年数のTERMのみ、目盛りは打たない" }
+  layers:   { type: array, required: false, note: "0-3 of {label, value} — 遺族年金・
+             企業保障など下から積む既存カバー層。残りが“私的で埋める層”＝emphasis 固定" }
+  unit:     { type: string, required: false }
+capacity: "layers ≤3（それ以上は identity で層だけ先に見せてから）"
+floor:    "層ラベルは baked＋層の高さゲート（薄い層に長文不可 — identityTextSpec を再利用）"
+honesty:  "逓減線の傾きは start/end の実数から導出（データ無し形は※模式図を自動打刻——
+           breakeven と同じ規則）。面積＝保障額の比例を守る（盛らない）"
+look:     "逓減線 accent（主役）、既存カバー層 muted の積み上げ、私的で埋める層
+           surfaceAccent＋accentDeep——“空いている部分”が一目で主役に読める"
+verified: "（実装時に満たす条件）layers=0/1/3 クリーン、傾き=実数比例の機械検証、
+           模式図打刻の自動化検証、薄層ラベル→OVERFLOW、run-gate 全テーマPASS、
+           未使用時 XML byte-identical"
+```
+
 ## Roadmap
 
 `flow`, `cycle`, `matrix`, `timeline`, `steps`, `branch`, and `formula` are

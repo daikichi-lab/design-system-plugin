@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "claude_version": "2.1.205",
+  "started_at": "2026-07-09T05:19:39.107Z",
+  "duration_seconds": 3,
+  "cost_usd": 0.0388095,
+  "partial": false,
+  "plugins": [],
+  "cases": [
+    {
+      "name": "smoke",
+      "dir": "_smoke",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 1,
+          "cost_usd": 0.0388095,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "says-ping",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched PING"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-lkVEQ3/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "title": "torture: relation-record missing",
+    "intent": "seminar"
+  },
+  "slides": [
+    {
+      "pattern": "cover",
+      "content": {
+        "titleLines": ["分解シート拷問デッキ"],
+        "notes": "cover は chrome — RELATION-RECORD の対象外（発火しないこと）"
+      }
+    },
+    {
+      "pattern": "message",
+      "content": {
+        "messageLines": ["notesの無いビート"]
+      }
+    },
+    {
+      "pattern": "card-grid",
+      "content": {
+        "title": "関係語の無いnotesを持つビート",
+        "cards": [
+          { "head": "カードA", "body": "本文" },
+          { "head": "カードB", "body": "本文" },
+          { "head": "カードC", "body": "本文" }
+        ],
+        "notes": "このメモには共通語彙のことばが入っていない（発火させる）"
+      }
+    },
+    {
+      "pattern": "flow",
+      "content": {
+        "steps": ["書く", "撮る", "出す"],
+        "notes": "図解だがメモに判定のことばが無い — education register なので既存の教育ガード側が発火し、こちらの新ガードは二重発火しないこと"
+      }
+    },
+    {
+      "pattern": "cta",
+      "content": {
+        "titleLines": ["おわり"],
+        "offerHead": "行動",
+        "offerBody": "chrome — 対象外",
+        "notes": "cta も対象外"
+      }
+    }
+  ]
+}

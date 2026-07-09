@@ -449,6 +449,16 @@ CLOSING-LEN enforces both the row cap and per-line length ~38/48 chars);
 `branch` is vertically deep — prefer its title/notes over a closing (COLLISION
 gate fires otherwise). `table` renders `note` OR `closing`, not both.
 
+**複合イディオム「主構図＋closing帯」（1ビート2関係の、唯一の明文化された例外）.**
+deck-strategy Step 2.5 の原則は「関係1語が2つ出たら2枚に割る」。ただし
+〈情報の関係〉に〈**単一の感情メッセージ**〉が重なるビート（例:「この決算書、
+読めますか？」＝ 書類の精密 ＋ 読めなくて当たり前という安心）は、情報の関係を
+主構図（table / identity / comparison / card-grid …）に取り、感情の一言を
+closing 帯に置く**1枚の複合**を許す — 種明かしは主構図を見た直後に落ちてこそ
+効く（dwell スライドの再読報酬）。ガード: closing に置けるのは単一主張1行のみ。
+2つ目の**情報**関係が出たら複合ではなく別ビート（割る）。判定例は
+`../graphics/text-to-diagram-examples.md` §3。
+
 ## Pattern: `before-after` (education register)
 
 ```yaml

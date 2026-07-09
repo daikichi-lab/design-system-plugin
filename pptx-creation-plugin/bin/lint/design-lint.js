@@ -718,7 +718,10 @@ function checkRhythm(slides, F) {
  *     対応…) => WARN — 保守的分類（迷えばテキスト）を記録で担保する。
  *     意味の正しさ自体は人の承認領域。 */
 const DIAGRAM_PATTERNS = ["flow", "cycle", "matrix", "positioning", "system", "relation", "timeline", "steps", "branch", "formula", "waterfall", "identity", "breakeven"];
-const STRUCT_WORD_RE = /順序|手順|ループ|循環|2軸|二軸|両軸|ポジション|位置取り|システム|全体像|エコシステム|対応|関係|構造|分解|恒等式|構成|内訳|分岐|時系列|段階|sequence|loop|two-axis|positioning|system|relation|identity/i;
+/* 共通語彙（taxonomy）— T1 eval の gold 構造語・T2 対ドリルの「構造1語」列・
+ * Step 2.5 分解シートの関係1語は、すべてこの1本の正規表現と同じ語彙を指す。
+ * バラけると計測とドリルが噛み合わない（改善指示 §1）。変更は3か所同時に。 */
+const STRUCT_WORD_RE = /順序|手順|流れ|ループ|循環|サイクル|繰り返し|2軸|二軸|両軸|象限|ポジション|位置取り|立ち位置|システム|全体像|エコシステム|対応|関係|構造|分解|等式|構成|内訳|分岐|展開|集約|時系列|年表|段階|階段|ステップ|並列|列挙|対比|比較|再フレーム|リフレーム|誤解|訂正|増減|橋|因数分解|掛け算|数式|乗算|規模|ランキング|推移|トレンド|構成比|割合|シェア|単一|一点|声|共感|会話|交差|損益分岐|精密|sequence|loop|two-axis|positioning|system|relation|identity|bridge|ranking|trend|share|parallel|single|reframe/i;
 const PERSONA_PATTERNS = ["message", "two-column"];
 
 function checkRegister(slides, meta, F) {
@@ -800,6 +803,30 @@ function checkRegister(slides, meta, F) {
         F.warn(idx, "OVER-DIAGRAM",
           `education diagram (${sl.pattern}) without the one-word structure test in notes — record WHY this skeleton fits (sequence/loop/two-axis/positioning/system/relation); 迷えばテキスト`);
       }
+    }
+  });
+}
+
+/* ---------------- CHECK: RELATION-RECORD (分解シート — 全ビート版) ----------------
+ * 構造判定を「事後の正当化」から「事前の成果物」にする（deck-strategy Step 2.5）。
+ * すべての body ビートは、パターンを選ぶ前に notes へ分解シート
+ * { 項目の列挙, 関係1語, 量の有無, 主役, 既知→未知 } を書く。ここでは
+ * 機械検査できる要（関係1語 = STRUCT_WORD_RE の共通語彙）の記録有無を見る。
+ * advisory WARN のみ — 意味の正しさは人の承認領域（M-2）なので ERROR で止めない。
+ * OVER-DIAGRAM が既に見る領域（education の図解スライド）は二重発火させない。 */
+const CHROME_PATTERNS = ["cover", "section", "cta"]; // 構造上の枠 — ビート分解の対象外
+
+function checkRelationRecord(slides, meta, F) {
+  const intent = meta && meta.intent;
+  const edu = intent === "education" || intent === "seminar";
+  slides.forEach((sl, i) => {
+    const idx = i + 1;
+    if (CHROME_PATTERNS.includes(sl.pattern)) return;
+    if (edu && DIAGRAM_PATTERNS.includes(sl.pattern)) return; // OVER-DIAGRAM の領域
+    const c = sl.content || {};
+    if (!(typeof c.notes === "string" && STRUCT_WORD_RE.test(c.notes))) {
+      F.warn(idx, "RELATION-RECORD",
+        `body beat (${sl.pattern}) without its 分解シート in notes — write the 関係1語 (順序/並列/対比/内訳/増減/2軸/対応/単一 …) + 項目・量・主役・既知→未知 BEFORE picking the pattern (deck-strategy Step 2.5); 関係が2語出たら2枚に割る`);
     }
   });
 }
@@ -1012,6 +1039,7 @@ function run(args) {
 
   const F = makeFindings();
   checkRegister(slides, meta, F);
+  checkRelationRecord(slides, meta, F);
   checkPlaceholders(slides, F);
   checkCapacity(slides, F);
   checkOverflow(slides, T, F);
@@ -1068,6 +1096,6 @@ if (require.main === module) main();
 module.exports = {
   contrastRatio, relLuminance, walkStrings, getByPath,
   checkPlaceholders, checkCapacity, checkOverflow, checkContrast, checkMargin, checkAiTells,
-  checkEmphasis, checkRhythm, checkRegister, isDense,
+  checkEmphasis, checkRhythm, checkRegister, checkRelationRecord, isDense,
   run,
 };
