@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.1",
+  "name": "smoke",
+  "tags": ["smoke"],
+  "runs": 1,
+  "execution": {
+    "prompt": "「PING」とだけ返答してください。他の文字は書かないこと。",
+    "max_turns": 2,
+    "allowed_tools": []
+  },
+  "graders": [
+    { "type": "regex", "name": "says-ping", "pattern": "PING", "match": "contains" }
+  ]
+}

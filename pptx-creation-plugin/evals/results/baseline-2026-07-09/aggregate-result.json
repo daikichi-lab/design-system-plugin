@@ -1,0 +1,1891 @@
+{
+  "schema_version": "1.0",
+  "claude_version": "2.1.205",
+  "started_at": "2026-07-09T05:28:04.111Z",
+  "duration_seconds": 3410,
+  "cost_usd": 12.22784875,
+  "partial": false,
+  "plugins": [
+    {
+      "name": "pptx-creation-plugin",
+      "path": "/home/fugashiojiri/design-system-plugin/pptx-creation-plugin"
+    }
+  ],
+  "cases": [
+    {
+      "name": "smoke",
+      "dir": "evals/text-to-diagram/_smoke",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 1,
+          "cost_usd": 0.0454095,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "says-ping",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched PING"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-7e7QRG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "bf-01-kessansho",
+      "dir": "evals/text-to-diagram/bf-01-kessansho",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 9,
+          "cost_usd": 0.1664255,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:branch)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-ckoqyE/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "bf-02-torae",
+      "dir": "evals/text-to-diagram/bf-02-torae",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 6,
+          "cost_usd": 0.1591235,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:formula)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-WErPHF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "bf-03-converge",
+      "dir": "evals/text-to-diagram/bf-03-converge",
+      "source": "case_yaml",
+      "score": 0,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0,
+          "turns": 7,
+          "cost_usd": 0.1817715,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern found (expected absent)"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-Ma0j2F/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "bf-04-tenkai",
+      "dir": "evals/text-to-diagram/bf-04-tenkai",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.20311900000000002,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:branch)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:分岐|展開|集約)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-0nPSiF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "bf-05-fake",
+      "dir": "evals/text-to-diagram/bf-05-fake",
+      "source": "case_yaml",
+      "score": 0.25,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.25,
+          "turns": 9,
+          "cost_usd": 0.2191845,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-CjDfeE/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "bf-06-shiten",
+      "dir": "evals/text-to-diagram/bf-06-shiten",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 1,
+          "cost_usd": 0.0649805,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:branch)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:分岐|展開|集約)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-SfU6IF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-01-oldnew",
+      "dir": "evals/text-to-diagram/cbp-01-oldnew",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.178788,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:comparison)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:対比|比較)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-GEtCpF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-02-gokai",
+      "dir": "evals/text-to-diagram/cbp-02-gokai",
+      "source": "case_yaml",
+      "score": 0,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0,
+          "turns": 10,
+          "cost_usd": 0.20647300000000002,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern found (expected absent)"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-oudLzG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-03-3plans",
+      "dir": "evals/text-to-diagram/cbp-03-3plans",
+      "source": "case_yaml",
+      "score": 0.25,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.25,
+          "turns": 11,
+          "cost_usd": 0.257156,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-bgyydF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-04-minaoshi",
+      "dir": "evals/text-to-diagram/cbp-04-minaoshi",
+      "source": "case_yaml",
+      "score": 0.25,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.25,
+          "turns": 10,
+          "cost_usd": 0.2367915,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-mc4P6E/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-05-market",
+      "dir": "evals/text-to-diagram/cbp-05-market",
+      "source": "case_yaml",
+      "score": 0,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0,
+          "turns": 10,
+          "cost_usd": 0.2237745,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern found (expected absent)"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-SkXt7D/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-06-slogan",
+      "dir": "evals/text-to-diagram/cbp-06-slogan",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 5,
+          "cost_usd": 0.81316,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:before-after)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:再フレーム|リフレーム|誤解|訂正)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-epeY6D/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-07-kirikuchi",
+      "dir": "evals/text-to-diagram/cbp-07-kirikuchi",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 6,
+          "cost_usd": 0.1649555,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:comparison)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:対比|比較)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-3SkgIF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cbp-08-vs",
+      "dir": "evals/text-to-diagram/cbp-08-vs",
+      "source": "case_yaml",
+      "score": 0,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0,
+          "turns": 11,
+          "cost_usd": 0.2016935,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern found (expected absent)"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-0SXdxH/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cc-01-3shikin",
+      "dir": "evals/text-to-diagram/cc-01-3shikin",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 1,
+          "cost_usd": 1.11544925,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:(card-grid|stat-grid))"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:並列|列挙)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-dElHHE/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cc-02-suii",
+      "dir": "evals/text-to-diagram/cc-02-suii",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.19278499999999998,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:chart-(line|column))"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:推移|トレンド|時系列)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-rLoRyH/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cc-03-kpi",
+      "dir": "evals/text-to-diagram/cc-03-kpi",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 10,
+          "cost_usd": 0.196772,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:stat-grid)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:並列|列挙)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-djv8oE/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cc-04-scale",
+      "dir": "evals/text-to-diagram/cc-04-scale",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 8,
+          "cost_usd": 0.183859,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:chart-bar)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-hO9QfF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cc-05-share",
+      "dir": "evals/text-to-diagram/cc-05-share",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.184475,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:chart-(band|pie))"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:構成比|割合|シェア)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-ranTlG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cc-06-quarter",
+      "dir": "evals/text-to-diagram/cc-06-quarter",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 10,
+          "cost_usd": 0.2279915,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:chart-(column|bar))"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:推移|トレンド|時系列)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-qD62TF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "cc-07-yakusoku",
+      "dir": "evals/text-to-diagram/cc-07-yakusoku",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.18997949999999997,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:card-grid)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:並列|列挙)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-E2cwaF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "dg-01-single",
+      "dir": "evals/text-to-diagram/dg-01-single",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.198133,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:message)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:単一|一点|ひとつ)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-f5mZhE/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "dg-02-voice",
+      "dir": "evals/text-to-diagram/dg-02-voice",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.6780685,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:dialogue)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:声|共感|会話)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-txTYKH/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "dg-03-precise",
+      "dir": "evals/text-to-diagram/dg-03-precise",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 5,
+          "cost_usd": 0.1517135,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:table)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-maRiwG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "dg-04-features",
+      "dir": "evals/text-to-diagram/dg-04-features",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 7,
+          "cost_usd": 0.17186949999999998,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:card-grid)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:並列|列挙)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-lpWg7F/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "dg-05-pivot",
+      "dir": "evals/text-to-diagram/dg-05-pivot",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 10,
+          "cost_usd": 0.23235499999999995,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:message)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-gdyWhI/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-01-bs",
+      "dir": "evals/text-to-diagram/fi-01-bs",
+      "source": "case_yaml",
+      "score": 0.25,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.25,
+          "turns": 9,
+          "cost_usd": 0.208299,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-gQyD0E/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-02-strac",
+      "dir": "evals/text-to-diagram/fi-02-strac",
+      "source": "case_yaml",
+      "score": 0.25,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.25,
+          "turns": 10,
+          "cost_usd": 0.227032,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-dOBowF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-03-sales",
+      "dir": "evals/text-to-diagram/fi-03-sales",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 3,
+          "cost_usd": 0.143715,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:formula)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-PzwfdI/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-04-tedori",
+      "dir": "evals/text-to-diagram/fi-04-tedori",
+      "source": "case_yaml",
+      "score": 0.25,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.25,
+          "turns": 0,
+          "cost_usd": 0,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-nhG5fF/out/trace.jsonl",
+          "error": "timed out after 300s"
+        }
+      ]
+    },
+    {
+      "name": "fi-05-dupont",
+      "dir": "evals/text-to-diagram/fi-05-dupont",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 7,
+          "cost_usd": 0.1550375,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:formula)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:因数分解|掛け算|数式|乗算)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-T7PCpI/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-06-cost",
+      "dir": "evals/text-to-diagram/fi-06-cost",
+      "source": "case_yaml",
+      "score": 0.5,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.5,
+          "turns": 9,
+          "cost_usd": 0.2088935,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:等式|内訳|構成)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-RilqLF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-07-kakekin",
+      "dir": "evals/text-to-diagram/fi-07-kakekin",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.7201737500000001,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:identity)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:等式|内訳|構成)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-o4VzVF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-08-nenkin",
+      "dir": "evals/text-to-diagram/fi-08-nenkin",
+      "source": "case_yaml",
+      "score": 0,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0,
+          "turns": 11,
+          "cost_usd": 0.2488125,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern found (expected absent)"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-QiV5yH/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fi-09-target",
+      "dir": "evals/text-to-diagram/fi-09-target",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 7,
+          "cost_usd": 0.15992599999999998,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:formula)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-sFEL8D/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-01-keiyaku",
+      "dir": "evals/text-to-diagram/fst-01-keiyaku",
+      "source": "case_yaml",
+      "score": 0.25,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.25,
+          "turns": 7,
+          "cost_usd": 0.172263,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": false,
+              "weight": 2,
+              "explanation": "pattern not found in last_message"
+            },
+            {
+              "name": "not-trap",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern found (expected absent)"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:順序|手順|流れ)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-gA486D/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-02-career",
+      "dir": "evals/text-to-diagram/fst-02-career",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.17289300000000002,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:steps)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:段階|階段|ステップ)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-BaQo6F/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-03-enkaku",
+      "dir": "evals/text-to-diagram/fst-03-enkaku",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 6,
+          "cost_usd": 0.15840100000000001,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:timeline)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:時系列|年表)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-GwvOeG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-04-road",
+      "dir": "evals/text-to-diagram/fst-04-road",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.18391249999999998,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:steps)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:段階|階段|ステップ)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-BdJsOG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-05-monthly",
+      "dir": "evals/text-to-diagram/fst-05-monthly",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 6,
+          "cost_usd": 0.16097200000000003,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:cycle)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:ループ|循環|繰り返し|サイクル)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-gYMgyG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-06-onboard",
+      "dir": "evals/text-to-diagram/fst-06-onboard",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.2107115,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:flow)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:順序|手順|流れ)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-nDZonH/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-07-seido",
+      "dir": "evals/text-to-diagram/fst-07-seido",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.166726,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:timeline)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:時系列|年表)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-UhmabI/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-08-lifestage",
+      "dir": "evals/text-to-diagram/fst-08-lifestage",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 1,
+          "cost_usd": 0.0610705,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:timeline)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-3cV9mH/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "fst-09-pdca",
+      "dir": "evals/text-to-diagram/fst-09-pdca",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 1,
+          "cost_usd": 0.0673655,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:cycle)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:ループ|循環|繰り返し|サイクル)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-YzlG6E/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "mc-01-risk",
+      "dir": "evals/text-to-diagram/mc-01-risk",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.18720249999999997,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:matrix)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:2軸|二軸|象限)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-5HTTVD/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "mc-02-seido",
+      "dir": "evals/text-to-diagram/mc-02-seido",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 9,
+          "cost_usd": 0.2157875,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:(comparison|table))"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:対比|比較)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-1Ud0lE/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "mc-03-impact",
+      "dir": "evals/text-to-diagram/mc-03-impact",
+      "source": "case_yaml",
+      "score": 0.75,
+      "pass_rate": 0,
+      "runs": [
+        {
+          "score": 0.75,
+          "turns": 7,
+          "cost_usd": 0.1844755,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:matrix)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": false,
+              "weight": 1,
+              "explanation": "pattern not found in last_message"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-CUGkfE/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "mc-04-swot",
+      "dir": "evals/text-to-diagram/mc-04-swot",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 1,
+          "cost_usd": 0.0639605,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:matrix)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:2軸|二軸|象限)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-yXRYGF/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "mc-05-chobo",
+      "dir": "evals/text-to-diagram/mc-05-chobo",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.17401850000000002,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:comparison)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:対比|比較)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-eyK04E/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "mc-06-kokyaku",
+      "dir": "evals/text-to-diagram/mc-06-kokyaku",
+      "source": "case_yaml",
+      "score": 1,
+      "pass_rate": 1,
+      "runs": [
+        {
+          "score": 1,
+          "turns": 8,
+          "cost_usd": 0.92994325,
+          "judge_cost_usd": 0,
+          "graders": [
+            {
+              "name": "correct-skeleton",
+              "passed": true,
+              "weight": 2,
+              "explanation": "matched 骨格[:：]\\s*[`\"'「]?(?:matrix)"
+            },
+            {
+              "name": "not-trap",
+              "passed": true,
+              "weight": 1,
+              "explanation": "pattern absent as expected"
+            },
+            {
+              "name": "struct-word",
+              "passed": true,
+              "weight": 1,
+              "explanation": "matched 構造[:：].*(?:2軸|二軸|象限)"
+            }
+          ],
+          "trace_path": "/tmp/claude-eval-FrmwKG/out/trace.jsonl",
+          "error": null
+        }
+      ]
+    }
+  ]
+}

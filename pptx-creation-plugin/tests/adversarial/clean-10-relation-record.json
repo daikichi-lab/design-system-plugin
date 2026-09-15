@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "title": "clean: relation-record present",
+    "intent": "seminar"
+  },
+  "slides": [
+    {
+      "pattern": "cover",
+      "content": {
+        "titleLines": ["分解シート clean デッキ"]
+      }
+    },
+    {
+      "pattern": "message",
+      "content": {
+        "messageLines": ["一枚一関係のビート"],
+        "notes": "【分解】項目=1 ／ 関係1語=単一の主張 ／ 量=なし ／ 主役=メッセージ行 ／ 既知→未知=導入の宣言"
+      }
+    },
+    {
+      "pattern": "card-grid",
+      "content": {
+        "title": "3つの約束",
+        "cards": [
+          { "head": "カードA", "body": "本文" },
+          { "head": "カードB", "body": "本文" },
+          { "head": "カードC", "body": "本文" }
+        ],
+        "notes": "【分解】項目=3（A/B/C）／ 関係1語=並列 ／ 量=なし ／ 主役=なし（等価） ／ 既知→未知=すべて既知の依頼"
+      }
+    },
+    {
+      "pattern": "flow",
+      "content": {
+        "steps": ["書く", "撮る", "出す"],
+        "notes": "【分解】項目=3 ／ 関係1語=順序（sequence）／ 量=なし ／ 主役=step3 ／ 既知→未知=手順の提示。構造1語テスト合格"
+      }
+    },
+    {
+      "pattern": "cta",
+      "content": {
+        "titleLines": ["おわり"],
+        "offerHead": "行動",
+        "offerBody": "chrome — 対象外"
+      }
+    }
+  ]
+}

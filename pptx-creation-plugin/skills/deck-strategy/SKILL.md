@@ -105,6 +105,30 @@ manuscript comprehension. Record it (each turning point's slide gets a `notes`
 line saying why it flips the room) so the human approving the plan can catch a
 mis-read; everything downstream of the classification is mechanical.
 
+## Step 2.5 — 分解シート (decompose BEFORE you map — 事後の正当化にしない)
+
+パターンの名前に触れる**前に**、全ビートについて分解シートを notes に書く。
+構造判定を「選んだ後の理由づけ」から「事前の成果物」に変える工程で、解釈が
+浅いときに card / bullet / message へ丸める癖（「見せ方が弱い」の実体）を
+ここで断つ。design-lint の RELATION-RECORD が記録の有無を advisory WARN で見る
+（意味の正しさは人の承認領域なので ERROR では止めない）。
+
+```
+【分解】項目=…（列挙して数える） ／ 関係1語=…（下の共通語彙から1つ） ／
+量=…（数値の有無・比例が論点か） ／ 主役=…（emphasis候補） ／ 既知→未知=…
+```
+
+- **関係1語は共通語彙から選ぶ** — design-lint `STRUCT_WORD_RE` ＝
+  `text-to-diagram-examples.md` の語彙 ＝ text-to-diagram eval の gold と同一：
+  順序／段階／年表／循環／対比／再フレーム／ポジション／2軸／内訳（等式）／
+  因数分解／増減／分岐／全体像／対応／規模／推移／構成比／並列／単一／声 …
+- **機械的ルール: 関係1語が2つ出たら、そのビートは2枚に割る。** 唯一の例外は
+  catalog に明文化された複合イディオム「主構図＋closing帯」（情報の関係＋単一の
+  感情メッセージ — `text-to-diagram-examples.md` §3）。2つ目の**情報**関係が
+  出たら、それは複合ではなく別ビート。
+- 分解シートが書けないビートは、まだ原稿を理解していない——パターン選定に
+  進まず、原稿に戻る。
+
 ## Step 3 — Map each beat to a pattern
 
 **Step 3.0 (MUST, before any mapping): look for a canonical-forms catalog.**
@@ -288,9 +312,14 @@ logic, and that is *worse* than plain text. So the gate is deliberately strict.
   (`{label, icon}` — registry names or the project's own SVG path;
   `../../references/graphics/icon-catalog.md` is the selection rule: actors and
   objects only, never decoration, registry/path only).
-- **Worked translations:** before mapping a hard beat, scan
-  `../../references/graphics/text-to-diagram-examples.md` — 12 sentence→skeleton
-  translations incl. the 額装 anti-pattern and the formula/identity boundary.
+- **Worked translations (対ドリル):** before mapping a hard beat, scan
+  `../../references/graphics/text-to-diagram-examples.md` — 境界の対ドリル
+  （誤答＋なぜダメ付きの6対: formula/identity・flow/steps/timeline・
+  comparison/before-after/positioning・数える/比べる・branch/formula・
+  matrix/comparison）＋早見表＋複合イディオム（主構図＋closing帯）。
+  ベースライン計測で弱い境界は 額装（formula/identity）と再フレーム
+  （comparison/before-after/positioning）— この2対は特に対ドリル側を読んでから
+  判定する。
 - **`dialogue` / `testimonial`** are persuasion devices, not diagrams: use them
   only in learner/marketing registers (financial/board = lint ERROR), always
   with `mark` (※例). The avatar is neutral — meaning rides in the words,
@@ -305,6 +334,16 @@ kept it as text). This makes the classification reviewable — the human approvi
 deck catches a mis-classification the lint cannot. The floor guarantees a diagram
 won't *break*; it never guarantees the *structure fits the meaning* — that is a human
 call, so leave the reasoning behind.
+
+**確信が持てないビートだけ、2案トーナメント（限定発動）.** 発動条件は2つのみ:
+(a) 原稿側が「図解が要る」と明示したビート、または (b) text-to-diagram eval の
+カテゴリ別スコアが弱い境界（現ベースライン: 額装 formula/identity・再フレーム
+comparison/before-after/positioning）に該当するビート — で、対ドリルを読んでも
+1案に絞り切れないとき。そのときは notes に
+`【候補】骨格A vs 骨格B — それぞれの構造1語と迷いの理由` を残して2案を宣言する。
+create-deck が両案をレンダし、0.5秒テストで1案を選び、選定理由を notes に確定
+させる。**全ビートに広げない** — 全部に候補を出すと希少性が消えてコスト倒れになる
+（1デッキで数枚まで）。
 
 ## Step 4 — Sequence (the sandwich)
 
