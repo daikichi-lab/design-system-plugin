@@ -1,0 +1,22 @@
+{
+  "deck": "day1-highlights/outputs/Day1_主要ページ抜粋.pptx",
+  "totalScore": 94,
+  "band": "external",
+  "dimensions": {
+    "messageLogic": { "score": 24, "max": 25, "notes": "全16枚が1スライド1メッセージ・結論/問いタイトル。32枚版の背骨（BAB＋失敗のSCQA）を保ったまま縦読みが成立：表紙→ゴール→でも→失敗→10億→防具→会計3つ→管理会計→桁違い→席→読めますか→BS→ワーク(peak)→PL→法人→締め。P6単発ダーク化（章扉省略）でDARK-RUNも解消。-1: 自己紹介と正直開示(P21)を落としたため信頼シフトの文脈は口頭補足が必要。" },
+    "visualIntegrity": { "score": 24, "max": 25, "notes": "独立目視QA全16枚で重大0。軽微1件（slide-10注記3行折返し）は出典のみに短縮して解消、再レンダで1行を確認。溢れ・重なり・AI-tellなし。" },
+    "designFidelity": { "score": 19, "max": 20, "notes": "wa-modern＋story knobs。ダーク4/16=25%・隣接なし・peak1枚(P27ワーク)。菱形kicker・朱・結び帯が一貫。" },
+    "informationDesign": { "score": 18, "max": 20, "notes": "identity×2は高さ比を画素実測で値比例確認（72:28≒2500:1000等）、barチャートも実寸比例・単位脚注1行化（前回レビュー指摘反映）。-2: saliency advisory 3件（barチャートの領域誤特定等、目視で主役確認済み＝lint近似の限界として受容）。" },
+    "contentIntegrity": { "score": 9, "max": 10, "notes": "架空数値は全て縦計算一致＋架空明記、実数値は概数・公表値ラベル。全ビートにStep 2.5分解シート（RELATION-RECORD警告0＝新規律準拠の初デッキ）。-1: P10の出典年次未確定（親デッキと同じ指摘——実配布前に講師が確定を）。" }
+  },
+  "visualQa": {
+    "ran": true,
+    "slides": [
+      { "slide": 10, "issues": [ { "type": "other", "detail": "初回レンダ：右カード注記が3行折返し→出典のみに短縮して1行化（再レンダ確認済み）", "severity": "minor", "resolved": true } ] }
+    ]
+  },
+  "findings": [
+    { "dimension": "contentIntegrity", "slide": 10, "issue": "『127万社』『約6割』の出典に年次・調査名がない", "fix": "実配布前に年次を付記（例：経産省推計・2025年時点）——親デッキdeck_review.jsonと同一指摘" }
+  ],
+  "verdict": "Ship可（external・94点）。32枚版（93点）の主要16枚抜粋＋前回レビュー指摘2件（単位脚注・注記幅）を反映済み。全ビート分解シート付きでdesign-lint警告0の初デッキ。"
+}
